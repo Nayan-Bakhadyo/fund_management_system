@@ -1,10 +1,78 @@
-<h2>Email Verification</h2>
-{% if error %}
-    <p style="color:red;">{{ error }}</p>
-{% endif %}
-<form method="post">
-    {% csrf_token %}
-    <label>Enter the code sent to your email:</label>
-    <input type="text" name="code" required>
-    <button type="submit">Verify</button>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Email Verification</title>
+    <style>
+        body {
+            background: #f7f7f7;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .verify-container {
+            background: #fff;
+            padding: 2.5rem 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            max-width: 350px;
+            width: 100%;
+            text-align: center;
+        }
+        .verify-title {
+            color: #bfa14a;
+            margin-bottom: 1.2rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .verify-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #14213d;
+            font-weight: 500;
+        }
+        .verify-input {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 1.2rem;
+            font-size: 1rem;
+        }
+        .verify-btn {
+            background: #bfa14a;
+            color: #fff;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .verify-btn:hover {
+            background: #a88d36;
+        }
+        .verify-error {
+            color: #e53935;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="verify-container">
+        <div class="verify-title">Email Verification</div>
+        {% if error %}
+            <div class="verify-error">{{ error }}</div>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <label class="verify-label">Enter the code sent to your email:</label>
+            <input class="verify-input" type="text" name="code" required>
+            <button class="verify-btn" type="submit">Verify</button>
+        </form>
+    </div>
+</body>
+</html>

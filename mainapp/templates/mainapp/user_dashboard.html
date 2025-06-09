@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Dashboard</title>
+    <link rel="icon" type="image/png" href="{% static 'mainapp/assets/BE_logo.png' %}">
+    <link rel="stylesheet" href="{% static 'mainapp/user_dashboard.css' %}">
+    <script src="{% static 'mainapp/user_dashboard.js' %}" defer></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="#" id="portfolio-link">
+                        📈 Portfolio Performance
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="transaction-history-link">
+                        🧾 Transaction History
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <!-- Main Content Area -->
+        <div class="main-content" id="mainContent">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="user-profile">
+                    <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}" alt="User DP" class="user-dp">
+                    <div class="user-info">
+                        <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+                        <div class="user-email">{{ user.email }}</div>
+                    </div>
+                    <a href="{% url 'logout' %}" class="logout-link">Log out</a>
+                </div>
+            </header>
+            <!-- Dashboard Content -->
+            <main>
+                <div id="dashboard-content">
+                    <div class="dashboard-title">Welcome to Your Dashboard</div>
+                    <div class="dashboard-message">
+                        Hello, {{ user.get_full_name|default:user.username }}!<br>
+                        This is your user dashboard.
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

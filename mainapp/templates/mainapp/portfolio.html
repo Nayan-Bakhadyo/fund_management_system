@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Portfolio Performance</title>
+</head>
+<body>
+    <div class="dashboard-title"></div>
+    <div class="dashboard-message">
+
+    </div>
+    <div class="portfolio-cards">
+        <div class="portfolio-card">
+            <div class="card-title">Total Unit Balance</div>
+            <div class="card-value">{{ total_units|floatformat:0 }}</div>
+        </div>
+        <div class="portfolio-card">
+            <div class="card-title">NAV <span class="nav-date">(as of {{ nav_date }})</span></div>
+            <div class="card-value">{{ nav|floatformat:0 }}</div>
+        </div>
+        <div class="portfolio-card">
+            <div class="card-title">Total Amount</div>
+            <div class="card-value">{{ total_amount|floatformat:0 }}</div>
+        </div>
+    </div>
+</body>
+</html>

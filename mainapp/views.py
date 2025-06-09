@@ -13,6 +13,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.template.loader import render_to_string
 from django.http import JsonResponse
+from django.utils import timezone
 
 # Create your views here.
 
@@ -179,3 +180,47 @@ def view_transactions(request):
         {'transactions': transactions, 'authorized_users': authorized_users, 'selected_email': email}
     )
     return JsonResponse({'html': html})
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+
+@login_required
+def user_dashboard(request):
+    return render(request, 'mainapp/user_dashboard.html')
+
+@login_required
+def portfolio(request):
+    # Fetch total unit balance for the user
+    user_nav = UserNAV.objects.filter(authorized_user__email=request.user.email).first()
+    total_units = user_nav.available_unit if user_nav else 0
+
+    # Fetch latest NAV record
+    latest_nav_record = NAVRecord.objects.order_by('-date_time').first()
+    nav = latest_nav_record.unit_cost if latest_nav_record else 0
+    nav_date = latest_nav_record.date_time.strftime('%Y-%m-%d') if latest_nav_record else 'N/A'
+
+    # Calculate total amount
+    total_amount = total_units * nav
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        html = render_to_string(
+            'mainapp/portfolio.html',
+            {
+                'total_units': total_units,
+                'nav': nav,
+                'nav_date': nav_date,
+                'total_amount': total_amount,
+            },
+            request=request
+        )
+        return HttpResponse(html)
+    return render(
+        request,
+        'mainapp/portfolio.html',
+        {
+            'total_units': total_units,
+            'nav': nav,
+            'nav_date': nav_date,
+            'total_amount': total_amount,
+        }
+    )

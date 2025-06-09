@@ -1,0 +1,165 @@
+body {
+    background: #f7f7f7;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+}
+.sidebar {
+    width: 30%;
+    min-width: 180px;
+    max-width: 350px;
+    background: #14213d;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 2rem;
+}
+.sidebar-logo .be-logo {
+    width: 60px;
+    margin-bottom: 2rem;
+}
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+}
+.sidebar-menu li {
+    width: 100%;
+}
+.sidebar-menu a {
+    display: block;
+    color: #fff;
+    text-decoration: none;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+.sidebar-menu a:hover {
+    background: #bfa14a;
+    color: #14213d;
+}
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin-left: 0; /* Remove margin if present */
+}
+.main-content.collapsed {
+    margin-left: 60px;
+}
+.topbar {
+    background: #fff;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.user-dp {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #bfa14a;
+}
+.user-info {
+    text-align: right;
+}
+.user-name {
+    font-weight: 600;
+    color: #14213d;
+    font-size: 1.05rem;
+}
+.user-email {
+    color: #555;
+    font-size: 0.97rem;
+}
+.logout-link {
+    color: #e53935;
+    text-decoration: none;
+    font-weight: 600;
+    margin-left: 1rem;
+    transition: color 0.2s;
+}
+.logout-link:hover {
+    color: #bfa14a;
+}
+.dashboard-title {
+    color: #bfa14a;
+    margin: 2rem 0 1rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+}
+.dashboard-message {
+    color: #14213d;
+    font-size: 1.1rem;
+    text-align: center;
+}
+/* Collapsible sidebar styles */
+.sidebar-toggle {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.7rem;
+    cursor: pointer;
+    margin-bottom: 1.5rem;
+    outline: none;
+    transition: color 0.2s;
+}
+.sidebar.collapsed {
+    width: 60px;
+    min-width: 60px;
+    transition: width 0.2s;
+}
+.sidebar.collapsed .sidebar-logo {
+    display: none;
+}
+.sidebar.collapsed .sidebar-menu a {
+    text-align: center;
+    padding: 1rem 0.5rem;
+    font-size: 1.3rem;
+}
+/* Portfolio cards styles */
+.portfolio-cards {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+.portfolio-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    padding: 2rem 2.5rem;
+    min-width: 180px;
+    text-align: center;
+}
+.card-title {
+    font-size: 1.1rem;
+    color: #bfa14a;
+    margin-bottom: 0.7rem;
+    font-weight: 600;
+}
+.card-value {
+    font-size: 1.5rem;
+    color: #14213d;
+    font-weight: 700;
+}
+.nav-date {
+    font-size: 0.9rem;
+    color: #888;
+    font-weight: 400;
+}

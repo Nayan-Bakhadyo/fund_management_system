@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 from django.conf import settings
 from django.conf.urls.static import static
@@ -13,4 +13,7 @@ urlpatterns = [
     path('fundmanager/add_transaction/', views.add_transaction, name='add_transaction'),
     path('fundmanager/add_transaction_form/', views.add_transaction_form, name='add_transaction_form'),
     path('fundmanager/view_transactions/', views.view_transactions, name='view_transactions'),
+    path('user/dashboard/', views.user_dashboard, name='user_dashboard'),
+    path('user/portfolio/', views.portfolio, name='portfolio'),
+    path('auth/', include('social_django.urls', namespace='social')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
