@@ -1,0 +1,73 @@
+{% load static %}
+{% load authorized_tags %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>B.E Investment Firm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{% static 'mainapp/style.css' %}">
+    <script src="{% static 'mainapp/script.js' %}" defer></script>
+
+</head>
+<body>
+    <div class="container">
+        <img src="{% static 'mainapp/assets/BE_logo.png' %}" alt="B.E Investment Firm Logo"
+             style="height: 90px; margin-bottom: 18px; border-radius: 50%; object-fit: cover;">
+        <div class="logo">B.E Investment Firm</div>
+        <hr class="brand-hr">
+        <div class="subtitle">Your Partner in Strategic Investment Growth</div>
+        <div class="desc">
+            B.E Investments provides comprehensive investment management services focused on maximizing returns while minimizing risk.<br>
+            We are dedicated to providing tailored investment solutions to individuals and businesses.<br>
+            Our experienced team prioritizes transparency, security, and long-term growth for our clients.<br>
+            <span style="font-size:0.95em;color:#666;"></span>
+        </div>
+        <hr>
+        {% if user.is_authenticated %}
+            {% if user.email|is_authorized %}
+                <!-- Authorized User Landing Page -->
+                <div class="welcome">
+                    Welcome, {{ user.get_full_name|default:user.username }}<br>
+                    <span style="font-size:0.97em;color:#555;">({{ user.email }})</span>
+                </div>
+                <div class="authorized-landing">
+                    <h3 style="color:#1a237e;">Your Investment Dashboard</h3>
+                    <p>Access your personalized investment solutions, performance reports, and exclusive resources.</p>
+                    <!-- Add more authorized-user-only content here -->
+                </div>
+                <a href="{% url 'logout' %}"><button class="logout-btn">Log out</button></a>
+            {% else %}
+                <!-- New User Landing Page -->
+                <div class="welcome">
+                    Welcome, {{ user.get_full_name|default:user.username }}<br>
+                    <span style="font-size:0.97em;color:#555;">({{ user.email }})</span>
+                </div>
+                <div class="new-user-landing">
+                    <h3 style="color:#e53935;">Complete Your Registration</h3>
+                    <p>To access our investment services, please verify your email address.</p>
+                    <div class="verify-section">
+                        <form action="{% url 'send_verification_code' %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="verify-btn">Verify Email</button>
+                        </form>
+                    </div>
+                </div>
+                <a href="{% url 'logout' %}"><button class="logout-btn">Log out</button></a>
+            {% endif %}
+        {% else %}
+            <!-- Not logged in -->
+            <a class="google-btn" href="{% url 'social:begin' 'google-oauth2' %}?next={{ request.path }}">
+                <img class="google-icon" src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo">
+                Sign In with Google
+            </a>
+            <div>
+                <a href="{% url 'social:begin' 'google-oauth2' %}?next=/fundmanager/dashboard/" class="fundmanager-link">
+                    Sign In as Fund Manager
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

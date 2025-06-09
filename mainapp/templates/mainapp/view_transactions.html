@@ -1,0 +1,54 @@
+<!-- filepath: mainapp/templates/mainapp/view_transactions.html -->
+<div class="transaction-center">
+    <h2 class="transaction-title">Transactions</h2>
+    <form id="transaction-filter-form" style="margin-bottom: 18px;">
+        <label for="filter_email">Filter by Email:</label>
+        <input list="filter_emails" name="filter_email" id="filter_email" placeholder="Type or select email..." autocomplete="off" value="{{ selected_email|default:'' }}">
+        <datalist id="filter_emails">
+            {% for user in authorized_users %}
+                <option value="{{ user.email }}">{{ user.email }}</option>
+            {% endfor %}
+        </datalist>
+        <button type="submit">Filter</button>
+    </form>
+    <div class="transaction-list">
+        <table class="transactions-view-table">
+            <thead>
+                <tr>
+                    <th>Date/Time</th>
+                    <th>Email</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Units</th>
+                    <th>Unit Cost</th>
+                    <th>Remaining Credit</th>
+                    <th>Show Transaction Image</th> <!-- New column -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in transactions %}
+                <tr>
+                    <td>{{ tx.date_time|date:"Y-m-d H:i" }}</td>
+                    <td>{{ tx.authorized_user.email }}</td>
+                    <td>{{ tx.transaction_type|title }}</td>
+                    <td>{{ tx.purchase_initiated_amount }}</td>
+                    <td>{{ tx.purchase_unit }}</td>
+                    <td>{{ tx.unit_cost }}</td>
+                    <td>{{ tx.remaining_credit }}</td>
+                    <td>
+                        {% if tx.transaction_image %}
+                            <a href="{{ tx.transaction_image.url }}" target="_blank">Show Image</a>
+                        {% else %}
+                            No Image
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align:center;">No transactions found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,14 @@
+Dear {{ user_email }},
+
+Here is a summary of your transactions for {{ date }}:
+
+{% for tx in transactions %}
+  Type: {{ tx.transaction_type|title }}
+  Amount: {{ tx.purchase_initiated_amount }}
+  Units: {{ tx.purchase_unit }}
+  Unit Cost: {{ tx.unit_cost }}
+  Time: {{ tx.date_time|date:"H:i" }}
+{% endfor %}
+
+Thank you,
+BE Investment Firm

@@ -1,0 +1,48 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fund Manager Dashboard</title>
+    <link rel="stylesheet" href="{% static 'mainapp/style.css' %}">
+    <link rel="stylesheet" href="{% static 'mainapp/fundmanager_dashboard.css' %}">
+    <link rel="icon" type="image/png" href="{% static 'mainapp/assets/BE_logo.png' %}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="{% static 'mainapp/fundmanager_dashboard.js' %}" defer></script>
+
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar" id="sidebar">
+            <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+            <h3>Fund Manager</h3>
+            <a href="#" id="addTransactionLink">Add Transaction</a>
+            <a href="#" id="viewTransactionsLink">View Transactions</a>
+            <!-- Add more sidebar options here -->
+        </nav>
+        <header class="topbar">
+            <div class="user-profile">
+                <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}" alt="User DP" class="user-dp">
+                <div class="user-info">
+                    <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+                    <div class="user-email">{{ user.email }}</div>
+                </div>
+                <a href="{% url 'logout' %}" class="logout-link">Log out</a>
+            </div>
+        </header>
+        <main class="main-content">
+            <div id="dashboard-content">
+                <!-- Content will be loaded here -->
+            </div>
+        </main>
+    </div>
+    <script src="{% static 'mainapp/fundmanager_dashboard.js' %}"></script>
+    {% if messages %}
+      <script>
+        {% for message in messages %}
+          alert("{{ message|escapejs }}");
+        {% endfor %}
+      </script>
+    {% endif %}
+</body>
+</html>
