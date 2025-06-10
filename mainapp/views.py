@@ -14,10 +14,21 @@ from django.db import transaction
 from django.template.loader import render_to_string
 from django.http import JsonResponse
 from django.utils import timezone
+from django.shortcuts import redirect
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 
 def home(request):
+    if request.user.is_authenticated:
+        try:
+            authorized_user = AuthorizedUser.objects.get(email=request.user.email)
+            if authorized_user.role == 'fund_manager':
+                return redirect('fundmanager_dashboard')
+            else:
+                return redirect('user_dashboard')
+        except AuthorizedUser.DoesNotExist:
+            return redirect('verify_email')
     return render(request, "mainapp/home.html")
 
 @login_required
@@ -36,15 +47,17 @@ def send_verification_code(request):
 
 @login_required
 def verify_email(request):
-    if request.method == 'POST':
+    is_authorized = AuthorizedUser.objects.filter(email=request.user.email).exists()
+    error = None
+    if request.method == 'POST' and not is_authorized:
         code = request.POST.get('code')
         if code == request.session.get('verification_code'):
             email = request.session.get('verification_email')
             AuthorizedUser.objects.get_or_create(email=email, defaults={'role': 'user'})
             return render(request, 'mainapp/verification_success.html')
         else:
-            return render(request, 'mainapp/verify_email.html', {'error': 'Invalid code'})
-    return render(request, 'mainapp/verify_email.html')
+            error = 'Invalid code'
+    return render(request, 'mainapp/verify_email.html', {'error': error, 'is_authorized': is_authorized})
 
 register = template.Library()
 
@@ -55,7 +68,7 @@ def is_authorized(email):
 
 def logout_view(request):
     logout(request)
-    return redirect('/')
+    return redirect('home')
 
 @login_required
 def fundmanager_dashboard(request):
@@ -223,4 +236,31 @@ def portfolio(request):
             'nav_date': nav_date,
             'total_amount': total_amount,
         }
+    )
+
+@login_required
+def transaction_history(request):
+    # Get the authorized user object for the logged-in user
+    try:
+        authorized_user = AuthorizedUser.objects.get(email=request.user.email)
+    except AuthorizedUser.DoesNotExist:
+        authorized_user = None
+
+    transactions = []
+    if authorized_user:
+        transactions = UserTransaction.objects.filter(
+            authorized_user=authorized_user
+        ).order_by('-date_time')  # Assuming 'date_time' is your transaction date field
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        html = render_to_string(
+            'mainapp/user_transaction_history.html',
+            {'transactions': transactions},
+            request=request
+        )
+        return HttpResponse(html)
+    return render(
+        request,
+        'mainapp/user_transaction_history.html',
+        {'transactions': transactions}
     )

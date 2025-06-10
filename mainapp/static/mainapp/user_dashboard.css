@@ -7,6 +7,7 @@ body {
 .dashboard-container {
     display: flex;
     min-height: 100vh;
+    position: relative;
 }
 .sidebar {
     width: 30%;
@@ -18,6 +19,8 @@ body {
     flex-direction: column;
     align-items: center;
     padding-top: 2rem;
+    z-index: 1050;
+    transition: left 0.3s, width 0.2s;
 }
 .sidebar-logo .be-logo {
     width: 60px;
@@ -110,14 +113,22 @@ body {
 }
 /* Collapsible sidebar styles */
 .sidebar-toggle {
-    background: none;
-    border: none;
+    background: #bfa14a;
     color: #fff;
-    font-size: 1.7rem;
-    cursor: pointer;
+    border: none;
+    font-size: 2rem;
+    border-radius: 8px;
+    padding: 0.3rem 0.8rem;
     margin-bottom: 1.5rem;
     outline: none;
-    transition: color 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    z-index: 1100;
+    transition: background 0.2s, color 0.2s;
+}
+.sidebar-toggle:hover,
+.sidebar-toggle:focus {
+    background: #a88d36;
+    color: #fff;
 }
 .sidebar.collapsed {
     width: 60px;
@@ -162,4 +173,64 @@ body {
     font-size: 0.9rem;
     color: #888;
     font-weight: 400;
+}
+/* Mobile sidebar toggle styles */
+.sidebar-overlay {
+    display: none;
+}
+@media (max-width: 767px) {
+    .dashboard-container {
+        position: relative;
+    }
+    .sidebar {
+        position: fixed;
+        left: -100%;
+        top: 0;
+        height: 100vh;
+        width: 80%;
+        max-width: 260px;
+        min-width: 0;
+        background: #14213d;
+        transition: left 0.3s;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+        z-index: 1200; /* Make sure it's above the topbar */
+    }
+    .sidebar.open {
+        left: 0;
+    }
+    .sidebar-toggle {
+        position: static;
+        margin-bottom: 0;
+        margin-right: 1rem;
+        background: #bfa14a;
+        color: #fff;
+        border: none;
+        font-size: 2rem;
+        border-radius: 8px;
+        padding: 0.3rem 0.8rem;
+        outline: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        z-index: 1300;
+        transition: background 0.2s, color 0.2s;
+    }
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.3);
+        z-index: 1199;
+    }
+    .sidebar.open ~ .sidebar-overlay {
+        display: block;
+    }
+    .main-content {
+        margin-left: 0 !important;
+    }
+    .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+    }
 }

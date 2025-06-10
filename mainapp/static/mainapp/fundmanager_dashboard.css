@@ -42,17 +42,28 @@ body {
     opacity: 0;
     pointer-events: none;
 }
-.sidebar a {
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+}
+.sidebar-menu li {
+    width: 100%;
+}
+.sidebar-menu a {
+    display: block;
+    width: 100%;
     color: #fff;
     text-decoration: none;
-    display: block;
-    margin-bottom: 18px;
-    font-size: 1rem;
-    padding: 10px 0 10px 12px;
-    border-radius: 4px;
-    transition: background 0.2s, opacity 0.3s;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    transition: background 0.2s;
+    box-sizing: border-box;
 }
-.sidebar a:hover {
+.sidebar-menu a:hover,
+.sidebar-menu a.active {
     background: #bfa14a;
     color: #14213d;
 }
@@ -201,6 +212,36 @@ body {
     color: #14213d;
     font-size: 1rem;
     font-weight: 600;
+}
+
+/* Sidebar menu styles */
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+}
+
+.sidebar-menu li {
+    width: 100%;
+}
+
+.sidebar-menu a {
+    display: block;
+    width: 100%;
+    color: #fff;
+    text-decoration: none;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    transition: background 0.2s;
+    box-sizing: border-box;
+}
+
+.sidebar-menu a:hover,
+.sidebar-menu a.active {
+    background: #bfa14a;
+    color: #14213d;
 }
 
 /* Responsive styles */

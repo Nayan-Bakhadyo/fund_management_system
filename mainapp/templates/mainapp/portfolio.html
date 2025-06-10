@@ -5,22 +5,26 @@
     <title>Portfolio Performance</title>
 </head>
 <body>
-    <div class="dashboard-title"></div>
-    <div class="dashboard-message">
-
-    </div>
-    <div class="portfolio-cards">
-        <div class="portfolio-card">
-            <div class="card-title">Total Unit Balance</div>
-            <div class="card-value">{{ total_units|floatformat:0 }}</div>
+    <div class="dashboard-title">Portfolio Performance</div>
+    <div class="dashboard-message"></div>
+    <div class="row portfolio-cards justify-content-center">
+        <div class="col-12 col-sm-6 col-md-4 mb-3">
+            <div class="portfolio-card h-100">
+                <div class="card-title">Total Unit Balance</div>
+                <div class="card-value">{{ total_units|floatformat:2 }}</div>
+            </div>
         </div>
-        <div class="portfolio-card">
-            <div class="card-title">NAV <span class="nav-date">(as of {{ nav_date }})</span></div>
-            <div class="card-value">{{ nav|floatformat:0 }}</div>
+        <div class="col-12 col-sm-6 col-md-4 mb-3">
+            <div class="portfolio-card h-100">
+                <div class="card-title">NAV <span class="nav-date">(as of {{ nav_date }})</span></div>
+                <div class="card-value">{{ nav|floatformat:2 }}</div>
+            </div>
         </div>
-        <div class="portfolio-card">
-            <div class="card-title">Total Amount</div>
-            <div class="card-value">{{ total_amount|floatformat:0 }}</div>
+        <div class="col-12 col-sm-6 col-md-4 mb-3">
+            <div class="portfolio-card h-100">
+                <div class="card-title">Total Amount</div>
+                <div class="card-value">Rs. {{ total_amount|floatformat:2 }}</div>
+            </div>
         </div>
     </div>
 </body>
