@@ -16,5 +16,6 @@ urlpatterns = [
     path('user/dashboard/', views.user_dashboard, name='user_dashboard'),
     path('user/portfolio/', views.portfolio, name='portfolio'),
     path('user/transactions/', views.transaction_history, name='transaction_history'),
+    path('user/bank_detail/', views.bank_detail, name='bank_detail'),
     path('auth/', include('social_django.urls', namespace='social')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

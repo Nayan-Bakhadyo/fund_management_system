@@ -18,9 +18,9 @@
             <tr>
                 <td>{{ tx.date_time|date:"Y-m-d H:i" }}</td>
                 <td>{{ tx.get_transaction_type_display }}</td>
-                <td>{{ tx.purchase_unit|floatformat:2 }}</td>
+                <td>{{ tx.purchase_unit|floatformat:0 }}</td>
                 <td>Rs. {{ tx.purchase_initiated_amount|floatformat:2 }}</td>
-                <td>{{ tx.unit_cost|floatformat:2 }}</td>
+                <td>Rs. {{ tx.unit_cost|floatformat:2 }}</td>
                 <td>{{ tx.remaining_credit|floatformat:2 }}</td>
                 <td>
                     {% if tx.transaction_image %}

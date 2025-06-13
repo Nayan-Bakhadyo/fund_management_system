@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.mail import send_mail
 from django.conf import settings
 from django.db.models import Max
-from .models import AuthorizedUser, UserTransaction, UserNAV, NAVRecord
+from .models import AuthorizedUser, UserTransaction, UserNAV, NAVRecord, UserBankDetail
 import random
 from django import template
 from django.contrib.auth import logout
@@ -16,6 +16,8 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
+from django.core.serializers.json import DjangoJSONEncoder
+import json
 
 # Create your views here.
 
@@ -49,14 +51,34 @@ def send_verification_code(request):
 def verify_email(request):
     is_authorized = AuthorizedUser.objects.filter(email=request.user.email).exists()
     error = None
+
+    # Automatically send code if not authorized and not already sent in this session
+    if not is_authorized and not request.session.get('verification_code_sent'):
+        code = random.randint(100000, 999999)
+        request.session['verification_code'] = str(code)
+        request.session['verification_email'] = request.user.email
+        send_mail(
+            'Your Verification Code',
+            f'Your verification code is: {code}',
+            settings.DEFAULT_FROM_EMAIL,
+            [request.user.email],
+            fail_silently=False,
+        )
+        request.session['verification_code_sent'] = True  # Prevent resending on every refresh
+
     if request.method == 'POST' and not is_authorized:
         code = request.POST.get('code')
         if code == request.session.get('verification_code'):
             email = request.session.get('verification_email')
             AuthorizedUser.objects.get_or_create(email=email, defaults={'role': 'user'})
+            # Clean up session
+            request.session.pop('verification_code', None)
+            request.session.pop('verification_email', None)
+            request.session.pop('verification_code_sent', None)
             return render(request, 'mainapp/verification_success.html')
         else:
             error = 'Invalid code'
+
     return render(request, 'mainapp/verify_email.html', {'error': error, 'is_authorized': is_authorized})
 
 register = template.Library()
@@ -215,28 +237,19 @@ def portfolio(request):
     # Calculate total amount
     total_amount = total_units * nav
 
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        html = render_to_string(
-            'mainapp/portfolio.html',
-            {
-                'total_units': total_units,
-                'nav': nav,
-                'nav_date': nav_date,
-                'total_amount': total_amount,
-            },
-            request=request
-        )
-        return HttpResponse(html)
-    return render(
-        request,
-        'mainapp/portfolio.html',
-        {
-            'total_units': total_units,
-            'nav': nav,
-            'nav_date': nav_date,
-            'total_amount': total_amount,
-        }
-    )
+    nav_records = NAVRecord.objects.order_by('date_time')
+    nav_dates = [nav.date_time.strftime('%Y-%m-%d') for nav in nav_records]
+    nav_unit_costs = [float(nav.unit_cost) for nav in nav_records]
+
+    context = {
+        'total_units': total_units,
+        'nav': nav,
+        'nav_date': nav_date,
+        'total_amount': total_amount,
+        'nav_dates_json': json.dumps(nav_dates, cls=DjangoJSONEncoder),
+        'nav_unit_costs_json': json.dumps(nav_unit_costs, cls=DjangoJSONEncoder),
+    }
+    return render(request, 'mainapp/portfolio.html', context)
 
 @login_required
 def transaction_history(request):
@@ -264,3 +277,36 @@ def transaction_history(request):
         'mainapp/user_transaction_history.html',
         {'transactions': transactions}
     )
+
+@login_required
+def bank_detail(request):
+    user = request.user
+    authorized_user = AuthorizedUser.objects.get(email=user.email)
+    bank = None
+    try:
+        bank = authorized_user.bank_detail
+    except:
+        bank = None
+
+    if request.method == 'POST':
+        data = request.POST
+        bank_number = data.get('bank_number')
+        bank_name = data.get('bank_name')
+        account_holder_name = data.get('account_holder_name')
+        branch = data.get('branch')
+        cell_number = data.get('cell_number')
+
+        bank_obj, created = UserBankDetail.objects.update_or_create(
+            authorized_user=authorized_user,
+            defaults={
+                'bank_number': bank_number,
+                'bank_name': bank_name,
+                'account_holder_name': account_holder_name,
+                'branch': branch,
+                'cell_number': cell_number
+            }
+        )
+        return JsonResponse({'success': True, 'message': 'Bank details saved successfully.'})
+
+    html = render_to_string('mainapp/bank_detail_form.html', {'bank': bank}, request=request)
+    return JsonResponse({'html': html})

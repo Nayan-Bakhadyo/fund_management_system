@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Portfolio Performance</title>
+    
 </head>
 <body>
     <div class="dashboard-title">Portfolio Performance</div>
@@ -11,13 +12,13 @@
         <div class="col-12 col-sm-6 col-md-4 mb-3">
             <div class="portfolio-card h-100">
                 <div class="card-title">Total Unit Balance</div>
-                <div class="card-value">{{ total_units|floatformat:2 }}</div>
+                <div class="card-value">{{ total_units|floatformat:0 }}</div>
             </div>
         </div>
         <div class="col-12 col-sm-6 col-md-4 mb-3">
             <div class="portfolio-card h-100">
                 <div class="card-title">NAV <span class="nav-date">(as of {{ nav_date }})</span></div>
-                <div class="card-value">{{ nav|floatformat:2 }}</div>
+                <div class="card-value">Rs. {{ nav|floatformat:2 }}</div>
             </div>
         </div>
         <div class="col-12 col-sm-6 col-md-4 mb-3">
@@ -27,5 +28,72 @@
             </div>
         </div>
     </div>
+    <div class="row justify-content-center mt-4">
+        <div class="col-12 col-md-10">
+            <div class="card p-3">
+                <div class="card-title">NAV changes<span class="nav-date">
+                <div>
+                    <canvas id="navLineChart" height="100"
+                        data-dates='{{ nav_dates_json|safe }}'
+                        data-costs='{{ nav_unit_costs_json|safe }}'></canvas>
+                </div>
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                <script>
+    (function() {
+        try {
+            const canvas = document.getElementById('navLineChart');
+            if (!canvas) {
+                console.error("Canvas with id 'navLineChart' not found.");
+                return;
+            }
+            const navDates = JSON.parse(canvas.dataset.dates);
+            const navUnitCosts = JSON.parse(canvas.dataset.costs);
+
+            if (!navDates.length || !navUnitCosts.length) {
+                console.warn("No NAV data to display.");
+                return;
+            }
+
+            const ctx = canvas.getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: navDates,
+                    datasets: [{
+                        label: 'Unit Cost (NAV)',
+                        data: navUnitCosts,
+                        borderColor: '#bfa14a',
+                        backgroundColor: 'rgba(191,161,74,0.1)',
+                        tension: 0.3,
+                        fill: true,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#bfa14a'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Date' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Unit Cost' },
+                            beginAtZero: false
+                        }
+                    }
+                }
+            });
+        } catch (e) {
+            console.error("Chart rendering error:", e);
+        }
+    })();
+    </script>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

@@ -56,3 +56,20 @@ class NAVRecord(models.Model):
 
     def __str__(self):
         return f"NAV on {self.date_time.strftime('%Y-%m-%d %H:%M:%S')}: Unit Cost {self.unit_cost}"
+
+class UserBankDetail(models.Model):
+    authorized_user = models.OneToOneField(
+        AuthorizedUser,
+        to_field='email',
+        db_column='email',
+        on_delete=models.CASCADE,
+        related_name='bank_detail'
+    )
+    bank_number = models.BigIntegerField()
+    bank_name = models.CharField(max_length=100)
+    account_holder_name = models.CharField(max_length=100)
+    branch = models.CharField(max_length=100)
+    cell_number = models.CharField(max_length=20)
+
+    def __str__(self):
+        return f"Bank details for {self.authorized_user.email} ({self.bank_name})"

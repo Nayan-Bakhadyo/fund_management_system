@@ -10,6 +10,7 @@
     <link rel="icon" type="image/png" href="{% static 'mainapp/assets/BE_logo.png' %}">
     <link rel="stylesheet" href="{% static 'mainapp/user_dashboard.css' %}">
     <script src="{% static 'mainapp/user_dashboard.js' %}" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container-fluid p-0">
@@ -25,6 +26,11 @@
                     <li class="nav-item w-100">
                         <a href="#" id="transaction-history" class="nav-link text-white w-100">
                             🧾 Transaction History
+                        </a>
+                    </li>
+                    <li class="nav-item w-100">
+                        <a href="#" id="bank-detail-link" class="nav-link text-white w-100">
+                            🏦 Bank Detail
                         </a>
                     </li>
                 </ul>
@@ -61,5 +67,6 @@
     </div>
     <!-- Bootstrap 5 JS Bundle CDN (for responsive navbar, etc.) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
 </body>
 </html>
