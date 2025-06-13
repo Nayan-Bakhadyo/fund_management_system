@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const bankDetailLink = document.getElementById('bank-detail-link');
     const dashboardContent = document.getElementById('dashboard-content');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const viewUserDashboardLink = document.getElementById('view-user-dashboard');
 
     function openSidebar() {
         sidebar.classList.add('open');
@@ -163,5 +164,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Call renderNavChart on page load
     renderNavChart();
+
+    if (viewUserDashboardLink) {
+        viewUserDashboardLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            const email = prompt("Enter the user's email to view their portfolio:");
+            if (email) {
+                fetch(`/fundmanager/user_portfolio/?email=${encodeURIComponent(email)}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    dashboardContent.innerHTML = html;
+                    renderNavChart(); // <-- Call it right here!
+                });
+            }
+        });
+    }
 });
 

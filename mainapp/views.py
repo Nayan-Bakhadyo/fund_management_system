@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.mail import send_mail
 from django.conf import settings
-from django.db.models import Max
+from django.db.models import Max, Sum
 from .models import AuthorizedUser, UserTransaction, UserNAV, NAVRecord, UserBankDetail
 import random
 from django import template
@@ -117,12 +117,12 @@ def add_transaction(request):
         email = request.POST.get('authorized_email')
         amount = float(request.POST.get('amount'))
         action_type = request.POST.get('action_type')
-        transaction_image = request.FILES.get('transaction_image')  # <-- Get the uploaded image
+        transaction_image = request.FILES.get('transaction_image')
+        description = request.POST.get('description', '')  # <-- Get description from form
 
         user = AuthorizedUser.objects.get(email=email)
         nav, _ = UserNAV.objects.get_or_create(authorized_user=user)
 
-        # Get latest NAVRecord unit_cost
         latest_nav_record = NAVRecord.objects.order_by('-date_time').first()
         unit_cost = float(latest_nav_record.unit_cost) if latest_nav_record else 10.0
 
@@ -143,7 +143,8 @@ def add_transaction(request):
                         purchase_initiated_amount=amount,
                         purchase_unit=purchase_nav,
                         remaining_credit=remaining_credit,
-                        transaction_image=transaction_image  # <-- Save the image
+                        transaction_image=transaction_image,
+                        description=description  # <-- Save description
                     )
                 return JsonResponse({
                     "success": True,
@@ -181,7 +182,8 @@ def add_transaction(request):
                             purchase_initiated_amount=amount,
                             purchase_unit=-units_to_withdraw,
                             remaining_credit=remaining_credit,
-                            transaction_image=transaction_image  # <-- Save the image
+                            transaction_image=transaction_image,
+                            description=description  # <-- Save description
                         )
                     return JsonResponse({
                         "success": True,
@@ -237,6 +239,22 @@ def portfolio(request):
     # Calculate total amount
     total_amount = total_units * nav
 
+    # Calculate total invested amount (deposits - withdrawals)
+    total_deposit = UserTransaction.objects.filter(
+        authorized_user__email=request.user.email,
+        transaction_type='deposit'
+    ).aggregate(total=Sum('purchase_initiated_amount'))['total'] or 0
+
+    total_withdrawal = UserTransaction.objects.filter(
+        authorized_user__email=request.user.email,
+        transaction_type='withdrawal'
+    ).aggregate(total=Sum('purchase_initiated_amount'))['total'] or 0
+
+    total_invested = total_deposit - total_withdrawal
+    # Calculate unrealized profit/loss
+    available_credit = user_nav.available_credit_amount if user_nav else 0
+    unrealized_pl = total_amount - total_invested
+
     nav_records = NAVRecord.objects.order_by('date_time')
     nav_dates = [nav.date_time.strftime('%Y-%m-%d') for nav in nav_records]
     nav_unit_costs = [float(nav.unit_cost) for nav in nav_records]
@@ -248,6 +266,8 @@ def portfolio(request):
         'total_amount': total_amount,
         'nav_dates_json': json.dumps(nav_dates, cls=DjangoJSONEncoder),
         'nav_unit_costs_json': json.dumps(nav_unit_costs, cls=DjangoJSONEncoder),
+        'unrealized_pl': unrealized_pl,
+        'total_invested': total_invested,
     }
     return render(request, 'mainapp/portfolio.html', context)
 
@@ -310,3 +330,49 @@ def bank_detail(request):
 
     html = render_to_string('mainapp/bank_detail_form.html', {'bank': bank}, request=request)
     return JsonResponse({'html': html})
+
+@login_required
+def fundmanager_user_portfolio(request):
+    try:
+        fund_manager = AuthorizedUser.objects.get(email=request.user.email)
+    except AuthorizedUser.DoesNotExist:
+        return HttpResponse("Unauthorized", status=403)
+    if fund_manager.role != 'fund_manager':
+        return HttpResponse("Unauthorized", status=403)
+
+    email = request.GET.get('email')
+    if not email:
+        return HttpResponse("No email provided.", status=400)
+
+    # Now fetch the user's data by email
+    user_nav = UserNAV.objects.filter(authorized_user__email=email).first()
+    total_units = user_nav.available_unit if user_nav else 0
+    latest_nav_record = NAVRecord.objects.order_by('-date_time').first()
+    nav = latest_nav_record.unit_cost if latest_nav_record else 0
+    nav_date = latest_nav_record.date_time.strftime('%Y-%m-%d') if latest_nav_record else 'N/A'
+    total_amount = total_units * nav
+    total_deposit = UserTransaction.objects.filter(
+        authorized_user__email=email,
+        transaction_type='deposit'
+    ).aggregate(total=Sum('purchase_initiated_amount'))['total'] or 0
+    total_withdrawal = UserTransaction.objects.filter(
+        authorized_user__email=email,
+        transaction_type='withdrawal'
+    ).aggregate(total=Sum('purchase_initiated_amount'))['total'] or 0
+    total_invested = total_deposit - total_withdrawal
+    available_credit = user_nav.available_credit_amount if user_nav else 0
+    unrealized_pl = total_amount - total_invested
+    nav_records = NAVRecord.objects.order_by('date_time')
+    nav_dates = [nav.date_time.strftime('%Y-%m-%d') for nav in nav_records]
+    nav_unit_costs = [float(nav.unit_cost) for nav in nav_records]
+    context = {
+        'total_units': total_units,
+        'nav': nav,
+        'nav_date': nav_date,
+        'total_amount': total_amount,
+        'nav_dates_json': json.dumps(nav_dates, cls=DjangoJSONEncoder),
+        'nav_unit_costs_json': json.dumps(nav_unit_costs, cls=DjangoJSONEncoder),
+        'unrealized_pl': unrealized_pl,
+        'total_invested': total_invested,
+    }
+    return render(request, 'mainapp/portfolio.html', context)

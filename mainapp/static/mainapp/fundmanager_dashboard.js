@@ -106,6 +106,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const cookies = document.cookie.split(';');
             for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
                 if (cookie.substring(0, name.length + 1) === (name + '=')) {
                     cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                     break;
@@ -116,3 +117,83 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     const csrftoken = getCookie('csrftoken');
 });
+
+// View user dashboard link functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const viewUserDashboardLink = document.getElementById('viewUserDashboardLink');
+    const dashboardContent = document.getElementById('dashboard-content');
+
+    if (viewUserDashboardLink) {
+        viewUserDashboardLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            const email = prompt("Enter the user's email to view their portfolio:");
+            if (email) {
+                fetch(`/fundmanager/user_portfolio/?email=${encodeURIComponent(email)}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    dashboardContent.innerHTML = html;
+                    renderNavChart();
+                });
+            }
+        });
+    }
+});
+
+// Add this function to render the NAV line chart (same as user dashboard)
+function renderNavChart() {
+    const canvas = document.getElementById('navLineChart');
+    if (!canvas) return;
+    const navDates = JSON.parse(canvas.dataset.dates);
+    const navUnitCosts = JSON.parse(canvas.dataset.costs);
+
+    if (!navDates.length || !navUnitCosts.length) return;
+
+    // Destroy previous chart instance if needed
+    if (window.navChartInstance) {
+        window.navChartInstance.destroy();
+    }
+
+    const ctx = canvas.getContext('2d');
+    window.navChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: navDates,
+            datasets: [{
+                label: 'Unit Cost (NAV)',
+                data: navUnitCosts,
+                borderColor: '#bfa14a',
+                backgroundColor: 'rgba(191,161,74,0.1)',
+                tension: 0.3,
+                fill: true,
+                pointRadius: 3,
+                pointBackgroundColor: '#bfa14a'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Date' }
+                },
+                y: {
+                    title: { display: true, text: 'Unit Cost' },
+                    beginAtZero: false
+                }
+            }
+        }
+    });
+}
+
+// Example: Call renderNavChart after loading portfolio.html via AJAX
+// (Place this after you inject the portfolio HTML into dashboardContent)
+// if (typeof dashboardContent !== 'undefined') {
+//     // If you load portfolio.html via AJAX, call renderNavChart() after injection
+//     // Example:
+//     // dashboardContent.innerHTML = html;
+//     // renderNavChart();
+// }

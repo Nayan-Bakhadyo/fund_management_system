@@ -151,35 +151,44 @@ body {
 }
 .transaction-form {
     background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(60,64,67,.08);
-    padding: 28px 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(60,64,67,.10);
+    padding: 40px 36px;
     width: 100%;
-    height: 60%;
-    max-width: none;
+    max-width: 540px;         /* Make form wider */
     margin: 0 auto;
     border: 1.5px solid #bfa14a;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-width: 320px;   /* Prevent too small on mobile */
-    margin-left: 0;     /* Align to the left */
-    margin-right: auto; /* Align to the left */
+    min-width: 320px;
+}
+.transaction-form .form-group {
+    margin-bottom: 18px;
+    width: 100%;
 }
 .transaction-form label {
     display: block;
     margin-bottom: 6px;
     font-weight: 500;
 }
-.transaction-form input, .transaction-form select {
+.transaction-form input,
+.transaction-form select,
+.transaction-form textarea {
     width: 100%;
     padding: 8px 10px;
-    margin-bottom: 18px;
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 1rem;
+    margin-bottom: 0;
+    box-sizing: border-box;
 }
-.transaction-form button {
+.transaction-form textarea#description {
+    min-height: 80px;
+    max-height: 200px;
+    resize: vertical;
+}
+.transaction-form button[type="submit"] {
     background: #bfa14a;
     color: #14213d;
     border: none;
@@ -188,8 +197,9 @@ body {
     font-size: 1rem;
     cursor: pointer;
     font-weight: 600;
+    margin-top: 8px;
 }
-.transaction-form button:hover {
+.transaction-form button[type="submit"]:hover {
     background: #14213d;
     color: #fff;
 }
@@ -198,20 +208,22 @@ body {
 .transaction-center {
     display: flex;
     flex-direction: column;
-    align-items: flex-start; /* Align to the left */
-    justify-content: top;
-    height: 80vh;
+    align-items: center;      /* Center horizontally */
+    justify-content: flex-start;
+    min-height: 80vh;
     width: 100%;
     margin-left: 0;
     padding-left: 0;
+    padding-top: 40px;        /* Add space from top bar */
 }
 
 .transaction-title {
     text-align: center;
-    margin-bottom: 5px;
+    margin-bottom: 24px;
     color: #14213d;
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 1px;
 }
 
 /* Sidebar menu styles */
@@ -244,7 +256,49 @@ body {
     color: #14213d;
 }
 
-/* Responsive styles */
+/* Chart container card styling */
+.card.p-3 {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    margin-bottom: 24px;
+}
+
+/* Chart title */
+.card-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+}
+
+/* Chart canvas responsiveness */
+#navLineChart {
+    width: 100% !important;
+    max-width: 100%;
+    min-height: 200px;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Portfolio card styling */
+.portfolio-card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 18px 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    text-align: center;
+}
+
+.card-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 8px;
+}
+
+.card-title {
+    color: #bfa14a;
+}
+
 @media (max-width: 900px) {
     .sidebar {
         width: 60px;
@@ -270,27 +324,12 @@ body {
     }
 }
 @media (max-width: 700px) {
-    .dashboard-container {
-        flex-direction: column;
+    .transaction-form {
+        padding: 18px 6px;
+        max-width: 98vw;
     }
-    .sidebar {
-        position: fixed;
-        left: 0;
-        top: 0;
-        height: 100vh;
-        z-index: 200;
-    }
-    .topbar {
-        left: 0;
-        width: 100%;
-        position: fixed;
-        top: 0;
-        z-index: 101;
-    }
-    .main-content {
-        margin-left: 0;
-        margin-top: 70px;
-        padding: 18px 4px;
+    .transaction-center {
+        padding-top: 70px; /* More space for mobile top bar */
     }
 }
 @media (max-width: 500px) {

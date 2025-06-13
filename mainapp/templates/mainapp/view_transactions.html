@@ -22,7 +22,8 @@
                     <th>Units</th>
                     <th>Unit Cost</th>
                     <th>Remaining Credit</th>
-                    <th>Show Transaction Image</th> <!-- New column -->
+                    <th>Description</th> <!-- Added column -->
+                    <th>Show Transaction Image</th>
                 </tr>
             </thead>
             <tbody>
@@ -35,6 +36,7 @@
                     <td>{{ tx.purchase_unit }}</td>
                     <td>{{ tx.unit_cost }}</td>
                     <td>{{ tx.remaining_credit }}</td>
+                    <td>{{ tx.description|default:"-" }}</td> <!-- Show description -->
                     <td>
                         {% if tx.transaction_image %}
                             <a href="{{ tx.transaction_image.url }}" target="_blank">Show Image</a>
@@ -45,7 +47,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="8" style="text-align:center;">No transactions found.</td>
+                    <td colspan="9" style="text-align:center;">No transactions found.</td>
                 </tr>
                 {% endfor %}
             </tbody>

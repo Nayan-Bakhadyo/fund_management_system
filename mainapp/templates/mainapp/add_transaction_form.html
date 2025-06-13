@@ -1,25 +1,45 @@
 <!-- filepath: mainapp/templates/mainapp/add_transaction_form.html -->
 <div class="transaction-center">
-    <h6 class="transaction-title">Add Transaction</h6>
-    <form class="transaction-form" method="post" action="{% url 'add_transaction' %}" enctype="multipart/form-data">
+    <form class="transaction-form" method="post" action="{% url 'add_transaction' %}" enctype="multipart/form-data" autocomplete="off">
         {% csrf_token %}
-        <label for="authorized_email">Authorized Email</label>
-        <input list="authorized_emails" name="authorized_email" id="authorized_email" required autocomplete="off">
-        <datalist id="authorized_emails">
-            {% for user in authorized_users %}
-                <option value="{{ user.email }}">{{ user.email }}</option>
-            {% endfor %}
-        </datalist>
-        <label for="amount">Amount</label>
-        <input type="number" step="0.01" name="amount" id="amount" required>
-        <label for="action_type">Action</label>
-        <select name="action_type" id="action_type" required>
-            <option value="" disabled selected>Select Action</option>
-            <option value="deposit">Deposit</option>
-            <option value="withdrawal">Withdrawal</option>
-        </select>
-        <label for="transaction_image">Transaction Image</label>
-        <input type="file" name="transaction_image" id="transaction_image" accept="image/*" required>
-        <button type="submit" required>Submit</button>
+        <h2 class="transaction-title">Add Transaction</h2>
+        
+        <div class="form-group">
+            <label for="authorized_email">Authorized Email</label>
+            <input list="authorized_emails" name="authorized_email" id="authorized_email" required placeholder="Select or enter email">
+            <datalist id="authorized_emails">
+                {% for user in authorized_users %}
+                    <option value="{{ user.email }}">{{ user.email }}</option>
+                {% endfor %}
+            </datalist>
+        </div>
+
+        <div class="form-group">
+            <label for="amount">Amount</label>
+            <input type="number" step="0.01" name="amount" id="amount" required placeholder="Enter amount">
+        </div>
+
+        <div class="form-group">
+            <label for="action_type">Action</label>
+            <select name="action_type" id="action_type" required>
+                <option value="" disabled selected>Select Action</option>
+                <option value="deposit">Deposit</option>
+                <option value="withdrawal">Withdrawal</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="transaction_image">Transaction Image</label>
+            <input type="file" name="transaction_image" id="transaction_image" accept="image/*" required>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea name="description" id="description" maxlength="255" placeholder="Enter description (optional)" rows="4"></textarea>
+        </div>
+
+        <div class="form-group" style="text-align: right;">
+            <button type="submit">Submit</button>
+        </div>
     </form>
 </div>

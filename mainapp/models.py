@@ -9,6 +9,7 @@ class AuthorizedUser(models.Model):
     ]
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='user')
+    is_contracted = models.BooleanField(default=False)  # <-- Added field
 
     def __str__(self):
         return f"{self.email} ({self.get_role_display()})"
@@ -31,7 +32,8 @@ class UserTransaction(models.Model):
     purchase_initiated_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     purchase_unit = models.DecimalField(max_digits=12, decimal_places=2)
     remaining_credit = models.DecimalField(max_digits=12, decimal_places=2)
-    transaction_image = models.ImageField(upload_to='transaction_images/', null=True, blank=True)  # <-- Added field
+    transaction_image = models.ImageField(upload_to='transaction_images/', null=True, blank=True)
+    description = models.CharField(max_length=255, blank=True, null=True)  
 
     def __str__(self):
         return f"Transaction for {self.authorized_user.email} on {self.date_time.strftime('%Y-%m-%d %H:%M:%S')}"
@@ -56,7 +58,7 @@ class NAVRecord(models.Model):
 
     def __str__(self):
         return f"NAV on {self.date_time.strftime('%Y-%m-%d %H:%M:%S')}: Unit Cost {self.unit_cost}"
-
+    
 class UserBankDetail(models.Model):
     authorized_user = models.OneToOneField(
         AuthorizedUser,
@@ -73,3 +75,18 @@ class UserBankDetail(models.Model):
 
     def __str__(self):
         return f"Bank details for {self.authorized_user.email} ({self.bank_name})"
+
+class UserContract(models.Model):
+    authorized_user = models.OneToOneField(
+        AuthorizedUser,
+        to_field='email',
+        db_column='email',
+        on_delete=models.CASCADE,
+        primary_key=True,
+        related_name='contract'
+    )
+    contract_pdf_img = models.FileField(upload_to='contracts/', null=True, blank=True)
+    description = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return f"Contract for {self.authorized_user.email}"
