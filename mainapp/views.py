@@ -1,10 +1,10 @@
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
 from django.db.models import Max, Sum
-from .models import AuthorizedUser, UserTransaction, UserNAV, NAVRecord, UserBankDetail
+from .models import AuthorizedUser, UserTransaction, UserNAV, NAVRecord, UserBankDetail, InvestmentCategory, FirmInvestment, TotalCapitalRecord
 import random
 from django import template
 from django.contrib.auth import logout
@@ -18,6 +18,30 @@ from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
 from django.core.serializers.json import DjangoJSONEncoder
 import json
+from django.shortcuts import render, redirect
+from decimal import Decimal
+
+from .models import TotalCapitalRecord, NAVRecord
+
+def update_nav_record():
+    latest_capital = TotalCapitalRecord.objects.order_by('-date_time').first()
+    if not latest_capital or latest_capital.total_circulating_unit == 0:
+        return None  # Avoid division by zero or missing data
+
+    nav = (latest_capital.invested_capital + latest_capital.available_capital) / latest_capital.total_circulating_unit
+    nav_record = NAVRecord.objects.create(unit_cost=nav)
+    return nav_record
+
+def mask_email(email):
+    try:
+        local, domain = email.split('@')
+        if len(local) <= 2:
+            masked_local = local[0] + '*' * (len(local)-1)
+        else:
+            masked_local = local[0] + '*' * (len(local)-2) + local[-1]
+        return masked_local + '@' + domain
+    except Exception:
+        return email
 
 # Create your views here.
 
@@ -35,17 +59,51 @@ def home(request):
 
 @login_required
 def send_verification_code(request):
+    import random
     code = random.randint(100000, 999999)
     request.session['verification_code'] = str(code)
     request.session['verification_email'] = request.user.email
-    send_mail(
-        'Your Verification Code',
-        f'Your verification code is: {code}',
-        settings.DEFAULT_FROM_EMAIL,
-        [request.user.email],
-        fail_silently=False,
-    )
-    return redirect('verify_email')
+
+    subject = 'Your BE Investment Firm Verification Code'
+    from_email = settings.DEFAULT_FROM_EMAIL
+    to_email = [request.user.email]
+
+    # HTML content
+    html_content = f"""
+    <div style="max-width:480px;margin:0 auto;padding:24px 18px;background:#fffbe6;border-radius:12px;
+        border:1.5px solid #bfa14a;font-family:sans-serif;">
+        <div style="text-align:center;margin-bottom:18px;">
+            <img src="https://drive.google.com/file/d/1gCOmiNtJKrWQq5kmHOeQpKxaZPFdjIGc/view?usp=sharing" alt="BE Logo" style="width:56px;height:56px;border-radius:10px;">
+        </div>
+        <h2 style="color:#bfa14a;text-align:center;margin-bottom:10px;">Email Verification</h2>
+        <p style="color:#14213d;text-align:center;font-size:1.1rem;margin-bottom:18px;">
+            Welcome to <b>BE Investment Firm</b>!<br>
+            Please use the code below to verify your email address.
+        </p>
+        <div style="background:#fff8e1;border-radius:8px;padding:18px 0;margin:18px 0;text-align:center;">
+            <span style="font-size:2rem;letter-spacing:6px;color:#14213d;font-weight:700;">{code}</span>
+        </div>
+        <ul style="color:#6c757d;font-size:0.98rem;margin-bottom:18px;">
+            <li>This code is valid for 10 minutes.</li>
+            <li>Do not share your code with anyone.</li>
+            <li>If you did not request this, please ignore this email.</li>
+        </ul>
+        <div style="text-align:center;color:#888;font-size:0.95rem;">
+            Need help? Contact <a href="mailto:beinvestmentfirm@gmail.com" style="color:#bfa14a;">beinvestmentfirm@gmail.com</a>
+        </div>
+    </div>
+    """
+
+    # Plain text fallback
+    text_content = f"""Your BE Investment Firm verification code is: {code}
+This code is valid for 10 minutes. Do not share your code with anyone.
+If you did not request this, please ignore this email.
+Contact beinvestmentfirm@gmail.com for help."""
+
+    email = EmailMultiAlternatives(subject, text_content, from_email, to_email)
+    email.attach_alternative(html_content, "text/html")
+    email.send(fail_silently=False)
+
 
 @login_required
 def verify_email(request):
@@ -57,14 +115,46 @@ def verify_email(request):
         code = random.randint(100000, 999999)
         request.session['verification_code'] = str(code)
         request.session['verification_email'] = request.user.email
-        send_mail(
-            'Your Verification Code',
-            f'Your verification code is: {code}',
-            settings.DEFAULT_FROM_EMAIL,
-            [request.user.email],
-            fail_silently=False,
-        )
-        request.session['verification_code_sent'] = True  # Prevent resending on every refresh
+
+        subject = 'Your BE Investment Firm Verification Code'
+        from_email = settings.DEFAULT_FROM_EMAIL
+        to_email = [request.user.email]
+
+        html_content = f"""
+        <div style="max-width:480px;margin:0 auto;padding:24px 18px;background:#fffbe6;border-radius:12px;
+            border:1.5px solid #bfa14a;font-family:sans-serif;">
+            <div style="text-align:center;margin-bottom:18px;">
+                <img src="https://yourdomain.com/static/mainapp/assets/be_logo.png" alt="BE Logo" style="width:56px;height:56px;border-radius:10px;">
+            </div>
+            <h2 style="color:#bfa14a;text-align:center;margin-bottom:10px;">Email Verification</h2>
+            <p style="color:#14213d;text-align:center;font-size:1.1rem;margin-bottom:18px;">
+                Welcome to <b>BE Investment Firm</b>!<br>
+                Please use the code below to verify your email address.
+            </p>
+            <div style="background:#fff8e1;border-radius:8px;padding:18px 0;margin:18px 0;text-align:center;">
+                <span style="font-size:2rem;letter-spacing:6px;color:#14213d;font-weight:700;">{code}</span>
+            </div>
+            <ul style="color:#6c757d;font-size:0.98rem;margin-bottom:18px;">
+                <li>This code is valid for 10 minutes.</li>
+                <li>Do not share your code with anyone.</li>
+                <li>If you did not request this, please ignore this email.</li>
+            </ul>
+            <div style="text-align:center;color:#888;font-size:0.95rem;">
+                Need help? Contact <a href="mailto:beinvestmentfirm@gmail.com" style="color:#bfa14a;">beinvestmentfirm@gmail.com</a>
+            </div>
+        </div>
+        """
+
+        text_content = f"""Your BE Investment Firm verification code is: {code}
+    This code is valid for 10 minutes. Do not share your code with anyone.
+    If you did not request this, please ignore this email.
+    Contact beinvestmentfirm@gmail.com for help."""
+
+        email = EmailMultiAlternatives(subject, text_content, from_email, to_email)
+        email.attach_alternative(html_content, "text/html")
+        email.send(fail_silently=False)
+
+        request.session['verification_code_sent'] = True
 
     if request.method == 'POST' and not is_authorized:
         code = request.POST.get('code')
@@ -78,8 +168,13 @@ def verify_email(request):
             return render(request, 'mainapp/verification_success.html')
         else:
             error = 'Invalid code'
-
-    return render(request, 'mainapp/verify_email.html', {'error': error, 'is_authorized': is_authorized})
+    masked_email = mask_email(request.user.email)
+    context = {
+        'error': error,
+        'is_authorized': is_authorized,
+        'masked_email': masked_email,
+    }
+    return render(request, 'mainapp/verify_email.html', context)
 
 register = template.Library()
 
@@ -115,7 +210,7 @@ def add_transaction(request):
 
     if request.method == 'POST':
         email = request.POST.get('authorized_email')
-        amount = float(request.POST.get('amount'))
+        amount = Decimal(request.POST.get('amount'))
         action_type = request.POST.get('action_type')
         transaction_image = request.FILES.get('transaction_image')
         description = request.POST.get('description', '')  # <-- Get description from form
@@ -124,10 +219,10 @@ def add_transaction(request):
         nav, _ = UserNAV.objects.get_or_create(authorized_user=user)
 
         latest_nav_record = NAVRecord.objects.order_by('-date_time').first()
-        unit_cost = float(latest_nav_record.unit_cost) if latest_nav_record else 10.0
+        unit_cost = Decimal(str(latest_nav_record.unit_cost)) if latest_nav_record else Decimal('10.0')
 
         if action_type == 'deposit':
-            a = float(nav.available_credit_amount)
+            a = nav.available_credit_amount  # Should be Decimal
             purchase_nav = int((amount + a) // unit_cost)
             remaining_credit = (amount + a) - (purchase_nav * unit_cost)
 
@@ -146,6 +241,36 @@ def add_transaction(request):
                         transaction_image=transaction_image,
                         description=description  # <-- Save description
                     )
+
+                    # 1. Retrieve the latest TotalCapitalRecord (or create one if none exists)
+                    latest_capital = TotalCapitalRecord.objects.order_by('-date_time').first()
+                    if not latest_capital:
+                        # If no record exists, initialize with zeros
+                        latest_capital = TotalCapitalRecord.objects.create(
+                            total_capital=0,
+                            invested_capital=0,
+                            available_capital=0,
+                            total_circulating_unit=0
+                        )
+
+                    # 2. Update available_capital based on transaction type
+                    if action_type == 'deposit':
+                        new_available_capital = latest_capital.available_capital + amount
+                        new_total_circulating_unit = latest_capital.total_circulating_unit + purchase_nav
+                    elif action_type == 'withdrawal':
+                        new_available_capital = latest_capital.available_capital - amount
+                        new_total_circulating_unit = latest_capital.total_circulating_unit + purchase_nav  # purchase_nav is negative for withdrawal
+
+
+                    # 4. Create a new TotalCapitalRecord with updated values
+                    TotalCapitalRecord.objects.create(
+                        total_capital=latest_capital.total_capital,  # or update as needed
+                        invested_capital=latest_capital.invested_capital,  # or update as needed
+                        available_capital=new_available_capital,
+                        total_circulating_unit=new_total_circulating_unit
+                    )
+
+                update_nav_record()  # <-- Call after atomic block
                 return JsonResponse({
                     "success": True,
                     "transaction_type": "Deposit",
@@ -158,8 +283,11 @@ def add_transaction(request):
                 return JsonResponse({"success": False, "error": str(e)})
 
         elif action_type == 'withdrawal':
-            available_unit = float(nav.available_unit)
-            available_credit = float(nav.available_credit_amount)
+            available_unit = Decimal(str(nav.available_unit))
+            available_credit = Decimal(str(nav.available_credit_amount))
+            unit_cost = Decimal(str(unit_cost))
+            amount = Decimal(request.POST.get('amount'))
+
             max_withdrawable = (available_unit * unit_cost) + available_credit
 
             if amount > max_withdrawable:
@@ -167,7 +295,8 @@ def add_transaction(request):
             else:
                 credit_used = min(amount, available_credit)
                 amount_left = amount - credit_used
-                units_to_withdraw = int(amount_left // unit_cost) + 1 if amount_left > 0 else 0
+                units_to_withdraw = int(amount_left // unit_cost) + (1 if amount_left % unit_cost != 0 else 0) if amount_left > 0 else 0
+                purchase_nav = -units_to_withdraw  # <-- 
                 remaining_credit = available_credit - credit_used + (units_to_withdraw * unit_cost - amount_left if amount_left > 0 else 0)
 
                 try:
@@ -180,11 +309,42 @@ def add_transaction(request):
                             transaction_type=action_type,
                             unit_cost=unit_cost,
                             purchase_initiated_amount=amount,
-                            purchase_unit=-units_to_withdraw,
+                            purchase_unit=purchase_nav,
                             remaining_credit=remaining_credit,
                             transaction_image=transaction_image,
                             description=description  # <-- Save description
                         )
+
+                        # 1. Retrieve the latest TotalCapitalRecord (or create one if none exists)
+                        latest_capital = TotalCapitalRecord.objects.order_by('-date_time').first()
+                        if not latest_capital:
+                            # If no record exists, initialize with zeros
+                            latest_capital = TotalCapitalRecord.objects.create(
+                                total_capital=0,
+                                invested_capital=0,
+                                available_capital=0,
+                                total_circulating_unit=0
+                            )
+
+                        # 2. Update available_capital based on transaction type
+                        if action_type == 'deposit':
+                            new_available_capital = latest_capital.available_capital + amount
+                            new_total_circulating_unit = latest_capital.total_circulating_unit + purchase_nav
+                        elif action_type == 'withdrawal':
+                            new_available_capital = latest_capital.available_capital - amount
+                            new_total_circulating_unit = latest_capital.total_circulating_unit + purchase_nav  # purchase_nav is negative for withdrawal
+
+                        # 3. Optionally, update total_capital and invested_capital as needed
+                        # For example, you might want to keep total_capital unchanged, or update it as per your business logic
+
+                        # 4. Create a new TotalCapitalRecord with updated values
+                        TotalCapitalRecord.objects.create(
+                            total_capital=latest_capital.total_capital,  # or update as needed
+                            invested_capital=latest_capital.invested_capital,  # or update as needed
+                            available_capital=new_available_capital,
+                            total_circulating_unit=new_total_circulating_unit
+                        )
+                    update_nav_record()  # <-- Call after atomic block
                     return JsonResponse({
                         "success": True,
                         "transaction_type": "Withdrawal",
@@ -237,8 +397,8 @@ def portfolio(request):
     nav_date = latest_nav_record.date_time.strftime('%Y-%m-%d') if latest_nav_record else 'N/A'
 
     # Calculate total amount
-    total_amount = total_units * nav
-
+    total_amount = (total_units * nav) + (user_nav.available_credit_amount if user_nav else 0)
+    total_amount_format = indian_number_format(total_amount)
     # Calculate total invested amount (deposits - withdrawals)
     total_deposit = UserTransaction.objects.filter(
         authorized_user__email=request.user.email,
@@ -264,6 +424,7 @@ def portfolio(request):
         'nav': nav,
         'nav_date': nav_date,
         'total_amount': total_amount,
+        'total_amount_format': total_amount_format,
         'nav_dates_json': json.dumps(nav_dates, cls=DjangoJSONEncoder),
         'nav_unit_costs_json': json.dumps(nav_unit_costs, cls=DjangoJSONEncoder),
         'unrealized_pl': unrealized_pl,
@@ -333,46 +494,130 @@ def bank_detail(request):
 
 @login_required
 def fundmanager_user_portfolio(request):
-    try:
-        fund_manager = AuthorizedUser.objects.get(email=request.user.email)
-    except AuthorizedUser.DoesNotExist:
-        return HttpResponse("Unauthorized", status=403)
-    if fund_manager.role != 'fund_manager':
-        return HttpResponse("Unauthorized", status=403)
-
     email = request.GET.get('email')
-    if not email:
-        return HttpResponse("No email provided.", status=400)
+    user_obj = get_object_or_404(AuthorizedUser, email=email)
 
-    # Now fetch the user's data by email
-    user_nav = UserNAV.objects.filter(authorized_user__email=email).first()
+    # Fetch total unit balance for the user
+    user_nav = UserNAV.objects.filter(authorized_user=user_obj).first()
     total_units = user_nav.available_unit if user_nav else 0
+
+    # Fetch latest NAV record
     latest_nav_record = NAVRecord.objects.order_by('-date_time').first()
     nav = latest_nav_record.unit_cost if latest_nav_record else 0
     nav_date = latest_nav_record.date_time.strftime('%Y-%m-%d') if latest_nav_record else 'N/A'
-    total_amount = total_units * nav
+
+    # Calculate total amount
+    available_credit = user_nav.available_credit_amount if user_nav else 0
+    total_amount = (total_units * nav) + available_credit
+    total_amount_display = indian_number_format(total_amount)
+
+    # Calculate total invested amount (deposits - withdrawals)
     total_deposit = UserTransaction.objects.filter(
-        authorized_user__email=email,
+        authorized_user=user_obj,
         transaction_type='deposit'
     ).aggregate(total=Sum('purchase_initiated_amount'))['total'] or 0
+
     total_withdrawal = UserTransaction.objects.filter(
-        authorized_user__email=email,
+        authorized_user=user_obj,
         transaction_type='withdrawal'
     ).aggregate(total=Sum('purchase_initiated_amount'))['total'] or 0
+
     total_invested = total_deposit - total_withdrawal
-    available_credit = user_nav.available_credit_amount if user_nav else 0
+    # Calculate unrealized profit/loss
     unrealized_pl = total_amount - total_invested
+
     nav_records = NAVRecord.objects.order_by('date_time')
     nav_dates = [nav.date_time.strftime('%Y-%m-%d') for nav in nav_records]
     nav_unit_costs = [float(nav.unit_cost) for nav in nav_records]
+
     context = {
+        'user_obj': user_obj,
         'total_units': total_units,
         'nav': nav,
         'nav_date': nav_date,
         'total_amount': total_amount,
+        'total_amount_display': total_amount_display,
         'nav_dates_json': json.dumps(nav_dates, cls=DjangoJSONEncoder),
         'nav_unit_costs_json': json.dumps(nav_unit_costs, cls=DjangoJSONEncoder),
         'unrealized_pl': unrealized_pl,
         'total_invested': total_invested,
+        'available_credit': available_credit,
     }
-    return render(request, 'mainapp/portfolio.html', context)
+    return render(request, 'mainapp/fundmanager_user_portfolio.html', context)
+
+def indian_number_format(amount):
+    # Format number as per Indian system (e.g., 10,00,000.00)
+    s = f"{amount:,.2f}"
+    x = s.split('.')
+    if len(x[0]) > 3:
+        x[0] = x[0][:-3].replace(',', '')[::-1]
+        x[0] = ','.join([x[0][i:i+2] for i in range(0, len(x[0]), 2)])[::-1] + ',' + s[-6:-3]
+    return x[0] + '.' + x[1]
+
+
+def send_transaction_email(user_email, transaction_type, amount, date, balance, transaction_id):
+    subject = f"BE Investment Firm: {transaction_type.capitalize()} Notification"
+    from_email = "no-reply@beinvestmentfirm.com"
+    to_email = [user_email]
+
+    html_content = f"""
+    <div style="max-width:520px;margin:0 auto;padding:28px 22px;background:#fffbe6;border-radius:14px;
+        border:1.5px solid #bfa14a;font-family:sans-serif;">
+        <div style="text-align:center;margin-bottom:18px;">
+            <img src="https://yourdomain.com/static/mainapp/assets/be_logo.png" alt="BE Logo" style="width:56px;height:56px;border-radius:10px;">
+        </div>
+        <h2 style="color:#bfa14a;text-align:center;margin-bottom:10px;">Transaction Alert</h2>
+        <p style="color:#14213d;text-align:center;font-size:1.1rem;margin-bottom:18px;">
+            Dear Investor,<br>
+            Your recent <b>{transaction_type}</b> has been processed successfully.
+        </p>
+        <div style="background:#fff8e1;border-radius:8px;padding:18px 0;margin:18px 0;text-align:center;">
+            <table style="margin:0 auto;font-size:1.05rem;color:#14213d;">
+                <tr>
+                    <td style="padding:6px 18px;">Transaction ID:</td>
+                    <td style="padding:6px 0;font-weight:600;">{transaction_id}</td>
+                </tr>
+                <tr>
+                    <td style="padding:6px 18px;">Type:</td>
+                    <td style="padding:6px 0;font-weight:600;">{transaction_type.capitalize()}</td>
+                </tr>
+                <tr>
+                    <td style="padding:6px 18px;">Amount:</td>
+                    <td style="padding:6px 0;font-weight:600;">₹ {amount:,.2f}</td>
+                </tr>
+                <tr>
+                    <td style="padding:6px 18px;">Date:</td>
+                    <td style="padding:6px 0;font-weight:600;">{date}</td>
+                </tr>
+                <tr>
+                    <td style="padding:6px 18px;">Balance:</td>
+                    <td style="padding:6px 0;font-weight:600;">₹ {balance:,.2f}</td>
+                </tr>
+            </table>
+        </div>
+        <ul style="color:#6c757d;font-size:0.98rem;margin-bottom:18px;">
+            <li>If you did not authorize this transaction, please contact us immediately.</li>
+            <li>Keep this email for your records.</li>
+        </ul>
+        <div style="text-align:center;color:#888;font-size:0.95rem;">
+            Need help? Contact <a href="mailto:beinvestmentfirm@gmail.com" style="color:#bfa14a;">beinvestmentfirm@gmail.com</a>
+        </div>
+    </div>
+    """
+
+    text_content = f"""BE Investment Firm Transaction Alert
+
+Transaction ID: {transaction_id}
+Type: {transaction_type.capitalize()}
+Amount: ₹ {amount:,.2f}
+Date: {date}
+Balance: ₹ {balance:,.2f}
+
+If you did not authorize this transaction, please contact us immediately.
+beinvestmentfirm@gmail.com
+"""
+
+    email = EmailMultiAlternatives(subject, text_content, from_email, to_email)
+    email.attach_alternative(html_content, "text/html")
+    email.send(fail_silently=False)
+

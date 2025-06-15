@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "mainapp",
     "social_django",
+    'django_crontab',
 ]
 
 MIDDLEWARE = [
@@ -154,3 +155,6 @@ SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/post_login_redirect/'
 LOGIN_URL = '/auth/login/google-oauth2/'
 
 
+CRONJOBS = [
+    ('0 0 * * *', 'mainapp.cron.daily_transaction_email_job'),
+]

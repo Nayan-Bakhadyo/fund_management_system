@@ -5,15 +5,6 @@ from django.conf.urls.static import static
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 
-@login_required
-def fundmanager_user_portfolio(request):
-    try:
-        authorized_user = AuthorizedUser.objects.get(email=request.user.email)
-    except AuthorizedUser.DoesNotExist:
-        return HttpResponse("Unauthorized", status=403)
-    if authorized_user.role != 'fund_manager':
-        return HttpResponse("Unauthorized", status=403)
-    # ...rest of your code...
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -30,5 +21,7 @@ urlpatterns = [
     path('user/transactions/', views.transaction_history, name='transaction_history'),
     path('user/bank_detail/', views.bank_detail, name='bank_detail'),
     path('fundmanager/user_portfolio/', views.fundmanager_user_portfolio, name='fundmanager_user_portfolio'),
+    #path('fundmanager/add_investment/', views.add_investment, name='add_investment'),
+
     path('auth/', include('social_django.urls', namespace='social')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

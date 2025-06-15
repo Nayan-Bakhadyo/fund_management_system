@@ -197,3 +197,22 @@ function renderNavChart() {
 //     // dashboardContent.innerHTML = html;
 //     // renderNavChart();
 // }
+
+// Add investment form loading
+document.addEventListener('DOMContentLoaded', function() {
+    const addInvestmentLink = document.getElementById('addInvestmentLink');
+    const dashboardContent = document.getElementById('dashboard-content');
+
+    if (addInvestmentLink) {
+        addInvestmentLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            fetch('/fundmanager/add_investment/', {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => response.text())
+            .then(html => {
+                dashboardContent.innerHTML = html;
+            });
+        });
+    }
+});

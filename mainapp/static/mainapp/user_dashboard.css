@@ -234,3 +234,12 @@ body {
         align-items: center;
     }
 }
+button[type="submit"] {
+    background: #bfa14a;
+    color: #14213d;
+}
+
+button[type="submit"]:hover {
+    background: #14213d;
+    color: #fff;
+}

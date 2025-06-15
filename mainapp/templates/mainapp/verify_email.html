@@ -1,77 +1,108 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Email Verification</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            background: #f7f7f7;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            background: #f8f9fa;
         }
         .verify-container {
-            background: #fff;
-            padding: 2.5rem 2rem;
-            border-radius: 16px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-            max-width: 350px;
-            width: 100%;
-            text-align: center;
+            max-width: 420px;
+            margin: 60px auto;
+            padding: 36px 32px 28px 32px;
+            background: #fffbe6;
+            border-radius: 14px;
+            box-shadow: 0 4px 16px rgba(60,64,67,.10);
+            border: 1.5px solid #bfa14a;
+        }
+        .be-logo {
+            display: block;
+            margin: 0 auto 18px auto;
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(191,161,74,0.10);
         }
         .verify-title {
             color: #bfa14a;
-            margin-bottom: 1.2rem;
-            font-size: 1.5rem;
-            font-weight: 600;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 1.7rem;
+            letter-spacing: 1px;
         }
-        .verify-label {
-            display: block;
-            margin-bottom: 0.5rem;
+        .verify-welcome {
             color: #14213d;
+            text-align: center;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+        }
+        .verify-info {
+            color: #14213d;
+            margin-bottom: 18px;
+            text-align: center;
+            font-size: 1.05rem;
+        }
+        .verify-details {
+            background: #fff8e1;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 18px;
+            font-size: 0.98rem;
+            color: #6c757d;
+        }
+        .form-label {
             font-weight: 500;
+            color: #14213d;
         }
-        .verify-input {
-            width: 100%;
-            padding: 0.6rem;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            margin-bottom: 1.2rem;
-            font-size: 1rem;
+        .form-control:focus {
+            border-color: #bfa14a;
+            box-shadow: 0 0 0 0.2rem rgba(191,161,74,.25);
         }
-        .verify-btn {
+        button[type="submit"] {
             background: #bfa14a;
-            color: #fff;
+            color: #14213d;
             border: none;
-            padding: 0.7rem 1.5rem;
-            border-radius: 8px;
+            border-radius: 4px;
+            padding: 10px 22px;
             font-size: 1rem;
-            font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
+            font-weight: 600;
+            margin-top: 8px;
+            width: 100%;
+            transition: background 0.2s, color 0.2s;
         }
-        .verify-btn:hover {
-            background: #a88d36;
+        button[type="submit"]:hover {
+            background: #14213d;
+            color: #fff;
         }
-        .verify-error {
-            color: #e53935;
-            margin-bottom: 1rem;
+        .support-info {
+            margin-top: 18px;
+            font-size: 0.95rem;
+            color: #888;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="verify-container">
+        <!-- BE Logo: replace src with your actual logo path if needed -->
+        <img src="{% static 'mainapp/assets/be_logo.png' %}" alt="BE Logo" class="be-logo">
         <div class="verify-title">Email Verification</div>
-        {% if error %}
-            <div class="verify-error">{{ error }}</div>
-        {% endif %}
-        <form method="post">
+        <div class="verify-info">
+            A 6-digit verification code has been sent to:<br>
+            <strong>{{ masked_email }}</strong>
+        </div>
+        <form method="post" autocomplete="off">
             {% csrf_token %}
-            <label class="verify-label">Enter the code sent to your email:</label>
-            <input class="verify-input" type="text" name="code" required>
-            <button class="verify-btn" type="submit">Verify</button>
+            <div class="mb-3">
+                <label for="code" class="form-label">Enter Verification Code</label>
+                <input type="text" class="form-control" id="code" name="code" required maxlength="6" pattern="\d{6}" autocomplete="off" placeholder="e.g. 123456">
+            </div>
+            <button type="submit">Verify</button>
         </form>
     </div>
 </body>

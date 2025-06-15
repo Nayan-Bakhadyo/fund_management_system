@@ -90,3 +90,52 @@ class UserContract(models.Model):
 
     def __str__(self):
         return f"Contract for {self.authorized_user.email}"
+
+class InvestmentCategory(models.Model):
+    RISK_FACTOR_CHOICES = [
+        ('High', 'High'),
+        ('Medium', 'Medium'),
+        ('Low', 'Low'),
+    ]
+    TIMEFRAME_CHOICES = [
+        ('Short Term', 'Short Term'),
+        ('Medium Term', 'Medium Term'),
+        ('Long Term', 'Long Term'),
+    ]
+    category_id = models.AutoField(primary_key=True)
+    category_name = models.CharField(max_length=100, unique=True)
+    category_description = models.TextField(blank=True, null=True)
+    category_risk_factor = models.CharField(max_length=6, choices=RISK_FACTOR_CHOICES)
+    category_time_frame = models.CharField(max_length=20, choices=TIMEFRAME_CHOICES)
+
+    def __str__(self):
+        return f"{self.category_name} ({self.category_risk_factor})"
+
+class FirmInvestment(models.Model):
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('closed', 'Closed'),
+    ]
+    investment_id = models.AutoField(primary_key=True)
+    investment_name = models.CharField(max_length=100)
+    investment_category = models.ForeignKey(
+        InvestmentCategory,
+        on_delete=models.CASCADE,
+        related_name='investments'
+    )
+    invested_amount = models.DecimalField(max_digits=14, decimal_places=2)
+    return_amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    status = models.CharField(max_length=6, choices=STATUS_CHOICES, default='open')
+
+    def __str__(self):
+        return f"{self.investment_name} ({self.get_status_display()})"
+
+class TotalCapitalRecord(models.Model):
+    date_time = models.DateTimeField(auto_now_add=True)
+    total_capital = models.DecimalField(max_digits=16, decimal_places=2)
+    invested_capital = models.DecimalField(max_digits=16, decimal_places=2)
+    available_capital = models.DecimalField(max_digits=16, decimal_places=2)
+    total_circulating_unit = models.IntegerField(default=0) 
+
+    def __str__(self):
+        return f"Total Capital on {self.date_time.strftime('%Y-%m-%d %H:%M:%S')}: {self.total_capital}"

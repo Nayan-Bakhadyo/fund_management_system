@@ -1,0 +1,43 @@
+<div class="investment-center">
+    <form class="investment-form" method="post" action="{% url 'add_investment' %}" autocomplete="off">
+        {% csrf_token %}
+        <h2 class="investment-title">Add Investment</h2>
+
+        <div class="form-group">
+            <label for="investment_name">Investment Name</label>
+            <input type="text" name="investment_name" id="investment_name" required placeholder="Enter investment name">
+        </div>
+
+        <div class="form-group">
+            <label for="investment_category">Category</label>
+            <select name="investment_category" id="investment_category" required>
+                <option value="" disabled selected>Select Category</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.pk }}">{{ cat.category_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="invested_amount">Invested Amount</label>
+            <input type="number" step="0.01" name="invested_amount" id="invested_amount" required placeholder="Enter invested amount">
+        </div>
+
+        <div class="form-group">
+            <label for="return_amount">Return Amount</label>
+            <input type="number" step="0.01" name="return_amount" id="return_amount" value="0" required placeholder="Enter return amount">
+        </div>
+
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select name="status" id="status" required>
+                <option value="open">Open</option>
+                <option value="closed">Closed</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="text-align: right;">
+            <button type="submit">Submit</button>
+        </div>
+    </form>
+</div>
