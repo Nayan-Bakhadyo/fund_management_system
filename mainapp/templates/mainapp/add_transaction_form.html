@@ -1,4 +1,4 @@
-<!-- filepath: mainapp/templates/mainapp/add_transaction_form.html -->
+{% load static %}
 <div class="transaction-center">
     <form class="transaction-form" method="post" action="{% url 'add_transaction' %}" enctype="multipart/form-data" autocomplete="off">
         {% csrf_token %}

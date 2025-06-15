@@ -1,10 +1,10 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
 from django.db.models import Max, Sum
-from .models import AuthorizedUser, UserTransaction, UserNAV, NAVRecord, UserBankDetail, InvestmentCategory, FirmInvestment, TotalCapitalRecord
+from .models import AuthorizedUser, UserTransaction, UserNAV, NAVRecord, UserBankDetail, InvestmentCategory, FirmInvestment, TotalCapitalRecord, InvestmentTransaction
 import random
 from django import template
 from django.contrib.auth import logout
@@ -12,19 +12,13 @@ from django.urls import reverse
 from django.contrib import messages
 from django.db import transaction
 from django.template.loader import render_to_string
-from django.http import JsonResponse
 from django.utils import timezone
-from django.shortcuts import redirect
-from django.contrib.auth.decorators import login_required
-from django.core.serializers.json import DjangoJSONEncoder
-import json
-from django.shortcuts import render, redirect
 from decimal import Decimal
-
-from .models import TotalCapitalRecord, NAVRecord
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 
 def update_nav_record():
-    latest_capital = TotalCapitalRecord.objects.order_by('-date_time').first()
+    latest_capital = TotalCapitalRecord.objects.latest('id')
     if not latest_capital or latest_capital.total_circulating_unit == 0:
         return None  # Avoid division by zero or missing data
 
@@ -218,7 +212,7 @@ def add_transaction(request):
         user = AuthorizedUser.objects.get(email=email)
         nav, _ = UserNAV.objects.get_or_create(authorized_user=user)
 
-        latest_nav_record = NAVRecord.objects.order_by('-date_time').first()
+        latest_nav_record = NAVRecord.objects.latest('id')
         unit_cost = Decimal(str(latest_nav_record.unit_cost)) if latest_nav_record else Decimal('10.0')
 
         if action_type == 'deposit':
@@ -344,7 +338,7 @@ def add_transaction(request):
                             available_capital=new_available_capital,
                             total_circulating_unit=new_total_circulating_unit
                         )
-                    update_nav_record()  # <-- Call after atomic block
+                    update_nav_record() 
                     return JsonResponse({
                         "success": True,
                         "transaction_type": "Withdrawal",
@@ -378,12 +372,12 @@ def view_transactions(request):
     )
     return JsonResponse({'html': html})
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-
 @login_required
 def user_dashboard(request):
-    return render(request, 'mainapp/user_dashboard.html')
+    authorized_user = AuthorizedUser.objects.get(email=request.user.email)
+    return render(request, 'mainapp/user_dashboard.html', {
+        'authorized_user': authorized_user
+    })
 
 @login_required
 def portfolio(request):
@@ -620,4 +614,206 @@ beinvestmentfirm@gmail.com
     email = EmailMultiAlternatives(subject, text_content, from_email, to_email)
     email.attach_alternative(html_content, "text/html")
     email.send(fail_silently=False)
+
+
+
+
+@login_required
+def message(request, msg):
+    return render(request, 'mainapp/message.html', {'msg': msg})
+
+@login_required
+def user_contract(request):
+    return render(request, 'mainapp/user_contract.html')
+
+@login_required
+def add_investment_transaction(request):
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        investment_id = request.POST.get('investment')
+        amount = request.POST.get('amount')
+        amount_type = request.POST.get('amount_type')
+
+        try:
+            amount = Decimal(amount)
+        except (TypeError, ValueError):
+            return JsonResponse({"success": False, "error": "Invalid amount."})
+
+        if investment_id and amount and amount_type:
+            try:
+                with transaction.atomic():
+                    investment = FirmInvestment.objects.get(pk=investment_id)
+
+                    # 1. Fetch latest Total Capital Record by ID
+                    latest_record = TotalCapitalRecord.objects.latest('id')
+                    total_capital = latest_record.total_capital
+                    invested_capital = latest_record.invested_capital
+                    available_capital = latest_record.available_capital
+                    total_circulating_unit = latest_record.total_circulating_unit
+
+                    if amount_type == 'investment':
+                        if amount > available_capital:
+                            return JsonResponse({"success": False, "error": "Transaction amount exceeds available capital."})
+                        new_invested_capital = invested_capital + amount
+                        new_available_capital = available_capital - amount
+                    elif amount_type == 'return':
+                        total_invested = InvestmentTransaction.objects.filter(
+                            investment=investment, amount_type='investment'
+                        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+                        total_return_before = InvestmentTransaction.objects.filter(
+                            investment=investment, amount_type='return'
+                        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+                        print("Total Invested:", total_invested)
+                        print("Total Return Before:", total_return_before)
+                        print("New Return Amount:", amount)
+                        if total_invested > (total_return_before + amount):
+                            new_available_capital = available_capital + amount
+                            new_invested_capital = invested_capital - amount
+                        else:
+                            remaining_inv = total_invested - total_return_before
+                            new_available_capital = available_capital + amount
+                            new_invested_capital = invested_capital - remaining_inv
+                    else:
+                        return JsonResponse({"success": False, "error": "Invalid amount type."})
+                    
+                    transaction_obj = InvestmentTransaction.objects.create(
+                        investment=investment,
+                        amount=amount,
+                        amount_type=amount_type
+                    )
+
+                    # 3. Add another Total Capital Record entry
+                    TotalCapitalRecord.objects.create(
+                        total_capital=new_invested_capital + new_available_capital,
+                        invested_capital=new_invested_capital,
+                        available_capital=new_available_capital,
+                        total_circulating_unit=total_circulating_unit
+                    )
+                update_nav_record()
+                return JsonResponse({
+                    "success": True,
+                    "investment": investment.investment_name,
+                    "amount": transaction_obj.amount,
+                    "amount_type": transaction_obj.get_amount_type_display()
+                })
+            except FirmInvestment.DoesNotExist:
+                return JsonResponse({"success": False, "error": "Selected investment does not exist."})
+            except TotalCapitalRecord.DoesNotExist:
+                return JsonResponse({"success": False, "error": "No Total Capital Record found."})
+            except Exception as e:
+                return JsonResponse({"success": False, "error": str(e)})
+        else:
+            return JsonResponse({"success": False, "error": "All fields are required."})
+
+    investments = FirmInvestment.objects.filter(status='open')
+    html = render_to_string('mainapp/add_investment_transaction.html', {'investments': investments}, request=request)
+    return HttpResponse(html)
+
+from django.http import JsonResponse, HttpResponse
+from django.template.loader import render_to_string
+from .models import FirmInvestment, InvestmentCategory
+
+@login_required
+def add_investment_modal(request):
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        investment_name = request.POST.get('investment_name')
+        investment_category_id = request.POST.get('investment_category')
+        status = request.POST.get('status')
+        if investment_name and investment_category_id and status:
+            # Check for duplicate investment name
+            if FirmInvestment.objects.filter(investment_name=investment_name).exists():
+                return JsonResponse({"success": False, "error": "The Investment name already exists - Choose another name"})
+            try:
+                category = InvestmentCategory.objects.get(pk=investment_category_id)
+                investment = FirmInvestment.objects.create(
+                    investment_name=investment_name,
+                    investment_category=category,
+                    status=status
+                )
+                return JsonResponse({"success": True})
+            except InvestmentCategory.DoesNotExist:
+                return JsonResponse({"success": False, "error": "Selected category does not exist."})
+            except Exception as e:
+                return JsonResponse({"success": False, "error": str(e)})
+        else:
+            return JsonResponse({"success": False, "error": "All fields are required."})
+
+    categories = InvestmentCategory.objects.all()
+    html = render_to_string('mainapp/add_investment_modal.html', {'categories': categories}, request=request)
+    return HttpResponse(html)
+
+@login_required
+def close_investment_modal(request):
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        investment_id = request.POST.get('investment_id')
+        status = request.POST.get('status')
+        if investment_id and status == 'closed':
+            try:
+                with transaction.atomic():
+                    investment = FirmInvestment.objects.get(pk=investment_id, status='open')
+
+                    transactions = InvestmentTransaction.objects.filter(investment=investment)
+                    latest_record = TotalCapitalRecord.objects.latest('id')
+                    total_capital = latest_record.total_capital
+                    invested_capital = latest_record.invested_capital
+                    available_capital = latest_record.available_capital
+                    total_circulating_unit = latest_record.total_circulating_unit
+
+                    invested_amount = transactions.filter(amount_type='investment').aggregate(total=Sum('amount'))['total'] or Decimal('0')
+                    return_amount = transactions.filter(amount_type='return').aggregate(total=Sum('amount'))['total'] or Decimal('0')
+                    profit = return_amount - invested_amount
+
+                    if profit > 0:
+                        profit_20 = profit * Decimal('0.20')
+
+                        # Fetch latest NAVRecord by id
+                        latest_nav = NAVRecord.objects.latest('id')
+                        unit_cost = latest_nav.unit_cost
+
+                        # Calculate purchase_unit and remaining_credit
+                        purchase_unit = profit_20 // unit_cost
+                        remaining_credit = profit_20 - (purchase_unit * unit_cost)
+
+                        be_user = AuthorizedUser.objects.get(email='beinvestmentfirm@gmail.com')
+                        UserTransaction.objects.create(
+                            authorized_user=be_user,
+                            transaction_type='deposit',
+                            unit_cost=unit_cost,
+                            purchase_initiated_amount=profit_20,
+                            purchase_unit=purchase_unit,
+                            remaining_credit=remaining_credit,
+                            description=f"{investment.investment_name} - profit credited"
+                        )
+
+                        # --- Update UserNav for beinvestmentfirm@gmail.com ---
+                        user_nav = UserNAV.objects.get(authorized_user=be_user)
+                        user_nav.available_unit += purchase_unit
+                        user_nav.available_credit_amount += remaining_credit
+                        user_nav.save()
+                        # -----------------------------------------------------
+
+                        new_available_capital = available_capital
+                        TotalCapitalRecord.objects.create(
+                            total_capital=total_capital,
+                            invested_capital=invested_capital,
+                            available_capital=new_available_capital,
+                            total_circulating_unit=total_circulating_unit + purchase_unit
+                        )
+
+                    investment.status = 'closed'
+                    investment.save()
+
+                update_nav_record()
+                return JsonResponse({"success": True})
+            except FirmInvestment.DoesNotExist:
+                return JsonResponse({"success": False, "error": "Selected investment does not exist or is already closed."})
+            except Exception as e:
+                return JsonResponse({"success": False, "error": str(e)})
+        else:
+            return JsonResponse({"success": False, "error": "All fields are required."})
+
+    investments = FirmInvestment.objects.filter(status='open')
+    html = render_to_string('mainapp/close_investment_modal.html', {'investments': investments}, request=request)
+    return HttpResponse(html)
 

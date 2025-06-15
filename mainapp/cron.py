@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.core.mail import EmailMultiAlternatives
 from .models import UserTransaction, AuthorizedUser
 
+print("=== daily_transaction_email_job STARTED ===")
 def send_transaction_email(user_email, transactions):
     subject = "BE Investment Firm: Daily Transaction Summary"
     from_email = "no-reply@beinvestmentfirm.com"
@@ -55,22 +56,28 @@ def send_transaction_email(user_email, transactions):
 
     text_content = "Your BE Investment Firm transactions for yesterday:\n"
     for txn in transactions:
-        text_content += f"{txn.transaction_type.capitalize()} | ₹ {txn.purchase_initiated_amount:,.2f} | {txn.date_time.strftime('%Y-%m-%d %H:%M')} | ID: {txn.id}\n"
+        text_content += f"{txn.transaction_type.capitalize()} | NRs. {txn.purchase_initiated_amount:,.2f} | {txn.date_time.strftime('%Y-%m-%d %H:%M')} | ID: {txn.id}\n"
 
     email = EmailMultiAlternatives(subject, text_content, from_email, to_email)
     email.attach_alternative(html_content, "text/html")
     email.send(fail_silently=False)
 
 def daily_transaction_email_job():
+    print("daily_transaction_email_job started")
     # Get yesterday's date range
     today = timezone.now().date()
-    yesterday = today - timedelta(days=1)
+    yesterday = today
     start = datetime.combine(yesterday, datetime.min.time()).replace(tzinfo=timezone.get_current_timezone())
     end = datetime.combine(yesterday, datetime.max.time()).replace(tzinfo=timezone.get_current_timezone())
 
     # Find all users with transactions yesterday
-    user_ids = UserTransaction.objects.filter(date_time__range=(start, end)).values_list('authorized_user', flat=True).distinct()
-    for user_id in user_ids:
-        user = AuthorizedUser.objects.get(pk=user_id)
-        transactions = UserTransaction.objects.filter(authorized_user=user, date_time__range=(start, end))
+    user_emails = UserTransaction.objects.filter(date_time__range=(start, end)).values_list('authorized_user', flat=True).distinct()
+    print("User IDs/Emails found:", list(user_emails))
+    for user_email in user_emails:
+        try:
+            user = AuthorizedUser.objects.get(email=user_email)
+        except AuthorizedUser.DoesNotExist:
+            print(f"Skipping invalid user email: {user_email}")
+            continue
+        transactions = UserTransaction.objects.filter(authorized_user=user_email, date_time__range=(start, end))
         send_transaction_email(user.email, transactions)

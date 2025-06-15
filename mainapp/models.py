@@ -112,10 +112,6 @@ class InvestmentCategory(models.Model):
         return f"{self.category_name} ({self.category_risk_factor})"
 
 class FirmInvestment(models.Model):
-    STATUS_CHOICES = [
-        ('open', 'Open'),
-        ('closed', 'Closed'),
-    ]
     investment_id = models.AutoField(primary_key=True)
     investment_name = models.CharField(max_length=100)
     investment_category = models.ForeignKey(
@@ -123,12 +119,30 @@ class FirmInvestment(models.Model):
         on_delete=models.CASCADE,
         related_name='investments'
     )
-    invested_amount = models.DecimalField(max_digits=14, decimal_places=2)
-    return_amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('closed', 'Closed'),
+    ]
     status = models.CharField(max_length=6, choices=STATUS_CHOICES, default='open')
 
     def __str__(self):
-        return f"{self.investment_name} ({self.get_status_display()})"
+        return f"{self.investment_name}"
+
+class InvestmentTransaction(models.Model):
+    AMOUNT_TYPE_CHOICES = [
+        ('investment', 'Investment'),
+        ('return', 'Return'),
+    ]
+    investment = models.ForeignKey(
+        FirmInvestment,
+        on_delete=models.CASCADE,
+        related_name='transactions'
+    )
+    amount = models.DecimalField(max_digits=14, decimal_places=2)
+    amount_type = models.CharField(max_length=11, choices=AMOUNT_TYPE_CHOICES)
+
+    def __str__(self):
+        return f"{self.investment.investment_name} - {self.get_amount_type_display()} - {self.amount}"
 
 class TotalCapitalRecord(models.Model):
     date_time = models.DateTimeField(auto_now_add=True)

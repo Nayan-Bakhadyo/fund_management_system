@@ -1,0 +1,31 @@
+<!-- filepath: /Users/Nayan/Documents/Business/BE_Investment_Firm/BE-app/mainapp/templates/mainapp/close_investment_modal.html -->
+<div class="modal fade" id="closeInvestmentModal" tabindex="-1" aria-labelledby="closeInvestmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="closeInvestmentForm" method="post" autocomplete="off">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="closeInvestmentModalLabel">Close Investment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="closeInvestmentAlert"></div>
+          <div class="mb-3">
+            <label for="investment_id" class="form-label">Select Investment</label>
+            <select class="form-control" id="investment_id" name="investment_id" required>
+              <option value="">Select Open Investment</option>
+              {% for inv in investments %}
+                <option value="{{ inv.investment_id }}">{{ inv.investment_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <input type="hidden" name="status" value="closed">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger">Close Investment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

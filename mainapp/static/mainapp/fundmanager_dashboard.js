@@ -199,20 +199,172 @@ function renderNavChart() {
 // }
 
 // Add investment form loading
-document.addEventListener('DOMContentLoaded', function() {
-    const addInvestmentLink = document.getElementById('addInvestmentLink');
-    const dashboardContent = document.getElementById('dashboard-content');
+$(document).on('click', '#addInvestmentLink', function(e) {
+    e.preventDefault();
+    $.get('/fundmanager/add_investment_modal/', function(html) {
+        $('#addInvestmentModal').remove(); // Remove any existing modal
+        $('body').append(html);            // Append the new modal
+        var modal = new bootstrap.Modal(document.getElementById('addInvestmentModal'));
+        modal.show();
+    });
+});
 
-    if (addInvestmentLink) {
-        addInvestmentLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            fetch('/fundmanager/add_investment/', {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(response => response.text())
-            .then(html => {
-                dashboardContent.innerHTML = html;
-            });
-        });
-    }
+$(document).off('click', '#addInvestmentTransactionLink').on('click', '#addInvestmentTransactionLink', function(e) {
+    e.preventDefault();
+    $('#investmentTransaction').remove(); // Remove any existing modal
+    $.get('/fundmanager/add_investment_transaction/', function(html) {
+        $('body').append(html);
+        var modal = new bootstrap.Modal(document.getElementById('investmentTransaction'));
+        modal.show();
+    });
+});
+
+// Handle form submission
+$(document).on('submit', '#addInvestment', function(e) {
+    e.preventDefault();
+    $.ajax({
+        url: '/fundmanager/add_investment_modal/',
+        type: 'POST',
+        data: $(this).serialize(),
+        headers: {'X-Requested-With': 'XMLHttpRequest'},
+        success: function(response) {
+            if (response.success) {
+                alert('Investment added successfully!');
+                location.reload();
+            } else {
+                $('#addInvestmentAlert').html(
+                    '<div class="alert alert-danger" role="alert">' + response.error + '</div>'
+                );
+            }
+        },
+        error: function(xhr, status, error) {
+            $('#addInvestmentAlert').html(
+                '<div class="alert alert-danger" role="alert">An error occurred: ' + error + '</div>'
+            );
+        }
+    });
+});
+
+$(document).off('click', '#addInvestmentLink').on('click', '#addInvestmentLink', function(e) {
+    e.preventDefault();
+    $('#addInvestmentModal').remove(); // Remove any existing modal
+    $.get('/fundmanager/add_investment_modal/', function(html) {
+        $('body').append(html);
+        var modal = new bootstrap.Modal(document.getElementById('addInvestmentModal'));
+        modal.show();
+    });
+});
+
+
+$(document).off('submit', '#addInvestmentForm').on('submit', '#addInvestmentForm', function(e) {
+    e.preventDefault();
+    $('#investmentAlert').empty();
+    $.ajax({
+        url: '/fundmanager/add_investment_modal/',
+        type: 'POST',
+        data: $(this).serialize(),
+        headers: {'X-Requested-With': 'XMLHttpRequest'},
+        success: function(response) {
+            console.log(response); // Add this line
+            if (response.success) {
+                $('#investmentAlert').html(
+                    '<div class="alert alert-success" role="alert">Investment added successfully!</div>'
+                );
+                $('#addInvestmentForm')[0].reset();
+                setTimeout(function() {
+                    var modal = bootstrap.Modal.getInstance(document.getElementById('addInvestmentModal'));
+                    modal.hide();
+                }, 1200);
+            } else {
+                $('#investmentAlert').html(
+                    '<div class="alert alert-danger" role="alert">' + response.error + '</div>'
+                );
+            }
+        },
+        error: function() {
+            $('#investmentAlert').html(
+                '<div class="alert alert-danger" role="alert">An error occurred. Please try again.</div>'
+            );
+        }
+    });
+});
+
+$(document).off('submit', '#investmentTransactionForm').on('submit', '#investmentTransactionForm', function(e) {
+    e.preventDefault();
+    $('#investmentTransactionAlert').empty();
+    $.ajax({
+        url: '/fundmanager/add_investment_transaction/', // <-- Make sure this is correct!
+        type: 'POST',
+        data: $(this).serialize(),
+        headers: {'X-Requested-With': 'XMLHttpRequest'},
+        success: function(response) {
+            if (response.success) {
+                $('#investmentTransactionAlert').html(
+                    '<div class="alert alert-success" role="alert">Transaction successful!</div>'
+                );
+                $('#investmentTransactionForm')[0].reset();
+                setTimeout(function() {
+                    var modal = bootstrap.Modal.getInstance(document.getElementById('investmentTransaction'));
+                    modal.hide();
+                }, 1200);
+            } else {
+                $('#investmentTransactionAlert').html(
+                    '<div class="alert alert-danger" role="alert">' + (response.error || 'Unknown error') + '</div>'
+                );
+            }
+        },
+        error: function(xhr, status, error) {
+            $('#investmentTransactionAlert').html(
+                '<div class="alert alert-danger" role="alert">An error occurred: ' + error + '</div>'
+            );
+        }
+    });
+});
+
+// Open the modal
+$(document).off('click', '#closeInvestmentLink').on('click', '#closeInvestmentLink', function(e) {
+    e.preventDefault();
+    $('#closeInvestmentModal').remove();
+    $.get('/fundmanager/close_investment_modal/', function(html) {
+        $('body').append(html);
+        var modal = new bootstrap.Modal(document.getElementById('closeInvestmentModal'));
+        modal.show();
+    });
+});
+
+// Handle form submission
+$(document).off('submit', '#closeInvestmentForm').on('submit', '#closeInvestmentForm', function(e) {
+    e.preventDefault();
+    $('#closeInvestmentAlert').empty();
+    var $submitBtn = $(this).find('button[type="submit"]');
+    $submitBtn.prop('disabled', true);
+
+    $.ajax({
+        url: '/fundmanager/close_investment_modal/',
+        type: 'POST',
+        data: $(this).serialize(),
+        headers: {'X-Requested-With': 'XMLHttpRequest'},
+        success: function(response) {
+            if (response.success) {
+                $('#closeInvestmentAlert').html(
+                    '<div class="alert alert-success" role="alert">Investment closed successfully!</div>'
+                );
+                setTimeout(function() {
+                    var modal = bootstrap.Modal.getInstance(document.getElementById('closeInvestmentModal'));
+                    modal.hide();
+                }, 1200);
+            } else {
+                $('#closeInvestmentAlert').html(
+                    '<div class="alert alert-danger" role="alert">' + response.error + '</div>'
+                );
+            }
+            $submitBtn.prop('disabled', false);
+        },
+        error: function() {
+            $('#closeInvestmentAlert').html(
+                '<div class="alert alert-danger" role="alert">An error occurred. Please try again.</div>'
+            );
+            $submitBtn.prop('disabled', false);
+        }
+    });
 });

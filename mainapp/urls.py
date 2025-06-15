@@ -21,7 +21,11 @@ urlpatterns = [
     path('user/transactions/', views.transaction_history, name='transaction_history'),
     path('user/bank_detail/', views.bank_detail, name='bank_detail'),
     path('fundmanager/user_portfolio/', views.fundmanager_user_portfolio, name='fundmanager_user_portfolio'),
-    #path('fundmanager/add_investment/', views.add_investment, name='add_investment'),
+    path('fundmanager/add_investment_modal/', views.add_investment_modal, name='add_investment_modal'),
+    path('fundmanager/add_investment_transaction/', views.add_investment_transaction, name='add_investment_transaction'),
+    path('message/<str:msg>/', views.message, name='message'),
+    path('user/contract/', views.user_contract, name='user_contract'),
+    path('fundmanager/close_investment_modal/', views.close_investment_modal, name='close_investment_modal'),
 
     path('auth/', include('social_django.urls', namespace='social')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
