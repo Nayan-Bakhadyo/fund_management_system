@@ -33,7 +33,7 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
-ALLOWED_HOSTS = ['beinvestmentfirm.com','52.15.154.89']
+ALLOWED_HOSTS = ['beinvestmentfirm.com','127.0.0.1']
 # Application definition
 
 INSTALLED_APPS = [
