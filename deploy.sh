@@ -9,7 +9,7 @@ source /home/ubuntu/fund_management_system/venv/bin/activate
 cd /home/ubuntu/fund_management_system
 
 # Pull latest changes from GitHub
-git pull origin main
+git pull origin server
 
 # Install new dependencies if any
 pip install -r requirements.txt
