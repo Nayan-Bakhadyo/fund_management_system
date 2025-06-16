@@ -25,6 +25,8 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+db.sqlite3
+
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -210,3 +212,4 @@ staticfiles/
 .vscode/
 # Mac system files
 .DS_Store
+db.sqlite3
