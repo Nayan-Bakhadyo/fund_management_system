@@ -1,6 +1,6 @@
 from .settings import *
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['beinvestmentfirm.com', 'http://52.15.154.89/', 'www.beinvestmentfirm.com']
 
