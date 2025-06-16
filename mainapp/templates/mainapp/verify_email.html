@@ -86,10 +86,11 @@
             color: #888;
             text-align: center;
         }
+
         @media (max-width: 600px) {
             .verify-container, .success-container {
                 padding: 18px 6px !important;
-                max-width: 98vw !important;
+                width: 100%% !important;
                 font-size: 1rem !important;
             }
             .verify-title, .success-title {
@@ -106,6 +107,7 @@
                 padding-left: 1.1em !important;
             }
         }
+
         @media (max-width: 767px) {
             .sidebar {
                 width: 90vw;
@@ -135,7 +137,7 @@
 <body>
     <div class="verify-container">
         <!-- BE Logo: replace src with your actual logo path if needed -->
-        <img src="{% static 'mainapp/assets/be_logo.png' %}" alt="BE Logo" class="be-logo">
+        <img src="{% static 'mainapp/assets/BE_logo.png' %}" alt="BE Logo" class="be-logo">
         <div class="verify-title">Email Verification</div>
         <div class="verify-info">
             A 6-digit verification code has been sent to:<br>
