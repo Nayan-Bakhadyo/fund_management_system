@@ -19,7 +19,7 @@ python manage.py collectstatic --noinput
 
 # OPTIONAL: Run migrations manually when needed
 # echo "Run migrations manually if you want."
-# python manage.py migrate
+python manage.py migrate
 
 # Restart your Gunicorn systemd service
 sudo systemctl restart fund_management_system.service

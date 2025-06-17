@@ -368,3 +368,66 @@ $(document).off('submit', '#closeInvestmentForm').on('submit', '#closeInvestment
         }
     });
 });
+
+// Load pending uploads
+document.addEventListener('DOMContentLoaded', function() {
+  const dashboardContent = document.getElementById('dashboard-content');
+  const pendingUploadsLink = document.createElement('a');
+  pendingUploadsLink.href = "#";
+  pendingUploadsLink.id = "pendingUploadsLink";
+  pendingUploadsLink.textContent = "Pending User Upload Transactions";
+  pendingUploadsLink.className = "nav-link";
+  const sidebarMenu = document.querySelector('.sidebar-menu');
+  if (sidebarMenu) {
+    const li = document.createElement('li');
+    li.appendChild(pendingUploadsLink);
+    sidebarMenu.appendChild(li);
+  }
+
+  pendingUploadsLink.addEventListener('click', function(e) {
+    e.preventDefault();
+    fetch('/fundmanager/pending_user_uploads/')
+      .then(response => response.json())
+      .then(data => {
+        dashboardContent.innerHTML = data.html;
+      });
+  });
+
+  // Delegate edit button click
+  dashboardContent.addEventListener('click', function(e) {
+    if (e.target.classList.contains('edit-upload-btn')) {
+      const email = e.target.getAttribute('data-email');
+      fetch(`/fundmanager/edit_user_upload/${encodeURIComponent(email)}/`)
+        .then(response => response.json())
+        .then(data => {
+          // Remove any existing modal
+          const oldModal = document.getElementById('editUserUploadModal');
+          if (oldModal) oldModal.remove();
+          document.body.insertAdjacentHTML('beforeend', data.html);
+          const modal = new bootstrap.Modal(document.getElementById('editUserUploadModal'));
+          modal.show();
+
+          // Handle form submit
+          document.getElementById('editUserUploadForm').onsubmit = function(ev) {
+            ev.preventDefault();
+            const formData = new FormData(this);
+            fetch(`/fundmanager/edit_user_upload/${encodeURIComponent(email)}/`, {
+              method: 'POST',
+              headers: {'X-Requested-With': 'XMLHttpRequest'},
+              body: formData
+            })
+            .then(response => response.json())
+            .then(resp => {
+              if (resp.success) {
+                modal.hide();
+                pendingUploadsLink.click(); // Reload table
+              } else {
+                alert(resp.error || "Update failed.");
+              }
+            });
+          };
+        });
+    }
+  });
+});
+

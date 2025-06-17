@@ -1,0 +1,38 @@
+<table class="table table-bordered table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Email</th>
+            <th>Date/Time</th>
+            <th>File</th>
+            <th>Amount</th>
+            <th>Description</th>
+            <th>is_valid</th>
+            <th>is_credited</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for upload in uploads %}
+        <tr>
+            <td>{{ upload.email }}</td>
+            <td>{{ upload.date_time }}</td>
+            <td>
+                {% if upload.transaction_file %}
+                    <a href="{{ upload.transaction_file.url }}" target="_blank">View</a>
+                {% else %}
+                    N/A
+                {% endif %}
+            </td>
+            <td>{{ upload.amount }}</td>
+            <td>{{ upload.description }}</td>
+            <td>{{ upload.is_valid }}</td>
+            <td>{{ upload.is_credited }}</td>
+            <td>
+                <button class="btn btn-sm btn-primary edit-upload-btn" data-email="{{ upload.email }}">Edit</button>
+            </td>
+        </tr>
+    {% empty %}
+        <tr><td colspan="8" class="text-center">No pending uploads.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>

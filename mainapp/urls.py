@@ -28,5 +28,8 @@ urlpatterns = [
     path('fundmanager/close_investment_modal/', views.close_investment_modal, name='close_investment_modal'),
      path('user/upload_transaction/', views.upload_transaction, name='upload_transaction'),
 
+    path('fundmanager/pending_user_uploads/', views.pending_user_uploads, name='pending_user_uploads'),
+    path('fundmanager/edit_user_upload/<str:email>/', views.edit_user_upload, name='edit_user_upload'),
+    
     path('auth/', include('social_django.urls', namespace='social')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -843,3 +843,33 @@ def upload_transaction(request):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid request.'})
+
+
+@login_required
+def pending_user_uploads(request):
+    # Only allow fund managers
+    authorized_user = AuthorizedUser.objects.get(email=request.user.email)
+    if authorized_user.role != 'fund_manager':
+        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
+
+    uploads = UserTransactionUpload.objects.filter(is_credited=False, is_valid=True).order_by('date_time')
+    html = render_to_string('mainapp/pending_user_uploads.html', {'uploads': uploads}, request=request)
+    return JsonResponse({'html': html})
+
+@login_required
+def edit_user_upload(request, email):
+    authorized_user = AuthorizedUser.objects.get(email=request.user.email)
+    if authorized_user.role != 'fund_manager':
+        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
+
+    upload = get_object_or_404(UserTransactionUpload, email=email)
+    if request.method == 'POST':
+        is_valid = request.POST.get('is_valid') == 'true'
+        is_credited = request.POST.get('is_credited') == 'true'
+        upload.is_valid = is_valid
+        upload.is_credited = is_credited
+        upload.save()
+        return JsonResponse({'success': True})
+
+    html = render_to_string('mainapp/edit_user_upload_modal.html', {'upload': upload}, request=request)
+    return JsonResponse({'html': html})
