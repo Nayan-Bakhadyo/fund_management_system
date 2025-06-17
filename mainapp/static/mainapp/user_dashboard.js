@@ -227,3 +227,72 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Show bank detail modal
+  const bankMenu = document.getElementById('viewBankDetailMenu');
+  if (bankMenu) {
+    bankMenu.addEventListener('click', function(e) {
+      e.preventDefault();
+      const modal = new bootstrap.Modal(document.getElementById('bankDetailModal'));
+      modal.show();
+    });
+  }
+
+  // Copy to clipboard functionality for bank details
+  document.querySelectorAll('.copy-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const targetId = btn.getAttribute('data-copy');
+      const text = document.getElementById(targetId).textContent;
+      navigator.clipboard.writeText(text).then(function() {
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 1200);
+      });
+    });
+  });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Open modal and fetch current payment detail
+  const modifyMenu = document.getElementById('modifyPaymentDetailMenu');
+  if (modifyMenu) {
+    modifyMenu.addEventListener('click', function(e) {
+      e.preventDefault();
+      fetch('/user/payment_detail/', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Set values (or defaults)
+        document.getElementById('recurring_payment_amount').value = data.recurring_payment_amount || '';
+        document.getElementById('payment_date').value = data.payment_date || '';
+        document.getElementById('modify-payment-detail-message').innerHTML = '';
+        const modal = new bootstrap.Modal(document.getElementById('modifyPaymentDetailModal'));
+        modal.show();
+      });
+    });
+  }
+
+  // Handle form submit
+  const form = document.getElementById('modify-payment-detail-form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(form);
+      fetch('/user/payment_detail/', {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        const msgDiv = document.getElementById('modify-payment-detail-message');
+        if (data.success) {
+          msgDiv.innerHTML = '<div class="alert alert-success">Payment detail updated!</div>';
+        } else {
+          msgDiv.innerHTML = '<div class="alert alert-danger">' + (data.error || 'Update failed.') + '</div>';
+        }
+      });
+    });
+  }
+});

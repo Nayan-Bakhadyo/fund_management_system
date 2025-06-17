@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
 from django.db.models import Max, Sum
-from .models import AuthorizedUser, UserTransaction, UserNAV, NAVRecord, UserBankDetail, InvestmentCategory, FirmInvestment, TotalCapitalRecord, InvestmentTransaction, UserTransactionUpload
+from .models import AuthorizedUser, UserRecurringPayment, UserTransaction, UserNAV, NAVRecord, UserBankDetail, InvestmentCategory, FirmInvestment, TotalCapitalRecord, InvestmentTransaction, UserTransactionUpload
 import random
 from django import template
 from django.contrib.auth import logout
@@ -873,3 +873,32 @@ def edit_user_upload(request, email):
 
     html = render_to_string('mainapp/edit_user_upload_modal.html', {'upload': upload}, request=request)
     return JsonResponse({'html': html})
+
+from django.views.decorators.http import require_http_methods
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def payment_detail(request):
+    user = AuthorizedUser.objects.get(email=request.user.email)
+    obj, created = UserRecurringPayment.objects.get_or_create(
+        authorized_user=user,
+        defaults={
+            'recurring_payment_amount': 0,
+            'payment_date': None
+        }
+    )
+    if request.method == 'GET':
+        return JsonResponse({
+            'recurring_payment_amount': str(obj.recurring_payment_amount) if obj.recurring_payment_amount else '',
+            'payment_date': obj.payment_date.isoformat() if obj.payment_date else ''
+        })
+    else:
+        amount = request.POST.get('recurring_payment_amount')
+        date = request.POST.get('payment_date')
+        try:
+            obj.recurring_payment_amount = amount
+            obj.payment_date = date
+            obj.save()
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})

@@ -87,6 +87,15 @@ class UserContract(models.Model):
     )
     contract_pdf_img = models.FileField(upload_to='contracts/', null=True, blank=True)
     description = models.CharField(max_length=255, blank=True, null=True)
+
+class UserRecurringPayment(models.Model):
+    authorized_user = models.ForeignKey(
+        AuthorizedUser,
+        to_field='email',
+        db_column='email',
+        on_delete=models.CASCADE,
+        related_name='recurring_payments'
+    )
     recurring_payment_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     payment_date = models.DateField(null=True, blank=True)
 
