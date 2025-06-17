@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
 from django.db.models import Max, Sum
-from .models import AuthorizedUser, UserTransaction, UserNAV, NAVRecord, UserBankDetail, InvestmentCategory, FirmInvestment, TotalCapitalRecord, InvestmentTransaction
+from .models import AuthorizedUser, UserTransaction, UserNAV, NAVRecord, UserBankDetail, InvestmentCategory, FirmInvestment, TotalCapitalRecord, InvestmentTransaction, UserTransactionUpload
 import random
 from django import template
 from django.contrib.auth import logout
@@ -817,3 +817,29 @@ def close_investment_modal(request):
     html = render_to_string('mainapp/close_investment_modal.html', {'investments': investments}, request=request)
     return HttpResponse(html)
 
+
+def upload_transaction(request):
+    print("Inside upload_transaction view")
+    if request.method == 'POST':
+        email = request.user.email if request.user.is_authenticated else request.POST.get('email')
+        transaction_file = request.FILES.get('transaction_file')
+        amount = request.POST.get('amount')
+        description = request.POST.get('description', '')
+
+        if not (email and transaction_file and amount):
+            return JsonResponse({'success': False, 'error': 'All fields are required.'})
+
+        try:
+            obj, created = UserTransactionUpload.objects.update_or_create(
+                email=email,
+                defaults={
+                    'transaction_file': transaction_file,
+                    'amount': amount,
+                    'description': description,
+                    'date_time': timezone.now()
+                }
+            )
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request.'})

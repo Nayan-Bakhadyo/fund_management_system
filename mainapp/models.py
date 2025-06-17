@@ -87,6 +87,8 @@ class UserContract(models.Model):
     )
     contract_pdf_img = models.FileField(upload_to='contracts/', null=True, blank=True)
     description = models.CharField(max_length=255, blank=True, null=True)
+    recurring_payment_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    payment_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return f"Contract for {self.authorized_user.email}"
@@ -153,3 +155,15 @@ class TotalCapitalRecord(models.Model):
 
     def __str__(self):
         return f"Total Capital on {self.date_time.strftime('%Y-%m-%d %H:%M:%S')}: {self.total_capital}"
+
+class UserTransactionUpload(models.Model):
+    email = models.EmailField(primary_key=True)
+    date_time = models.DateTimeField(auto_now_add=True)
+    transaction_file = models.FileField(upload_to='user_transaction_uploads/', null=True, blank=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    description = models.CharField(max_length=255, blank=True, null=True)
+    is_valid = models.BooleanField(default=True)
+    is_credited = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Transaction upload by {self.email} on {self.date_time.strftime('%Y-%m-%d %H:%M:%S')}"

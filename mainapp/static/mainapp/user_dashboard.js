@@ -183,3 +183,47 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+document.addEventListener('DOMContentLoaded', function() {
+  // Modal open on menu click
+  const uploadMenu = document.getElementById('uploadTransactionMenu');
+  if (uploadMenu) {
+    uploadMenu.addEventListener('click', function(e) {
+      e.preventDefault();
+      const modal = new bootstrap.Modal(document.getElementById('uploadTransactionModal'));
+      modal.show();
+    });
+  }
+
+  // (Keep your AJAX form submission code here as before)
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('transaction-upload-form');
+  const messageDiv = document.getElementById('transaction-upload-message');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(form);
+
+      fetch('/user/upload_transaction/', {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          messageDiv.innerHTML = '<div class="alert alert-success">Upload successful!</div>';
+          form.reset();
+        } else {
+          messageDiv.innerHTML = '<div class="alert alert-danger">' + (data.error || 'Upload failed.') + '</div>';
+        }
+      })
+      .catch(() => {
+        messageDiv.innerHTML = '<div class="alert alert-danger">An error occurred. Please try again.</div>';
+      });
+    });
+  }
+});

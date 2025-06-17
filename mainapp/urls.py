@@ -26,6 +26,7 @@ urlpatterns = [
     path('message/<str:msg>/', views.message, name='message'),
     path('user/contract/', views.user_contract, name='user_contract'),
     path('fundmanager/close_investment_modal/', views.close_investment_modal, name='close_investment_modal'),
+     path('user/upload_transaction/', views.upload_transaction, name='upload_transaction'),
 
     path('auth/', include('social_django.urls', namespace='social')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
