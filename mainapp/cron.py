@@ -14,7 +14,7 @@ def send_transaction_email(user_email, transactions):
         rows += f"""
         <tr>
             <td style="padding:6px 12px;">{txn.transaction_type.capitalize()}</td>
-            <td style="padding:6px 12px;">₹ {txn.purchase_initiated_amount:,.2f}</td>
+            <td style="padding:6px 12px;">NRs. {txn.purchase_initiated_amount:,.2f}</td>
             <td style="padding:6px 12px;">{txn.date_time.strftime('%Y-%m-%d %H:%M')}</td>
             <td style="padding:6px 12px;">{txn.id}</td>
         </tr>
