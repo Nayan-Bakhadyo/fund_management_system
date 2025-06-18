@@ -24,7 +24,7 @@ def send_transaction_email(user_email, transactions):
     <div style="max-width:520px;margin:0 auto;padding:28px 22px;background:#fffbe6;border-radius:14px;
         border:1.5px solid #bfa14a;font-family:sans-serif;">
         <div style="text-align:center;margin-bottom:18px;">
-            <img src="https://yourdomain.com/static/mainapp/assets/be_logo.png" alt="BE Logo" style="width:56px;height:56px;border-radius:10px;">
+            <img src="https://beinvestmentfirm.com/static/mainapp/assets/BE_logo_2.png" alt="BE Logo" style="width:56px;height:56px;border-radius:10px;">
         </div>
         <h2 style="color:#bfa14a;text-align:center;margin-bottom:10px;">Daily Transaction Summary</h2>
         <p style="color:#14213d;text-align:center;font-size:1.1rem;margin-bottom:18px;">
