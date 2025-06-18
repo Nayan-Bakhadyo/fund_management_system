@@ -5,7 +5,7 @@ from .models import UserTransaction, AuthorizedUser
 
 print("=== daily_transaction_email_job STARTED ===")
 def send_transaction_email(user_email, transactions):
-    subject = "BE Investment Firm: Daily Transaction Summary"
+    subject = "BE Investment Firm: Transaction Notification"
     from_email = "no-reply@beinvestmentfirm.com"
     to_email = [user_email]
 
@@ -21,19 +21,20 @@ def send_transaction_email(user_email, transactions):
         """
 
     html_content = f"""
-    <div style="max-width:520px;margin:0 auto;padding:28px 22px;background:#fffbe6;border-radius:14px;
-        border:1.5px solid #bfa14a;font-family:sans-serif;">
-        <div style="text-align:center;margin-bottom:18px;">
-            <img src="https://beinvestmentfirm.com/static/mainapp/assets/BE_logo_2.png" alt="BE Logo" style="width:56px;height:56px;border-radius:10px;">
+    <div style="max-width:540px;margin:0 auto;padding:32px 18px;background:#e8f9f1;border-radius:18px;
+        border:2px solid #7ed957;font-family:sans-serif;">
+        <div style="text-align:center;margin-bottom:22px;">
+            <img src="https://beinvestmentfirm.com/static/mainapp/assets/BE_logo_final2.png" alt="BE Logo"
+                 style="width:112px;height:112px;border-radius:18px;box-shadow:0 2px 12px #b2f2dd;">
         </div>
-        <h2 style="color:#bfa14a;text-align:center;margin-bottom:10px;">Daily Transaction Summary</h2>
-        <p style="color:#14213d;text-align:center;font-size:1.1rem;margin-bottom:18px;">
+        <h2 style="color:#38b000;text-align:center;margin-bottom:12px;">Transaction Summary</h2>
+        <p style="color:#1b4332;text-align:center;font-size:1.15rem;margin-bottom:22px;">
             Dear Investor,<br>
             Here is a summary of your transactions for {timezone.now().date() - timedelta(days=1)}.
         </p>
-        <table style="margin:0 auto;font-size:1.05rem;color:#14213d;width:100%;border-collapse:collapse;">
+        <table style="margin:0 auto;font-size:1.08rem;color:#1b4332;width:100%;border-collapse:collapse;">
             <thead>
-                <tr style="background:#f5e9c6;">
+                <tr style="background:#b2f2dd;">
                     <th>Type</th>
                     <th>Amount</th>
                     <th>Date & Time</th>
@@ -44,12 +45,12 @@ def send_transaction_email(user_email, transactions):
                 {rows}
             </tbody>
         </table>
-        <ul style="color:#6c757d;font-size:0.98rem;margin-bottom:18px;">
+        <ul style="color:#40916c;font-size:1rem;margin-bottom:18px;">
             <li>If you did not authorize these transactions, please contact us immediately.</li>
             <li>Keep this email for your records.</li>
         </ul>
-        <div style="text-align:center;color:#888;font-size:0.95rem;">
-            Need help? Contact <a href="mailto:beinvestmentfirm@gmail.com" style="color:#bfa14a;">beinvestmentfirm@gmail.com</a>
+        <div style="text-align:center;color:#52b788;font-size:0.98rem;">
+            Need help? Contact <a href="mailto:beinvestmentfirm@gmail.com" style="color:#38b000;">beinvestmentfirm@gmail.com</a>
         </div>
     </div>
     """

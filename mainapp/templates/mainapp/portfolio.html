@@ -32,7 +32,7 @@
             <div class="portfolio-card h-100">
                 <div class="card-title">Unrealized Profit/Loss</div>
                 <div class="card-value"
-                     style="color: {% if unrealized_pl > 0 %}green{% else %}red{% endif %};">
+                    style="color: {% if unrealized_pl > 0 %}green{% elif unrealized_pl < 0 %}red{% else %}black{% endif %};">
                     Rs. {{ unrealized_pl|floatformat:2 }}
                 </div>
             </div>
