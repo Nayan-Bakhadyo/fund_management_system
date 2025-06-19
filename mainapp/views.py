@@ -65,35 +65,29 @@ def send_verification_code(request):
 
     # HTML content
     html_content = f"""
-    <div style="max-width:480px;margin:0 auto;padding:24px 18px;background:#fffbe6;border-radius:12px;
-        border:1.5px solid #bfa14a;font-family:sans-serif;">
+    <div style="max-width:480px;margin:0 auto;padding:24px 18px;background:#f6fff9;border-radius:14px;
+        border:2px solid #ffb703;font-family:sans-serif;">
         <div style="text-align:center;margin-bottom:18px;">
-            <img src="https://drive.google.com/file/d/1gCOmiNtJKrWQq5kmHOeQpKxaZPFdjIGc/view?usp=sharing" alt="BE Logo" style="width:56px;height:56px;border-radius:10px;">
+            <img src="https://beinvestmentfirm.com/static/mainapp/assets/BE_logo_final2.png" alt="BE Logo" style="width:88px;height:60px;border-radius:14px;box-shadow:0 2px 12px #b2f2dd;">
         </div>
-        <h2 style="color:#bfa14a;text-align:center;margin-bottom:10px;">Email Verification</h2>
-        <p style="color:#14213d;text-align:center;font-size:1.1rem;margin-bottom:18px;">
+        <h2 style="color:#38b000;text-align:center;margin-bottom:10px;">Email Verification</h2>
+        <p style="color:#ff8800;text-align:center;font-size:1.1rem;margin-bottom:18px;">
             Welcome to <b>BE Investment Firm</b>!<br>
             Please use the code below to verify your email address.
         </p>
-        <div style="background:#fff8e1;border-radius:8px;padding:18px 0;margin:18px 0;text-align:center;">
-            <span style="font-size:2rem;letter-spacing:6px;color:#14213d;font-weight:700;">{code}</span>
+        <div style="background:#fffbe6;border-radius:10px;padding:18px 0;margin:18px 0;text-align:center;border:1.5px solid #ffb703;">
+            <span style="font-size:2rem;letter-spacing:6px;color:#38b000;font-weight:700;">{code}</span>
         </div>
-        <ul style="color:#6c757d;font-size:0.98rem;margin-bottom:18px;">
+        <ul style="color:#40916c;font-size:0.98rem;margin-bottom:18px;">
             <li>This code is valid for 10 minutes.</li>
             <li>Do not share your code with anyone.</li>
             <li>If you did not request this, please ignore this email.</li>
         </ul>
-        <div style="text-align:center;color:#888;font-size:0.95rem;">
-            Need help? Contact <a href="mailto:beinvestmentfirm@gmail.com" style="color:#bfa14a;">beinvestmentfirm@gmail.com</a>
+        <div style="text-align:center;color:#ff8800;font-size:0.95rem;">
+            Need help? Contact <a href="mailto:beinvestmentfirm@gmail.com" style="color:#38b000;">beinvestmentfirm@gmail.com</a>
         </div>
     </div>
     """
-
-    # Plain text fallback
-    text_content = f"""Your BE Investment Firm verification code is: {code}
-This code is valid for 10 minutes. Do not share your code with anyone.
-If you did not request this, please ignore this email.
-Contact beinvestmentfirm@gmail.com for help."""
 
     email = EmailMultiAlternatives(subject, text_content, from_email, to_email)
     email.attach_alternative(html_content, "text/html")
