@@ -17,7 +17,11 @@
         <div class="row g-0">
             <!-- Sidebar -->
             <nav class="col-12 col-md-3 col-lg-2 sidebar d-flex flex-md-column align-items-center align-items-md-stretch" id="sidebar">
+                <div class="sidebar-logo w-100 d-flex justify-content-center align-items-center" style="position:sticky;top:0;z-index:2;background:inherit;">
+                    <img src="{% static 'mainapp/assets/BE_logo_final2.png' %}" alt="BE Logo" class="be-logo" style="width:90px;max-width:90px;display:block;margin:1.5rem auto 1rem auto;">
+                </div>
                 <ul class="sidebar-menu nav flex-md-column flex-row w-100 justify-content-center justify-content-md-start">
+                  <li><hr class="sidebar-gold-divider"></li>
                     <li class="nav-item w-100">
                         <a href="#" id="portfolio-link" class="nav-link text-white w-100">
                             Portfolio Performance
@@ -54,12 +58,12 @@
                         <a class="nav-link" href="{% url 'user_contract' %}">Contract</a>
                     </li>
                     {% endif %}
-                    <hr>
-                    <li class="nav-item">
-                      <a href="#" class="nav-link" id="firmStatusMenu">
-                    <i class="bi bi-bar-chart"></i> Firm's Status
-                </a>
-            </li>
+                    <li><hr class="sidebar-gold-divider"></li>
+                      <li class="nav-item">
+                        <a href="#" class="nav-link" id="firmStatusMenu">
+                          <i class="bi bi-bar-chart"></i> Firm's Status
+                        </a>
+                      </li>
                 </ul>
             </nav>
             <!-- Overlay for mobile -->
@@ -98,7 +102,7 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="uploadTransactionModalLabel">Upload Transaction Screenshot / PDF</h5>
+            <h5 class="modal-title" id="uploadTransactionModalLabel">Upload Transaction Screenshot</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
@@ -173,6 +177,9 @@
             <div class="modal-header">
               <h5 class="modal-title" id="modifyPaymentDetailModalLabel">Modify Payment Detail</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+             <div class="alert alert-info mb-3" role="alert">
+            <strong>Note:</strong> This amount and date is your preferred recurring investment amount for the firm in every month on specified date.</b> eg: 2025/06/25 means on 25th of every month, the firm expect the payment of specified amount.
             </div>
             <div class="modal-body">
               <div id="modify-payment-detail-message"></div>

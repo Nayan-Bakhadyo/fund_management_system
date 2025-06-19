@@ -11,11 +11,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function openSidebar() {
         sidebar.classList.add('open');
-        sidebarOverlay.style.display = 'block';
     }
     function closeSidebar() {
         sidebar.classList.remove('open');
-        sidebarOverlay.style.display = 'none';
     }
 
     toggleBtn.addEventListener('click', function(e) {
@@ -26,8 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
             openSidebar();
         }
     });
-
-    sidebarOverlay.addEventListener('click', closeSidebar);
 
     // Optional: close sidebar when resizing to desktop
     window.addEventListener('resize', function() {
@@ -374,3 +370,24 @@ function renderFirmStatusCharts() {
         }
     });
 }
+
+// Close sidebar on menu click (for mobile)
+document.querySelectorAll('.sidebar-menu .nav-link').forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 767) {
+            sidebar.classList.remove('open');
+        }
+    });
+});
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', function() {
+            sidebar.classList.remove('open');
+        });
+    }
+});

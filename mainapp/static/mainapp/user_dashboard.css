@@ -13,18 +13,60 @@ body {
     width: 30%;
     min-width: 180px;
     max-width: 350px;
-    background: #14213d;
+    background: #232946; /* Solid deep blue */
+    border-right: 2px solid #bfa14a;
     color: #fff;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 2rem;
+    padding-top: 0; /* Remove top padding, handled by logo */
     z-index: 1050;
     transition: left 0.3s, width 0.2s;
+    box-shadow: 2px 0 18px 0 rgba(191,161,74,0.10);
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow: hidden;
+}
+.sidebar-logo {
+    width: 100%;
+    background: inherit;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
 }
 .sidebar-logo .be-logo {
     width: 60px;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
+}
+.be-logo {
+    width: 90px;
+    max-width: 90px;
+    display: block;
+    margin: 0 auto;
+    border-radius: 16px; /* Add this line for slightly rounded corners */
+}
+.sidebar-menu {
+    flex: 1 1 auto;
+    overflow-y: auto !important;
+    max-height: calc(100vh - 120px); /* Adjust 120px if your logo/header is taller/shorter */
+    padding-bottom: 2rem;
+    margin-bottom: 0;
+    /* Optional: add a little space below the last item */
+    scrollbar-width: thin;
+    scrollbar-color: #bfa14a #232946;
+}
+.sidebar-menu::-webkit-scrollbar {
+    width: 8px;
+}
+.sidebar-menu::-webkit-scrollbar-thumb {
+    background: #bfa14a;
+    border-radius: 4px;
+}
+.sidebar-menu::-webkit-scrollbar-track {
+    background: #232946;
 }
 .sidebar-menu {
     list-style: none;
@@ -39,13 +81,36 @@ body {
     color: #fff;
     text-decoration: none;
     padding: 1rem 2rem;
-    font-size: 1.1rem;
-    border-radius: 8px;
-    transition: background 0.2s;
+    font-size: 1.13rem;
+    border-radius: 12px;
+    margin: 0.7rem 0;
+    background: linear-gradient(145deg, #2d3a5a 60%, #3a4970 100%);
+    box-shadow: 0 4px 14px 0 rgba(191,161,74,0.08);
+    transition: 
+        background 0.2s, 
+        color 0.2s, 
+        box-shadow 0.2s, 
+        transform 0.15s;
+    position: relative;
+    font-family: 'Poppins', 'Montserrat', sans-serif;
+    letter-spacing: 0.03em;
 }
-.sidebar-menu a:hover {
-    background: #bfa14a;
+.sidebar-menu a:hover, .sidebar-menu a:focus {
+    background: linear-gradient(145deg, #ffe082 60%, #bfa14a 100%);
+    color: #232946 !important;
+    box-shadow: 0 8px 24px 0 rgba(191,161,74,0.18);
+    transform: translateY(-2px) scale(1.04);
+}
+.sidebar-menu a:active {
+    background: linear-gradient(145deg, #a88d36 60%, #ffe082 100%);
     color: #14213d;
+    box-shadow: 0 2px 6px 0 rgba(191,161,74,0.10);
+    transform: translateY(1px) scale(0.98);
+}
+.sidebar-menu a.active {
+    border-left: 4px solid #bfa14a;
+    background: linear-gradient(90deg, #ffe082 30%, #fffbe6 100%);
+    color: #232946;
 }
 .main-content {
     flex: 1;
@@ -61,7 +126,7 @@ body {
     background: #fff;
     padding: 1rem 2rem;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between; /* <-- change this */
     align-items: center;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
@@ -69,6 +134,8 @@ body {
     display: flex;
     align-items: center;
     gap: 1rem;
+    min-width: 0;
+    flex-shrink: 1;
 }
 .user-dp {
     width: 40px;
@@ -79,6 +146,11 @@ body {
 }
 .user-info {
     text-align: right;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 180px; /* or whatever fits your layout */
 }
 .user-name {
     font-weight: 600;
@@ -233,6 +305,10 @@ body {
         display: flex;
         align-items: center;
     }
+    .sidebar-menu a {
+        font-size: 0.98rem;
+        padding: 0.7rem 1.2rem;
+    }
 }
 button[type="submit"] {
     background: #bfa14a;
@@ -242,4 +318,19 @@ button[type="submit"] {
 button[type="submit"]:hover {
     background: #14213d;
     color: #fff;
+}
+
+.sidebar-gold-divider {
+    border: none;
+    border-top: 3px solid #bfa14a;
+    margin: 1.2rem 1.5rem 0.7rem 1.5rem;
+    opacity: 0.95;
+    border-radius: 2px;
+    box-shadow: 0 1px 6px 0 rgba(191,161,74,0.13);
+}
+
+.alert-info {
+    background-color: #83adea !important;
+    border-color: #bfa14a !important;
+    color: black !important;
 }
