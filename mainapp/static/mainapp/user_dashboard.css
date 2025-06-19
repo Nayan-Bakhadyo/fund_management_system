@@ -51,7 +51,7 @@ body {
 .sidebar-menu {
     flex: 1 1 auto;
     overflow-y: auto !important;
-    max-height: calc(100vh - 120px); /* Adjust 120px if your logo/header is taller/shorter */
+    max-height: calc(100vh - 120px);
     padding-bottom: 2rem;
     margin-bottom: 0;
     /* Optional: add a little space below the last item */
@@ -333,4 +333,16 @@ button[type="submit"]:hover {
     background-color: #83adea !important;
     border-color: #bfa14a !important;
     color: black !important;
+}
+
+body.sidebar-open {
+    overflow: hidden;
+    touch-action: none;
+}
+
+.sidebar {
+    -webkit-overflow-scrolling: touch;
+}
+.sidebar-menu {
+    -webkit-overflow-scrolling: touch;
 }

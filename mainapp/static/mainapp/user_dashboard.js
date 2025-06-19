@@ -11,9 +11,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function openSidebar() {
         sidebar.classList.add('open');
+        document.body.classList.add('sidebar-open');
     }
     function closeSidebar() {
         sidebar.classList.remove('open');
+        document.body.classList.remove('sidebar-open');
     }
 
     toggleBtn.addEventListener('click', function(e) {
