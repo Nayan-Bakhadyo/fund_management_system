@@ -344,6 +344,11 @@ body.sidebar-open {
     touch-action: none;
 }
 
+body.modal-open {
+    overflow-y: auto !important;
+    position: static !important;
+}
+
 .sidebar {
     -webkit-overflow-scrolling: touch;
 }
