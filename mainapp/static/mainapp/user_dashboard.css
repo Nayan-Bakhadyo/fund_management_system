@@ -26,7 +26,7 @@ body {
     height: 100vh;
     position: sticky;
     top: 0;
-    overflow: hidden;
+    /* overflow: hidden; */ /* REMOVE or comment out this line */
 }
 .sidebar-logo {
     width: 100%;
@@ -51,12 +51,9 @@ body {
 .sidebar-menu {
     flex: 1 1 auto;
     overflow-y: auto !important;
-    max-height: calc(100vh - 120px);
     padding-bottom: 2rem;
     margin-bottom: 0;
-    /* Optional: add a little space below the last item */
-    scrollbar-width: thin;
-    scrollbar-color: #bfa14a #232946;
+    -webkit-overflow-scrolling: touch;
 }
 .sidebar-menu::-webkit-scrollbar {
     width: 8px;
@@ -297,6 +294,9 @@ body {
     }
     .main-content {
         margin-left: 0 !important;
+        height: 100vh;
+        overflow-y: auto;
+        
     }
     .topbar {
         position: sticky;
@@ -308,6 +308,9 @@ body {
     .sidebar-menu a {
         font-size: 0.98rem;
         padding: 0.7rem 1.2rem;
+    }
+    .sidebar-menu {
+        max-height: calc(100vh - 70px); /* mobile: adjust for logo height */
     }
 }
 button[type="submit"] {
