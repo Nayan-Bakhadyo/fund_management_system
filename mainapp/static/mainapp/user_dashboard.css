@@ -339,10 +339,10 @@ button[type="submit"]:hover {
     color: black !important;
 }
 
-body.sidebar-open {
+/*body.sidebar-open {
     overflow: hidden;
     touch-action: none;
-}
+}*/
 
 body.modal-open {
     overflow-y: auto !important;
