@@ -296,3 +296,81 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+  const firmStatusMenu = document.getElementById('firmStatusMenu');
+  if (firmStatusMenu) {
+    firmStatusMenu.addEventListener('click', function(e) {
+      e.preventDefault();
+      // Show modal and loading spinner
+      const modal = new bootstrap.Modal(document.getElementById('firmStatusModal'));
+      document.getElementById('firm-status-dashboard').innerHTML =
+        '<div class="text-center py-5"><div class="spinner-border text-success" role="status"></div></div>';
+      modal.show();
+      // Fetch dashboard content and render charts
+      fetch('/firm_status_dashboard/')
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('firm-status-dashboard').innerHTML = data.html;
+          setTimeout(renderFirmStatusCharts, 100); // Give DOM time to update
+        });
+    });
+  }
+});
+
+function renderFirmStatusCharts() {
+    // Pie Chart
+    const pieCanvas = document.getElementById('capitalPieChart');
+    const lineCanvas = document.getElementById('capitalLineChart');
+    if (!pieCanvas || !lineCanvas) return;
+
+    // Get data from data attributes or hidden inputs if needed
+    const invested = parseFloat(pieCanvas.getAttribute('data-invested')) || 0;
+    const reserve = parseFloat(pieCanvas.getAttribute('data-reserve')) || 0;
+
+    // For line chart, you can use data attributes or JSON embedded in the HTML
+    const lineLabels = JSON.parse(lineCanvas.getAttribute('data-labels') || '[]');
+    const lineData = JSON.parse(lineCanvas.getAttribute('data-data') || '[]');
+
+    // Pie Chart
+    new Chart(pieCanvas.getContext('2d'), {
+        type: 'pie',
+        data: {
+            labels: ['Invested Capital', 'Reserve Cash'],
+            datasets: [{
+                data: [invested, reserve],
+                backgroundColor: ['#0d6efd', '#ffc107'],
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+
+    // Line Chart
+    new Chart(lineCanvas.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: lineLabels,
+            datasets: [{
+                label: 'Total Capital',
+                data: lineData,
+                borderColor: '#198754',
+                backgroundColor: 'rgba(25,135,84,0.1)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 3,
+                pointBackgroundColor: '#198754'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { title: { display: true, text: 'Date' } },
+                y: { title: { display: true, text: 'Total Capital' }, beginAtZero: false }
+            }
+        }
+    });
+}

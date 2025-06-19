@@ -1,10 +1,12 @@
+{% load indian_format %}
+
 {% if latest_record %}
 <div class="row g-3 mb-4">
   <div class="col-12 col-md-3">
     <div class="card text-center shadow-sm">
       <div class="card-body">
         <div class="card-title fw-bold text-success">Total Capital</div>
-        <div class="display-6">Nrs. {{ latest_record.total_capital|floatformat:2 }}</div>
+        <div class="display-6">Nrs. {{ latest_record.total_capital|indian_format }}</div>
       </div>
     </div>
   </div>
@@ -12,7 +14,7 @@
     <div class="card text-center shadow-sm">
       <div class="card-body">
         <div class="card-title fw-bold text-primary">Total Invested Capital</div>
-        <div class="display-6">Nrs. {{ latest_record.invested_capital|floatformat:2 }}</div>
+        <div class="display-6">Nrs. {{ latest_record.invested_capital|indian_format }}</div>
       </div>
     </div>
   </div>
@@ -20,7 +22,7 @@
     <div class="card text-center shadow-sm">
       <div class="card-body">
         <div class="card-title fw-bold text-warning">Total Reserve Cash</div>
-        <div class="display-6">{{ latest_record.available_capital|floatformat:2 }}</div>
+        <div class="display-6">Nrs. {{ latest_record.available_capital|indian_format }}</div>
       </div>
     </div>
   </div>
