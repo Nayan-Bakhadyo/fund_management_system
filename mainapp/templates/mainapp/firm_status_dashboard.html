@@ -1,0 +1,108 @@
+{% if latest_record %}
+<div class="row g-3 mb-4">
+  <div class="col-12 col-md-3">
+    <div class="card text-center shadow-sm">
+      <div class="card-body">
+        <div class="card-title fw-bold text-success">Total Capital</div>
+        <div class="display-6">Nrs. {{ latest_record.total_capital|floatformat:2 }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-3">
+    <div class="card text-center shadow-sm">
+      <div class="card-body">
+        <div class="card-title fw-bold text-primary">Total Invested Capital</div>
+        <div class="display-6">Nrs. {{ latest_record.invested_capital|floatformat:2 }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-3">
+    <div class="card text-center shadow-sm">
+      <div class="card-body">
+        <div class="card-title fw-bold text-warning">Total Reserve Cash</div>
+        <div class="display-6">{{ latest_record.available_capital|floatformat:2 }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-3">
+    <div class="card text-center shadow-sm">
+      <div class="card-body">
+        <div class="card-title fw-bold text-info">Total Circulating Unit</div>
+        <div class="display-6">{{ latest_record.total_circulating_unit|floatformat:0 }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-md-6">
+    <div class="card p-3">
+      <div class="card-title">Capital Distribution</div>
+      <canvas id="capitalPieChart"
+          data-invested="{{ latest_record.invested_capital|floatformat:2 }}"
+          data-reserve="{{ latest_record.available_capital|floatformat:2 }}"></canvas>
+    </div>
+  </div>
+  <div class="col-12 col-md-6">
+    <div class="card p-3">
+      <div class="card-title">Total Capital Over Time</div>
+      <canvas id="capitalLineChart"
+    data-labels='[{% for rec in history %}"{{ rec.date_time|date:"Y-m-d" }}"{% if not forloop.last %},{% endif %}{% endfor %}]'
+    data-data='[{% for rec in history %}{{ rec.total_capital|floatformat:2 }}{% if not forloop.last %},{% endif %}{% endfor %}]'></canvas>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Pie Chart
+  const pieCtx = document.getElementById('capitalPieChart').getContext('2d');
+  new Chart(pieCtx, {
+    type: 'pie',
+    data: {
+      labels: ['Invested Capital', 'Reserve Cash'],
+      datasets: [{
+        data: [
+          {{ latest_record.invested_capital|floatformat:2 }},
+          {{ latest_record.available_capital|floatformat:2 }}
+        ],
+        backgroundColor: ['#0d6efd', '#ffc107'],
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+
+  // Line Chart
+  const lineCtx = document.getElementById('capitalLineChart').getContext('2d');
+  new Chart(lineCtx, {
+    type: 'line',
+    data: {
+      labels: [{% for rec in history %}'{{ rec.date_time|date:"Y-m-d" }}',{% endfor %}],
+      datasets: [{
+        label: 'Total Capital',
+        data: [{% for rec in history %}{{ rec.total_capital|floatformat:2 }},{% endfor %}],
+        borderColor: '#198754',
+        backgroundColor: 'rgba(25,135,84,0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 3,
+        pointBackgroundColor: '#198754'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { title: { display: true, text: 'Date' } },
+        y: { title: { display: true, text: 'Total Capital' }, beginAtZero: false }
+      }
+    }
+  });
+});
+</script>
+{% else %}
+<div class="alert alert-warning text-center">No capital records found.</div>
+{% endif %}

@@ -1,6 +1,7 @@
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.views.decorators.http import require_GET
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
 from django.db.models import Max, Sum
@@ -251,14 +252,16 @@ def add_transaction(request):
                     if action_type == 'deposit':
                         new_available_capital = latest_capital.available_capital + amount
                         new_total_circulating_unit = latest_capital.total_circulating_unit + purchase_nav
+                        new_total_capital = latest_capital.total_capital + amount
                     elif action_type == 'withdrawal':
                         new_available_capital = latest_capital.available_capital - amount
                         new_total_circulating_unit = latest_capital.total_circulating_unit + purchase_nav  # purchase_nav is negative for withdrawal
+                        new_total_capital = latest_capital.total_capital - amount
 
 
                     # 4. Create a new TotalCapitalRecord with updated values
                     TotalCapitalRecord.objects.create(
-                        total_capital=latest_capital.total_capital,  # or update as needed
+                        total_capital= new_total_capital,
                         invested_capital=latest_capital.invested_capital,  # or update as needed
                         available_capital=new_available_capital,
                         total_circulating_unit=new_total_circulating_unit
@@ -324,16 +327,18 @@ def add_transaction(request):
                         if action_type == 'deposit':
                             new_available_capital = latest_capital.available_capital + amount
                             new_total_circulating_unit = latest_capital.total_circulating_unit + purchase_nav
+                            new_total_capital = latest_capital.total_capital + amount
                         elif action_type == 'withdrawal':
                             new_available_capital = latest_capital.available_capital - amount
                             new_total_circulating_unit = latest_capital.total_circulating_unit + purchase_nav  # purchase_nav is negative for withdrawal
+                            new_total_capital = latest_capital.total_capital - amount
 
                         # 3. Optionally, update total_capital and invested_capital as needed
                         # For example, you might want to keep total_capital unchanged, or update it as per your business logic
 
                         # 4. Create a new TotalCapitalRecord with updated values
                         TotalCapitalRecord.objects.create(
-                            total_capital=latest_capital.total_capital,  # or update as needed
+                            total_capital=new_total_capital,  # or update as needed
                             invested_capital=latest_capital.invested_capital,  # or update as needed
                             available_capital=new_available_capital,
                             total_circulating_unit=new_total_circulating_unit
@@ -795,7 +800,7 @@ def close_investment_modal(request):
 
                         new_available_capital = available_capital
                         TotalCapitalRecord.objects.create(
-                            total_capital=total_capital,
+                            total_capital=invested_capital + new_available_capital,
                             invested_capital=invested_capital,
                             available_capital=new_available_capital,
                             total_circulating_unit=total_circulating_unit + purchase_unit
@@ -902,3 +907,14 @@ def payment_detail(request):
             return JsonResponse({'success': True})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
+        
+@login_required
+@require_GET
+def firm_status_dashboard(request):
+    latest_record = TotalCapitalRecord.objects.order_by('-id').first()
+    history = TotalCapitalRecord.objects.order_by('date_time').values('date_time', 'total_capital')
+    html = render_to_string('mainapp/firm_status_dashboard.html', {
+        'latest_record': latest_record,
+        'history': list(history),
+    })
+    return JsonResponse({'html': html})
