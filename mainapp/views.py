@@ -663,16 +663,83 @@ def add_investment_transaction(request):
                             investment=investment, amount_type='return'
                         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
 
-                        print("Total Invested:", total_invested)
-                        print("Total Return Before:", total_return_before)
-                        print("New Return Amount:", amount)
-                        if total_invested > (total_return_before + amount):
+                        # Calculate what the total return will be after this transaction
+                        total_return_after = total_return_before + amount
+
+                        if total_return_before > total_invested:
+                            # All returns are profit, so 20% of this amount goes to beinvestmentfirm.com
+                            profit_20 = amount * Decimal('0.20')
+
+                            # Fetch latest NAVRecord by id
+                            latest_nav = NAVRecord.objects.latest('id')
+                            unit_cost = latest_nav.unit_cost
+                            
+                            be_user = AuthorizedUser.objects.get(email='beinvestmentfirm@gmail.com')
+                            be_user_nav = UserNAV.objects.get(authorized_user=be_user)
+
+                            profit_20 = profit_20 + be_user_nav.available_credit_amount
+                            # Calculate purchase units and remaining credit
+
+                            purchase_unit = profit_20 // unit_cost
+                            remaining_credit = profit_20 - (purchase_unit * unit_cost)
+
+                            UserTransaction.objects.create(
+                                authorized_user=be_user,
+                                transaction_type='deposit',
+                                unit_cost=unit_cost,
+                                purchase_initiated_amount=profit_20,
+                                purchase_unit=purchase_unit,
+                                remaining_credit=remaining_credit,
+                                description=f"{investment.investment_name} - profit credited"
+                            )
+
+                            # Update UserNav for beinvestmentfirm@gmail.com
+                            user_nav = UserNAV.objects.get(authorized_user=be_user)
+                            user_nav.available_unit += purchase_unit
+                            user_nav.available_credit_amount = remaining_credit
+                            user_nav.save()
+
                             new_available_capital = available_capital + amount
-                            new_invested_capital = invested_capital - amount
+                            new_invested_capital = invested_capital
+                            total_circulating_unit += purchase_unit
+
                         else:
-                            remaining_inv = total_invested - total_return_before
+                            # Only the profit portion above total_invested is subject to 20%
+                            profit = total_return_after - total_invested
+                            if profit > 0:
+                                profit_20 = profit * Decimal('0.20')
+
+                                latest_nav = NAVRecord.objects.latest('id')
+                                unit_cost = latest_nav.unit_cost
+
+                                be_user = AuthorizedUser.objects.get(email='beinvestmentfirm@gmail.com')
+                                be_user_nav = UserNAV.objects.get(authorized_user=be_user)
+                                
+                                profit_20 = profit_20 + be_user_nav.available_credit_amount
+
+                                purchase_unit = profit_20 // unit_cost
+                                remaining_credit = profit_20 - (purchase_unit * unit_cost)
+
+                                be_user = AuthorizedUser.objects.get(email='beinvestmentfirm@gmail.com')
+                                UserTransaction.objects.create(
+                                    authorized_user=be_user,
+                                    transaction_type='deposit',
+                                    unit_cost=unit_cost,
+                                    purchase_initiated_amount=profit_20,
+                                    purchase_unit=purchase_unit,
+                                    remaining_credit=remaining_credit,
+                                    description=f"{investment.investment_name} - profit credited"
+                                )
+
+                                # Update UserNav for beinvestmentfirm@gmail.com
+                                user_nav = UserNAV.objects.get(authorized_user=be_user)
+                                user_nav.available_unit += purchase_unit
+                                user_nav.available_credit_amount = remaining_credit
+                                user_nav.save()
+
                             new_available_capital = available_capital + amount
-                            new_invested_capital = invested_capital - remaining_inv
+                            new_invested_capital = invested_capital - (amount - profit)
+                            total_circulating_unit += purchase_unit
                     else:
                         return JsonResponse({"success": False, "error": "Invalid amount type."})
                     

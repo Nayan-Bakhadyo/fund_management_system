@@ -176,3 +176,21 @@ class UserTransactionUpload(models.Model):
 
     def __str__(self):
         return f"Transaction upload by {self.email} on {self.date_time.strftime('%Y-%m-%d %H:%M:%S')}"
+
+class AuditLog(models.Model):
+    ACTION_CHOICES = [
+        ('CREATE', 'Create'),
+        ('UPDATE', 'Update'),
+        ('DELETE', 'Delete'),
+        ('OTHER', 'Other'),
+    ]
+    table_name = models.CharField(max_length=100)
+    object_id = models.CharField(max_length=100, blank=True, null=True)
+    action = models.CharField(max_length=10, choices=ACTION_CHOICES)
+    changed_by = models.CharField(max_length=100, blank=True, null=True)
+    change_message = models.TextField()
+    triggered_by = models.CharField(max_length=100, blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.table_name} {self.action} by {self.changed_by} at {self.timestamp}"
