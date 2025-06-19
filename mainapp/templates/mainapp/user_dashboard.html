@@ -93,8 +93,35 @@
                         <div class="dashboard-title">Welcome to Your Dashboard</div>
                         <div class="dashboard-message">
                             Hello, {{ user.get_full_name|default:user.username }}!<br>
-                            This is your user dashboard.
                         </div>
+                        <br>
+                        <div class="alert mb-3" role="alert" style="background:#fffbe6; border-color:#bfa14a; color:#232946;">
+  <strong>Need help?</strong> You can use our <b>Virtual Bot</b> for more information by clicking the chat icon at the bottom right corner of your screen.
+</div>
+                        <div class="alert alert-info mb-3" role="alert" style="background-color:#fffbe6; border-color:#bfa14a; color:#bfa14a;">
+                          <strong>Tip:</strong> For an app-like experience on your iPhone:<br>
+                          1. Visit this site in <b>Safari</b>.<br>
+                          2. Tap the <b>Share</b> icon and select <b>“Add to Home Screen”</b>.<br>
+                          3. Open from your home screen for a fullscreen, app-like experience with the BE icon.
+                      </div>
+                      <div class="alert mb-3" role="alert" style="background:#e7ecfa; border-color:#2d3a5a; color:#232946;">
+  <strong>Instructions for Payment and Withdrawal:</strong>
+  <br><br>
+  <b>Payment:</b>
+  <ol class="mb-2 ps-3">
+    <li>Go to <b>Modify Payment Detail</b> and update your details.</li>
+    <li>Go to <b>View Bank Detail</b> menu and transfer the amount to that bank account.</li>
+    <li>Go to <b>Upload Transaction</b> and upload a screenshot of your transaction.</li>
+    <li>Your payment will be reflected in your portfolio within 1 business day.</li>
+  </ol>
+  <b>Withdrawal:</b>
+  <ol class="mb-0 ps-3">
+    <li>From <b>My Bank Detail</b> menu, enter your bank account details.</li>
+    <li>Drop a withdrawal request through email.</li>
+    <li>The amount will be transferred to your specified bank account after confirmation.</li>
+  </ol>
+</div>
+                        <div id="transaction-history-section" class="mb-4">
                     </div>
                 </main>
             </div>
@@ -230,5 +257,8 @@
         navigator.serviceWorker.register("{% static 'serviceworker.js' %}");
       }
     </script>
+    <!-- Zapier Chatbot Embed -->
+    <script async type='module' src='https://interfaces.zapier.com/assets/web-components/zapier-interfaces/zapier-interfaces.esm.js'></script>
+    <zapier-interfaces-chatbot-embed is-popup='true' chatbot-id='cmc3vdkw7004gb3vjafi6ioam'></zapier-interfaces-chatbot-embed>
 </body>
 </html>

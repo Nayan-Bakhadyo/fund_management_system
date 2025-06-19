@@ -308,6 +308,7 @@ body {
     .sidebar-menu a {
         font-size: 0.98rem;
         padding: 0.7rem 1.2rem;
+        margin: 0.35rem 0; /* Reduce vertical gap by 50% */
     }
     .sidebar-menu {
         max-height: calc(100vh - 70px); /* mobile: adjust for logo height */
