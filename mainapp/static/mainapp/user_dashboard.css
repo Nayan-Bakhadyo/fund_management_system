@@ -248,6 +248,18 @@ body {
     display: none;
 }
 @media (max-width: 767px) {
+    .sidebar-menu .nav-item {
+    height: 50px;
+    margin-bottom: 0 !important;
+}
+.sidebar-menu .nav-item {
+    margin-bottom: 0 !important;
+}
+
+.sidebar-menu .nav-link {
+    margin-bottom: 0 !important;
+    margin-top: 0 !important;
+}
     .dashboard-container {
         position: relative;
     }
@@ -355,3 +367,4 @@ body.modal-open {
 .sidebar-menu {
     -webkit-overflow-scrolling: touch;
 }
+
