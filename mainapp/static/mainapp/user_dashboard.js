@@ -5,29 +5,60 @@ document.addEventListener('DOMContentLoaded', function() {
     const portfolioLink = document.getElementById('portfolio-link');
     const transactionHistoryLink = document.getElementById('transaction-history');
     const bankDetailLink = document.getElementById('bank-detail-link');
-    const dashboardContent = document.getElementById('dashboard-content');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
     const viewUserDashboardLink = document.getElementById('view-user-dashboard');
+    const dynamicContent = document.getElementById('dynamic-content');
+    const portfolioSection = document.getElementById('portfolio-section');
+    const transactionSection = document.getElementById('transaction-history-section');
+    const bankDetailSection = document.getElementById('bank-detail-section');
 
     function openSidebar() {
         sidebar.classList.add('open');
         document.body.classList.add('sidebar-open');
     }
+    
     function closeSidebar() {
         sidebar.classList.remove('open');
         document.body.classList.remove('sidebar-open');
     }
 
-    toggleBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        if (sidebar.classList.contains('open')) {
+    // Toggle sidebar on button click
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (sidebar.classList.contains('open')) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
+        });
+    }
+
+    // Enhanced sidebar functionality for modern UI
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', function() {
             closeSidebar();
-        } else {
-            openSidebar();
+        });
+    }
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768 && 
+            sidebar.classList.contains('open') && 
+            !sidebar.contains(e.target) && 
+            toggleBtn && !toggleBtn.contains(e.target)) {
+            closeSidebar();
         }
     });
 
-    // Optional: close sidebar when resizing to desktop
+    // Close sidebar on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+            closeSidebar();
+        }
+    });
+
+    // Close sidebar when resizing to desktop
     window.addEventListener('resize', function() {
         if (window.innerWidth > 767) {
             closeSidebar();
@@ -82,14 +113,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // When the user clicks "Portfolio Performance"
+    // Helper function to hide all sections and show specific one
+    function showSection(sectionToShow) {
+        const allSections = document.querySelectorAll('.content-section');
+        allSections.forEach(section => section.style.display = 'none');
+        if (sectionToShow) {
+            sectionToShow.style.display = 'block';
+        }
+    }
+
+    // When the user clicks "My Portfolio"
     if (portfolioLink) {
         portfolioLink.addEventListener('click', function(e) {
             e.preventDefault();
             fetch('/user/portfolio/', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(response => response.text())
                 .then(html => {
-                    dashboardContent.innerHTML = html;
+                    portfolioSection.innerHTML = html;
+                    showSection(portfolioSection);
                     renderNavChart(); // Call this after injecting the HTML
                 });
         });
@@ -105,7 +146,8 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.text())
             .then(html => {
-                dashboardContent.innerHTML = html;
+                transactionSection.innerHTML = html;
+                showSection(transactionSection);
             });
         });
     }
@@ -116,7 +158,8 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch('/user/bank_detail/', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(response => response.json())
                 .then(data => {
-                    dashboardContent.innerHTML = data.html;
+                    bankDetailSection.innerHTML = data.html;
+                    showSection(bankDetailSection);
                     attachBankDetailFormHandler();
                 });
         });
@@ -149,13 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (cancelBtn) {
             cancelBtn.addEventListener('click', function() {
-                dashboardContent.innerHTML = `
-                    <div class="dashboard-title">Welcome to Your Dashboard</div>
-                    <div class="dashboard-message">
-                        Hello, ${document.querySelector('.user-name').textContent}!<br>
-                        This is your user dashboard.
-                    </div>
-                `;
+                showSection(null); // Hide all sections to show the main dashboard
             });
         }
     }
@@ -179,22 +216,119 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
 
-document.addEventListener('DOMContentLoaded', function() {
-  // Modal open on menu click
-  const uploadMenu = document.getElementById('uploadTransactionMenu');
-  if (uploadMenu) {
-    uploadMenu.addEventListener('click', function(e) {
-      e.preventDefault();
-      const modal = new bootstrap.Modal(document.getElementById('uploadTransactionModal'));
-      modal.show();
+    // Action card click handlers
+    document.addEventListener('click', function(e) {
+        const actionCard = e.target.closest('.action-card');
+        if (actionCard) {
+            const action = actionCard.dataset.action;
+            handleActionCardClick(action);
+        }
     });
-  }
 
-  // (Keep your AJAX form submission code here as before)
+    function handleActionCardClick(action) {
+        switch(action) {
+            case 'upload-transaction':
+                const uploadModal = new bootstrap.Modal(document.getElementById('uploadTransactionModal'));
+                uploadModal.show();
+                break;
+            case 'bank-details':
+                const bankModal = new bootstrap.Modal(document.getElementById('bankDetailModal'));
+                bankModal.show();
+                break;
+            case 'payment-settings':
+                const paymentModal = new bootstrap.Modal(document.getElementById('modifyPaymentDetailModal'));
+                paymentModal.show();
+                break;
+            case 'firm-portfolio':
+                const firmModal = new bootstrap.Modal(document.getElementById('firmStatusModal'));
+                firmModal.show();
+                // Load firm status data
+                loadFirmStatus();
+                break;
+        }
+    }
+
+    function loadFirmStatus() {
+        const modalBody = document.getElementById('firm-status-dashboard');
+        modalBody.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>';
+        
+        fetch('/user/firm_status/', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.text())
+        .then(html => {
+            modalBody.innerHTML = html;
+        })
+        .catch(error => {
+            modalBody.innerHTML = '<div class="alert alert-danger">Failed to load firm status.</div>';
+        });
+    }
+
+}); // End of main DOMContentLoaded block
+
+    // Modal menu items event handlers
+    const uploadTransactionMenu = document.getElementById('uploadTransactionMenu');
+    const viewBankDetailMenu = document.getElementById('viewBankDetailMenu');
+    const modifyPaymentDetailMenu = document.getElementById('modifyPaymentDetailMenu');
+    const firmStatusMenu = document.getElementById('firmStatusMenu');
+
+    if (uploadTransactionMenu) {
+        uploadTransactionMenu.addEventListener('click', function(e) {
+            e.preventDefault();
+            const uploadModal = new bootstrap.Modal(document.getElementById('uploadTransactionModal'));
+            uploadModal.show();
+            if (window.innerWidth <= 767) closeSidebar();
+        });
+    }
+
+    if (viewBankDetailMenu) {
+        viewBankDetailMenu.addEventListener('click', function(e) {
+            e.preventDefault();
+            const bankModal = new bootstrap.Modal(document.getElementById('bankDetailModal'));
+            bankModal.show();
+            if (window.innerWidth <= 767) closeSidebar();
+        });
+    }
+
+    if (modifyPaymentDetailMenu) {
+        modifyPaymentDetailMenu.addEventListener('click', function(e) {
+            e.preventDefault();
+            const paymentModal = new bootstrap.Modal(document.getElementById('modifyPaymentDetailModal'));
+            paymentModal.show();
+            if (window.innerWidth <= 767) closeSidebar();
+        });
+    }
+
+    if (firmStatusMenu) {
+        firmStatusMenu.addEventListener('click', function(e) {
+            e.preventDefault();
+            const firmModal = new bootstrap.Modal(document.getElementById('firmStatusModal'));
+            firmModal.show();
+            loadFirmStatus();
+            if (window.innerWidth <= 767) closeSidebar();
+        });
+    }
+
+    // Close sidebar on menu click for content sections (mobile)
+    if (portfolioLink) {
+        portfolioLink.addEventListener('click', function() {
+            if (window.innerWidth <= 767) closeSidebar();
+        });
+    }
+    if (transactionHistoryLink) {
+        transactionHistoryLink.addEventListener('click', function() {
+            if (window.innerWidth <= 767) closeSidebar();
+        });
+    }
+    if (bankDetailLink) {
+        bankDetailLink.addEventListener('click', function() {
+            if (window.innerWidth <= 767) closeSidebar();
+        });
+    }
 });
 
+// Transaction upload form handler
 document.addEventListener('DOMContentLoaded', function() {
   const form = document.getElementById('transaction-upload-form');
   const messageDiv = document.getElementById('transaction-upload-message');
@@ -268,8 +402,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const modal = new bootstrap.Modal(document.getElementById('modifyPaymentDetailModal'));
         modal.show();
       });
-    });
-  }
+    }
+  });
 
   // Handle form submit
   const form = document.getElementById('modify-payment-detail-form');
@@ -373,23 +507,60 @@ function renderFirmStatusCharts() {
     });
 }
 
-// Close sidebar on menu click (for mobile)
-document.querySelectorAll('.sidebar-menu .nav-link').forEach(function(link) {
-    link.addEventListener('click', function() {
-        if (window.innerWidth <= 767) {
+// Close sidebar on menu click (for mobile) - outside DOMContentLoaded
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('nav-link') && window.innerWidth <= 767) {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
             sidebar.classList.remove('open');
         }
-    });
-});
-
-
-document.addEventListener('DOMContentLoaded', function() {
-    const sidebar = document.getElementById('sidebar');
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
-
-    if (sidebarOverlay) {
-        sidebarOverlay.addEventListener('click', function() {
-            sidebar.classList.remove('open');
-        });
     }
 });
+
+// Action Card Event Handlers for new modern UI - outside DOMContentLoaded  
+document.addEventListener('click', function(e) {
+    const actionCard = e.target.closest('.action-card');
+    if (actionCard) {
+        const action = actionCard.dataset.action;
+        handleActionCardClick(action);
+    }
+});
+
+function handleActionCardClick(action) {
+    switch(action) {
+        case 'upload-transaction':
+            const uploadModal = new bootstrap.Modal(document.getElementById('uploadTransactionModal'));
+            uploadModal.show();
+            break;
+        case 'bank-details':
+            const bankModal = new bootstrap.Modal(document.getElementById('bankDetailModal'));
+            bankModal.show();
+            break;
+        case 'payment-settings':
+            const paymentModal = new bootstrap.Modal(document.getElementById('modifyPaymentDetailModal'));
+            paymentModal.show();
+            break;
+        case 'firm-portfolio':
+            const firmModal = new bootstrap.Modal(document.getElementById('firmStatusModal'));
+            firmModal.show();
+            // Load firm status data
+            loadFirmStatusExternal();
+            break;
+    }
+}
+
+function loadFirmStatusExternal() {
+    const modalBody = document.getElementById('firm-status-dashboard');
+    modalBody.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>';
+    
+    fetch('/user/firm_status/', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.text())
+    .then(html => {
+        modalBody.innerHTML = html;
+    })
+    .catch(error => {
+        modalBody.innerHTML = '<div class="alert alert-danger">Failed to load firm status.</div>';
+    });
+}

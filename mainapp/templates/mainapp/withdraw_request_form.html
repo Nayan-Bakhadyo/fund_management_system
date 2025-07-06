@@ -1,0 +1,267 @@
+<div class="withdraw-request-container">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-cash-coin"></i> Withdrawal Request
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="withdraw-request-form">
+                        {% csrf_token %}
+                        
+                        <!-- Amount Input -->
+                        <div class="mb-3">
+                            <label for="requested_amount" class="form-label">
+                                Withdrawal Amount <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">NRs.</span>
+                                <input type="number" class="form-control" id="requested_amount" name="requested_amount" 
+                                       step="0.01" min="1" max="{{ total_available }}" required>
+                            </div>
+                            <div class="form-text">
+                                Maximum available: <strong>NRs. {{ total_available|floatformat:2 }}</strong>
+                            </div>
+                        </div>
+
+                        <!-- Withdrawal Type -->
+                        <div class="mb-3">
+                            <label for="withdrawal_type" class="form-label">Withdrawal Type</label>
+                            <select class="form-select" id="withdrawal_type" name="withdrawal_type">
+                                <option value="partial">Partial Withdrawal</option>
+                                <option value="full">Full Withdrawal</option>
+                                <option value="emergency">Emergency Withdrawal</option>
+                            </select>
+                        </div>
+
+                        <!-- Reason (Optional) -->
+                        <div class="mb-3">
+                            <label for="user_reason" class="form-label">Reason for Withdrawal (Optional)</label>
+                            <textarea class="form-control" id="user_reason" name="user_reason" rows="3" 
+                                      placeholder="Please provide a brief reason for this withdrawal request..."></textarea>
+                        </div>
+
+                        <!-- Bank Details Display -->
+                        <div class="mb-3">
+                            <label class="form-label">Transfer to Bank Account</label>
+                            <div class="bank-details-display">
+                                <div class="bank-info">
+                                    <strong>{{ bank_detail.bank_name }}</strong><br>
+                                    Account: {{ bank_detail.bank_number }}<br>
+                                    Holder: {{ bank_detail.account_holder_name }}<br>
+                                    Branch: {{ bank_detail.branch }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="button" class="btn btn-secondary me-md-2" id="cancelWithdrawRequest">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Available Balance Card -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Available Balance</h6>
+                </div>
+                <div class="card-body">
+                    <div class="balance-item">
+                        <span class="balance-label">Portfolio Value:</span>
+                        <span class="balance-value">NRs. {{ available_units|floatformat:2 }} × {{ current_nav|floatformat:2 }}</span>
+                        <span class="balance-total">= NRs. {{ available_units|floatformat:2|mul:current_nav|floatformat:2 }}</span>
+                    </div>
+                    <div class="balance-item">
+                        <span class="balance-label">Available Credit:</span>
+                        <span class="balance-value">NRs. {{ available_credit|floatformat:2 }}</span>
+                    </div>
+                    <hr>
+                    <div class="balance-item total">
+                        <span class="balance-label"><strong>Total Available:</strong></span>
+                        <span class="balance-value"><strong>NRs. {{ total_available|floatformat:2 }}</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Important Notes -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Important Notes</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li><i class="bi bi-info-circle text-info"></i> Processing time: 3-5 business days</li>
+                        <li><i class="bi bi-shield-check text-success"></i> All requests are reviewed by fund manager</li>
+                        <li><i class="bi bi-bank text-warning"></i> Amount will be transferred to your registered bank account</li>
+                        <li><i class="bi bi-envelope text-primary"></i> You'll receive email notifications on status updates</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Cancel button
+    const cancelBtn = document.getElementById('cancelWithdrawRequest');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', function() {
+            // Show main dashboard
+            const portfolioLink = document.getElementById('portfolio-link');
+            if (portfolioLink) {
+                portfolioLink.click();
+            }
+        });
+    }
+
+    // Amount validation
+    const amountInput = document.getElementById('requested_amount');
+    const maxAmount = {{ total_available }};
+    
+    if (amountInput) {
+        amountInput.addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            if (value > maxAmount) {
+                this.setCustomValidity(`Amount cannot exceed NRs. ${maxAmount.toFixed(2)}`);
+            } else if (value <= 0) {
+                this.setCustomValidity('Amount must be greater than 0');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+    }
+
+    // Withdrawal type change
+    const typeSelect = document.getElementById('withdrawal_type');
+    if (typeSelect) {
+        typeSelect.addEventListener('change', function() {
+            if (this.value === 'full' && amountInput) {
+                amountInput.value = maxAmount.toFixed(2);
+            }
+        });
+    }
+});
+</script>
+
+<style>
+.withdraw-request-container {
+    padding: 2rem;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    color: white;
+    border-radius: 0.75rem 0.75rem 0 0 !important;
+    border: none;
+}
+
+.bank-details-display {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.bank-info {
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.balance-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.balance-item.total {
+    font-size: 1rem;
+    margin-top: 0.5rem;
+}
+
+.balance-label {
+    color: #6b7280;
+}
+
+.balance-value {
+    color: #1f2937;
+}
+
+.balance-total {
+    color: #059669;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: #6b7280;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+}
+
+.btn-secondary:hover {
+    background: #4b5563;
+    transform: translateY(-1px);
+}
+
+.input-group-text {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.form-control:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+}
+
+.form-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+}
+
+@media (max-width: 768px) {
+    .withdraw-request-container {
+        padding: 1rem;
+    }
+    
+    .balance-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+}
+</style>

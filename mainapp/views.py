@@ -5,7 +5,7 @@ from django.views.decorators.http import require_GET
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
 from django.db.models import Max, Sum
-from .models import AuthorizedUser, UserRecurringPayment, UserTransaction, UserNAV, NAVRecord, UserBankDetail, InvestmentCategory, FirmInvestment, TotalCapitalRecord, InvestmentTransaction, UserTransactionUpload
+from .models import AuthorizedUser, UserRecurringPayment, UserTransaction, UserNAV, NAVRecord, UserBankDetail, InvestmentCategory, FirmInvestment, TotalCapitalRecord, InvestmentTransaction, UserTransactionUpload, WithdrawalRequest
 import random
 from django import template
 from django.contrib.auth import logout
@@ -374,8 +374,51 @@ def view_transactions(request):
 @login_required
 def user_dashboard(request):
     authorized_user = AuthorizedUser.objects.get(email=request.user.email)
+    
+    # Fetch portfolio data for dashboard cards
+    user_nav = UserNAV.objects.filter(authorized_user__email=request.user.email).first()
+    total_units = user_nav.available_unit if user_nav else 0
+    
+    # Fetch latest NAV record
+    latest_nav_record = NAVRecord.objects.order_by('-date_time').first()
+    nav = latest_nav_record.unit_cost if latest_nav_record else 0
+    nav_date = latest_nav_record.date_time.strftime('%B %d, %Y') if latest_nav_record else 'N/A'
+    
+    # Calculate total amount (Portfolio Value)
+    total_amount = (total_units * nav) + (user_nav.available_credit_amount if user_nav else 0)
+    total_amount_format = indian_number_format(total_amount)
+    
+    # Calculate total invested amount
+    total_deposit = UserTransaction.objects.filter(
+        authorized_user__email=request.user.email,
+        transaction_type='deposit'
+    ).aggregate(total=Sum('purchase_initiated_amount'))['total'] or 0
+    
+    total_withdrawal = UserTransaction.objects.filter(
+        authorized_user__email=request.user.email,
+        transaction_type='withdrawal'
+    ).aggregate(total=Sum('purchase_initiated_amount'))['total'] or 0
+    
+    total_invested = total_deposit - total_withdrawal
+    
+    # Calculate unrealized profit/loss
+    unrealized_pl = total_amount - total_invested
+    
+    # Fetch NAV data for chart
+    nav_records = NAVRecord.objects.order_by('date_time')
+    nav_dates = [nav.date_time.strftime('%Y-%m-%d') for nav in nav_records]
+    nav_unit_costs = [float(nav.unit_cost) for nav in nav_records]
+    
     return render(request, 'mainapp/user_dashboard.html', {
-        'authorized_user': authorized_user
+        'authorized_user': authorized_user,
+        'portfolio_value': total_amount,
+        'portfolio_value_format': total_amount_format,
+        'current_nav': nav,
+        'nav_date': nav_date,
+        'total_units': total_units,
+        'unrealized_pl': unrealized_pl,
+        'nav_dates_json': json.dumps(nav_dates, cls=DjangoJSONEncoder),
+        'nav_unit_costs_json': json.dumps(nav_unit_costs, cls=DjangoJSONEncoder),
     })
 
 @login_required
@@ -576,7 +619,7 @@ def send_transaction_email(user_email, transaction_type, amount, date, balance, 
                 </tr>
                 <tr>
                     <td style="padding:6px 18px;">Amount:</td>
-                    <td style="padding:6px 0;font-weight:600;">₹ {amount:,.2f}</td>
+                    <td style="padding:6px 0;font-weight:600;">NRs. {amount:,.2f}</td>
                 </tr>
                 <tr>
                     <td style="padding:6px 18px;">Date:</td>
@@ -584,7 +627,7 @@ def send_transaction_email(user_email, transaction_type, amount, date, balance, 
                 </tr>
                 <tr>
                     <td style="padding:6px 18px;">Balance:</td>
-                    <td style="padding:6px 0;font-weight:600;">₹ {balance:,.2f}</td>
+                    <td style="padding:6px 0;font-weight:600;">NRs. {balance:,.2f}</td>
                 </tr>
             </table>
         </div>
@@ -602,9 +645,9 @@ def send_transaction_email(user_email, transaction_type, amount, date, balance, 
 
 Transaction ID: {transaction_id}
 Type: {transaction_type.capitalize()}
-Amount: ₹ {amount:,.2f}
+Amount: NRs. {amount:,.2f}
 Date: {date}
-Balance: ₹ {balance:,.2f}
+Balance: NRs. {balance:,.2f}
 
 If you did not authorize this transaction, please contact us immediately.
 beinvestmentfirm@gmail.com
@@ -979,3 +1022,135 @@ def firm_status_dashboard(request):
         'history': list(history),
     })
     return JsonResponse({'html': html})
+
+@login_required
+def withdraw_request(request):
+    """
+    Handle withdrawal request workflow:
+    1. Check if user has bank details
+    2. If not, prompt to fill bank details first
+    3. If yes, show withdrawal request form
+    4. Validate withdrawal amount against available balance
+    """
+    try:
+        authorized_user = AuthorizedUser.objects.get(email=request.user.email)
+    except AuthorizedUser.DoesNotExist:
+        return JsonResponse({'error': 'User not authorized'}, status=403)
+    
+    if request.method == 'GET':
+        # Check if user has bank details
+        try:
+            bank_detail = UserBankDetail.objects.get(authorized_user=authorized_user)
+        except UserBankDetail.DoesNotExist:
+            bank_detail = None
+        
+        if not bank_detail:
+            # User needs to fill bank details first
+            html = render_to_string('mainapp/withdraw_request_no_bank.html', {
+                'authorized_user': authorized_user,
+            })
+            return JsonResponse({'html': html})
+        
+        # User has bank details, show withdrawal form
+        # Get user's available balance for validation
+        try:
+            user_nav = UserNAV.objects.get(authorized_user=authorized_user)
+            latest_nav = NAVRecord.objects.latest('id')
+            
+            # Calculate available balance: (units * current_nav) + credit
+            available_portfolio_value = user_nav.available_unit * latest_nav.unit_cost
+            total_available = available_portfolio_value + user_nav.available_credit_amount
+            
+        except (UserNAV.DoesNotExist, NAVRecord.DoesNotExist):
+            total_available = Decimal('0.00')
+        
+        html = render_to_string('mainapp/withdraw_request_form.html', {
+            'authorized_user': authorized_user,
+            'bank_detail': bank_detail,
+            'total_available': total_available,
+            'available_units': user_nav.available_unit if 'user_nav' in locals() else 0,
+            'available_credit': user_nav.available_credit_amount if 'user_nav' in locals() else 0,
+            'current_nav': latest_nav.unit_cost if 'latest_nav' in locals() else 0,
+        })
+        return JsonResponse({'html': html})
+    
+    elif request.method == 'POST':
+        # Process withdrawal request submission
+        from .models import WithdrawalRequest
+        
+        # Validate that user has bank details
+        try:
+            bank_detail = UserBankDetail.objects.get(authorized_user=authorized_user)
+        except UserBankDetail.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Please set up your bank details first.'
+            })
+        
+        # Get form data
+        requested_amount = request.POST.get('requested_amount')
+        withdrawal_type = request.POST.get('withdrawal_type', 'partial')
+        user_reason = request.POST.get('user_reason', '')
+        
+        try:
+            requested_amount = Decimal(requested_amount)
+        except (ValueError, TypeError):
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid withdrawal amount.'
+            })
+        
+        # Validate withdrawal amount
+        try:
+            user_nav = UserNAV.objects.get(authorized_user=authorized_user)
+            latest_nav = NAVRecord.objects.latest('id')
+            
+            # Calculate available balance
+            available_portfolio_value = user_nav.available_unit * latest_nav.unit_cost
+            total_available = available_portfolio_value + user_nav.available_credit_amount
+            
+            if requested_amount > total_available:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Requested amount (NRs. {requested_amount}) exceeds available balance (NRs. {total_available}).'
+                })
+            
+            # Create withdrawal request
+            withdrawal_request = WithdrawalRequest.objects.create(
+                authorized_user=authorized_user,
+                requested_amount=requested_amount,
+                withdrawal_type=withdrawal_type,
+                bank_detail=bank_detail,
+                user_reason=user_reason,
+                available_balance_at_request=total_available,
+                available_units_at_request=user_nav.available_unit,
+                current_nav_at_request=latest_nav.unit_cost,
+                created_from_ip=get_client_ip(request)
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'withdrawal_id': withdrawal_request.withdrawal_id,
+                'requested_amount': str(requested_amount),
+                'message': 'Withdrawal request submitted successfully!'
+            })
+            
+        except (UserNAV.DoesNotExist, NAVRecord.DoesNotExist) as e:
+            return JsonResponse({
+                'success': False,
+                'error': 'Unable to process withdrawal request. Please contact support.'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'An error occurred: {str(e)}'
+            })
+
+def get_client_ip(request):
+    """Get client's IP address"""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
