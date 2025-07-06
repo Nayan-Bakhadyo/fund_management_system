@@ -58,7 +58,7 @@
 
                         <!-- Action Buttons -->
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <button type="button" class="btn btn-secondary me-md-2" id="cancelWithdrawRequest">
+                            <button type="button" class="btn btn-secondary me-md-2" id="cancelWithdrawRequest" onclick="handleBackToDashboard()">
                                 <i class="bi bi-x-circle"></i> Cancel
                             </button>
                             <button type="submit" class="btn btn-primary">
@@ -114,16 +114,82 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Cancel button
-    const cancelBtn = document.getElementById('cancelWithdrawRequest');
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', function() {
-            // Show main dashboard
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Delay to ensure main dashboard JS is loaded
+<script>
+// Define global handler function if not already defined
+if (typeof window.handleBackToDashboard !== 'function') {
+    window.handleBackToDashboard = function() {
+        console.log('Back to dashboard button clicked via onclick');
+        
+        try {
+            // Try multiple approaches to go back to dashboard
+            if (typeof window.goToMainDashboard === 'function') {
+                console.log('Using goToMainDashboard function');
+                window.goToMainDashboard();
+                return;
+            }
+            
+            if (typeof window.navigateToMainDashboard === 'function') {
+                console.log('Using navigateToMainDashboard function');
+                window.navigateToMainDashboard();
+                return;
+            }
+            
+            if (typeof window.showMainDashboard === 'function') {
+                console.log('Using showMainDashboard function');
+                window.showMainDashboard();
+                return;
+            }
+            
+            // Direct DOM approach
             const portfolioLink = document.getElementById('portfolio-link');
             if (portfolioLink) {
+                console.log('Found portfolio link, clicking...');
                 portfolioLink.click();
+                return;
             }
-        });
+            
+            // Find portfolio link in sidebar
+            const sidebarLinks = document.querySelectorAll('#sidebar a, .sidebar a');
+            for (let link of sidebarLinks) {
+                if (link.textContent.includes('Portfolio') || link.id === 'portfolio-link') {
+                    console.log('Found portfolio link in sidebar, clicking...');
+                    link.click();
+                    return;
+                }
+            }
+            
+            // Manual dashboard show
+            const mainDashboardContent = document.getElementById('main-dashboard-content');
+            const allSections = document.querySelectorAll('.content-section');
+            
+            if (mainDashboardContent) {
+                allSections.forEach(section => section.style.display = 'none');
+                mainDashboardContent.style.display = 'block';
+                console.log('Manually showed main dashboard content');
+                return;
+            }
+            
+            // Last resort: page reload
+            console.log('Using page reload as last resort');
+            window.location.href = '/user/dashboard/';
+            
+        } catch (error) {
+            console.error('Error in handleBackToDashboard:', error);
+            window.location.href = '/user/dashboard/';
+        }
+    };
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Withdraw request form template loaded');
+    
+    // Cancel button backup event listener
+    const cancelBtn = document.getElementById('cancelWithdrawRequest');
+    if (cancelBtn && !cancelBtn.onclick) {
+        cancelBtn.addEventListener('click', window.handleBackToDashboard);
     }
 
     // Amount validation

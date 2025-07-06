@@ -12,10 +12,10 @@
         <div class="card-body">
             <p class="text-muted">Click the button below to set up your bank account details. This is a one-time setup required for all withdrawal requests.</p>
             <div class="d-grid gap-2">
-                <button type="button" class="btn btn-primary" id="setupBankDetailsBtn">
+                <button type="button" class="btn btn-primary" id="setupBankDetailsBtn" onclick="handleSetupBankDetails()">
                     <i class="bi bi-bank"></i> Setup Bank Details
                 </button>
-                <button type="button" class="btn btn-secondary" id="cancelWithdrawBtn">
+                <button type="button" class="btn btn-secondary" id="cancelWithdrawBtn" onclick="handleBackToDashboard()">
                     <i class="bi bi-arrow-left"></i> Back to Dashboard
                 </button>
             </div>
@@ -24,209 +24,128 @@
 </div>
 
 <script>
+// Define global handler functions immediately
+window.handleSetupBankDetails = function() {
+    console.log('Setup bank details button clicked via onclick');
+    
+    // Try to navigate to bank details using multiple approaches
+    try {
+        // Approach 1: Use global navigation functions
+        if (typeof window.goToBankDetails === 'function') {
+            console.log('Using goToBankDetails function');
+            if (window.goToBankDetails()) return;
+        }
+        
+        if (typeof window.navigateToBankDetails === 'function') {
+            console.log('Using navigateToBankDetails function');
+            if (window.navigateToBankDetails()) return;
+        }
+        
+        // Approach 2: Direct DOM manipulation
+        console.log('Trying direct DOM approach');
+        const bankDetailLink = document.getElementById('bank-detail-link');
+        if (bankDetailLink) {
+            console.log('Found bank detail link, clicking...');
+            bankDetailLink.click();
+            return;
+        }
+        
+        // Approach 3: Find and trigger the sidebar link
+        const sidebarLinks = document.querySelectorAll('#sidebar a, .sidebar a');
+        for (let link of sidebarLinks) {
+            if (link.textContent.includes('Bank Detail') || link.id === 'bank-detail-link') {
+                console.log('Found bank detail link in sidebar, clicking...');
+                link.click();
+                return;
+            }
+        }
+        
+        // Fallback: Show alert with instructions
+        alert('To set up your bank details:\n\n1. Click on "Bank Details" in the sidebar menu\n2. Fill in your bank account information\n3. Save the details\n4. Then return here to request a withdrawal\n\nFor security reasons, bank details must be set up through the dedicated Bank Details section.');
+        
+    } catch (error) {
+        console.error('Error in handleSetupBankDetails:', error);
+        alert('Please use the "Bank Details" option in the sidebar menu to set up your bank account information.');
+    }
+};
+
+window.handleBackToDashboard = function() {
+    console.log('Back to dashboard button clicked via onclick');
+    
+    try {
+        // Approach 1: Use global navigation functions
+        if (typeof window.goToMainDashboard === 'function') {
+            console.log('Using goToMainDashboard function');
+            window.goToMainDashboard();
+            return;
+        }
+        
+        if (typeof window.navigateToMainDashboard === 'function') {
+            console.log('Using navigateToMainDashboard function');
+            window.navigateToMainDashboard();
+            return;
+        }
+        
+        if (typeof window.showMainDashboard === 'function') {
+            console.log('Using showMainDashboard function');
+            window.showMainDashboard();
+            return;
+        }
+        
+        // Approach 2: Find and click portfolio link
+        const portfolioLink = document.getElementById('portfolio-link');
+        if (portfolioLink) {
+            console.log('Found portfolio link, clicking...');
+            portfolioLink.click();
+            return;
+        }
+        
+        // Approach 3: Find portfolio link in sidebar
+        const sidebarLinks = document.querySelectorAll('#sidebar a, .sidebar a');
+        for (let link of sidebarLinks) {
+            if (link.textContent.includes('Portfolio') || link.id === 'portfolio-link') {
+                console.log('Found portfolio link in sidebar, clicking...');
+                link.click();
+                return;
+            }
+        }
+        
+        // Approach 4: Hide all sections to show main dashboard
+        const mainDashboardContent = document.getElementById('main-dashboard-content');
+        const allSections = document.querySelectorAll('.content-section');
+        
+        if (mainDashboardContent) {
+            allSections.forEach(section => section.style.display = 'none');
+            mainDashboardContent.style.display = 'block';
+            console.log('Manually showed main dashboard content');
+            return;
+        }
+        
+        // Last resort: page reload
+        console.log('Using page reload as last resort');
+        window.location.href = '/user/dashboard/';
+        
+    } catch (error) {
+        console.error('Error in handleBackToDashboard:', error);
+        window.location.href = '/user/dashboard/';
+    }
+};
+
+// Also set up event listeners as backup
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Withdraw request no bank template loaded');
+    
     // Setup bank details button
     const setupBtn = document.getElementById('setupBankDetailsBtn');
-    if (setupBtn) {
-        setupBtn.addEventListener('click', function() {
-            // Show loading state
-            setupBtn.disabled = true;
-            setupBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
-            
-            // Get the withdraw request section
-            const withdrawRequestSection = document.getElementById('withdraw-request-section');
-            if (withdrawRequestSection) {
-                // Load bank detail form directly
-                fetch('/user/bank_detail/', { 
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' } 
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.html) {
-                        withdrawRequestSection.innerHTML = data.html;
-                        // Attach bank detail form handler
-                        attachBankDetailFormHandler();
-                    } else {
-                        withdrawRequestSection.innerHTML = '<div class="alert alert-warning">No bank detail form available.</div>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading bank details:', error);
-                    withdrawRequestSection.innerHTML = '<div class="alert alert-danger">Failed to load bank detail form. Please try again.</div>';
-                })
-                .finally(() => {
-                    // Reset button
-                    setupBtn.disabled = false;
-                    setupBtn.innerHTML = '<i class="bi bi-bank"></i> Setup Bank Details';
-                });
-            }
-        });
+    if (setupBtn && !setupBtn.onclick) {
+        setupBtn.addEventListener('click', window.handleSetupBankDetails);
     }
     
     // Cancel button
     const cancelBtn = document.getElementById('cancelWithdrawBtn');
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', function() {
-            // Show main dashboard
-            showMainDashboard();
-        });
+    if (cancelBtn && !cancelBtn.onclick) {
+        cancelBtn.addEventListener('click', window.handleBackToDashboard);
     }
-    
-    // Bank detail form handler function
-    function attachBankDetailFormHandler() {
-        const form = document.getElementById('bank-detail-form');
-        const cancelBtn = document.getElementById('cancel-bank-detail');
-        const messageDiv = document.getElementById('bank-detail-message');
-        
-        if (form) {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const formData = new FormData(form);
-                const submitBtn = form.querySelector('button[type="submit"]');
-                const originalText = submitBtn.textContent;
-                
-                // Show loading state
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
-                
-                fetch('/user/bank_detail/', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Bank details saved successfully, now load withdrawal form
-                        const withdrawRequestSection = document.getElementById('withdraw-request-section');
-                        if (withdrawRequestSection) {
-                            withdrawRequestSection.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2">Loading withdrawal form...</p></div>';
-                            
-                            // Load withdrawal request form
-                            fetch('/user/withdraw_request/', {
-                                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.html) {
-                                    withdrawRequestSection.innerHTML = data.html;
-                                    attachWithdrawRequestFormHandler();
-                                }
-                            });
-                        }
-                    } else if (data.html) {
-                        // Form has errors, reload with error messages
-                        const withdrawRequestSection = document.getElementById('withdraw-request-section');
-                        if (withdrawRequestSection) {
-                            withdrawRequestSection.innerHTML = data.html;
-                            attachBankDetailFormHandler(); // Re-attach handler
-                        }
-                    } else {
-                        if (messageDiv) {
-                            messageDiv.innerHTML = '<div class="alert alert-danger">An error occurred. Please try again.</div>';
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error submitting bank details:', error);
-                    if (messageDiv) {
-                        messageDiv.innerHTML = '<div class="alert alert-danger">Failed to save bank details. Please try again.</div>';
-                    }
-                })
-                .finally(() => {
-                    // Reset button
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalText;
-                });
-            });
-        }
-        
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', function() {
-                showMainDashboard();
-            });
-        }
-    }
-    
-    // Function to show main dashboard
-    function showMainDashboard() {
-        const mainDashboardContent = document.getElementById('main-dashboard-content');
-        const withdrawRequestSection = document.getElementById('withdraw-request-section');
-        
-        if (mainDashboardContent && withdrawRequestSection) {
-            withdrawRequestSection.style.display = 'none';
-            mainDashboardContent.style.display = 'block';
-        }
-    }
-    
-    // Function to attach withdraw request form handler (will be called after bank details are saved)
-    function attachWithdrawRequestFormHandler() {
-        const form = document.getElementById('withdraw-request-form');
-        if (!form) return;
-        
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Show loading state
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Submitting...';
-            
-            const formData = new FormData(form);
-            
-            fetch('/user/withdraw_request/', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                const withdrawRequestSection = document.getElementById('withdraw-request-section');
-                if (data.success) {
-                    withdrawRequestSection.innerHTML = `
-                        <div class="alert alert-success">
-                            <h4>Withdrawal Request Submitted Successfully!</h4>
-                            <p>Your withdrawal request ID: <strong>${data.withdrawal_id}</strong></p>
-                            <p>Amount: <strong>NRs. ${data.requested_amount}</strong></p>
-                            <p>Status: <strong>Pending Review</strong></p>
-                            <p>You will be notified once the fund manager reviews your request.</p>
-                        </div>
-                    `;
-                } else if (data.html) {
-                    // Form has errors, reload with error messages
-                    withdrawRequestSection.innerHTML = data.html;
-                    attachWithdrawRequestFormHandler(); // Re-attach handler
-                } else {
-                    withdrawRequestSection.innerHTML = '<div class="alert alert-danger">An error occurred. Please try again.</div>';
-                }
-            })
-            .catch(error => {
-                console.error('Error submitting withdraw request:', error);
-                const withdrawRequestSection = document.getElementById('withdraw-request-section');
-                withdrawRequestSection.innerHTML = '<div class="alert alert-danger">Failed to submit withdraw request. Please try again.</div>';
-            })
-            .finally(() => {
-                // Reset button
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
-            });
-        });
-    }
-});
 });
 </script>
 

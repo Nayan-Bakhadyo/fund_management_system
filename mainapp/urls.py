@@ -28,6 +28,8 @@ urlpatterns = [
     path('fundmanager/close_investment_modal/', views.close_investment_modal, name='close_investment_modal'),
      path('user/upload_transaction/', views.upload_transaction, name='upload_transaction'),
     path('user/withdraw_request/', views.withdraw_request, name='withdraw_request'),
+    path('fundmanager/withdrawal_requests/', views.fundmanager_withdrawal_requests, name='fundmanager_withdrawal_requests'),
+    path('fundmanager/withdrawal_detail/<str:withdrawal_id>/', views.fundmanager_withdrawal_detail, name='fundmanager_withdrawal_detail'),
 
     path('fundmanager/pending_user_uploads/', views.pending_user_uploads, name='pending_user_uploads'),
     path('fundmanager/edit_user_upload/<str:email>/', views.edit_user_upload, name='edit_user_upload'),

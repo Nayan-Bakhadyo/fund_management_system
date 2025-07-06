@@ -5,6 +5,7 @@ from django.views.decorators.http import require_GET
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
 from django.db.models import Max, Sum
+from django.utils import timezone
 from .models import AuthorizedUser, UserRecurringPayment, UserTransaction, UserNAV, NAVRecord, UserBankDetail, InvestmentCategory, FirmInvestment, TotalCapitalRecord, InvestmentTransaction, UserTransactionUpload, WithdrawalRequest
 import random
 from django import template
@@ -1154,3 +1155,127 @@ def get_client_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
+@login_required
+def fundmanager_withdrawal_requests(request):
+    """Fund manager view for managing withdrawal requests"""
+    try:
+        authorized_user = AuthorizedUser.objects.get(email=request.user.email)
+        if authorized_user.role != 'fund_manager':
+            return redirect('home')
+    except AuthorizedUser.DoesNotExist:
+        return redirect('home')
+    
+    # Get filter parameters
+    status_filter = request.GET.get('status', 'all')
+    priority_filter = request.GET.get('priority', 'all')
+    
+    # Base query
+    withdrawal_requests = WithdrawalRequest.objects.select_related('authorized_user', 'bank_detail').all()
+    
+    # Apply filters
+    if status_filter != 'all':
+        withdrawal_requests = withdrawal_requests.filter(status=status_filter)
+    if priority_filter != 'all':
+        withdrawal_requests = withdrawal_requests.filter(priority=priority_filter)
+    
+    # Get status choices for filter dropdown
+    status_choices = WithdrawalRequest.STATUS_CHOICES
+    priority_choices = WithdrawalRequest.PRIORITY_CHOICES
+    
+    context = {
+        'withdrawal_requests': withdrawal_requests,
+        'status_filter': status_filter,
+        'priority_filter': priority_filter,
+        'status_choices': status_choices,
+        'priority_choices': priority_choices,
+    }
+    
+    return render(request, 'mainapp/fundmanager_withdrawal_requests.html', context)
+
+@login_required
+def fundmanager_withdrawal_detail(request, withdrawal_id):
+    """Fund manager detailed view for a specific withdrawal request"""
+    try:
+        authorized_user = AuthorizedUser.objects.get(email=request.user.email)
+        if authorized_user.role != 'fund_manager':
+            return redirect('home')
+    except AuthorizedUser.DoesNotExist:
+        return redirect('home')
+    
+    try:
+        withdrawal_request = WithdrawalRequest.objects.select_related(
+            'authorized_user', 'bank_detail'
+        ).get(withdrawal_id=withdrawal_id)
+    except WithdrawalRequest.DoesNotExist:
+        return redirect('fundmanager_withdrawal_requests')
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'update_status':
+            new_status = request.POST.get('status')
+            priority = request.POST.get('priority')
+            manager_notes = request.POST.get('manager_notes', '')
+            approved_amount = request.POST.get('approved_amount')
+            rejection_reason = request.POST.get('rejection_reason', '')
+            
+            # Update withdrawal request
+            withdrawal_request.status = new_status
+            withdrawal_request.priority = priority
+            withdrawal_request.manager_notes = manager_notes
+            withdrawal_request.reviewed_by = request.user.email
+            withdrawal_request.reviewed_date = timezone.now()
+            
+            if new_status == 'approved' and approved_amount:
+                withdrawal_request.approved_amount = Decimal(approved_amount)
+            elif new_status == 'rejected' and rejection_reason:
+                withdrawal_request.rejection_reason = rejection_reason
+            
+            withdrawal_request.save()
+            
+            return JsonResponse({
+                'success': True, 
+                'message': f'Withdrawal request {new_status} successfully'
+            })
+        
+        elif action == 'process_withdrawal':
+            processed_amount = request.POST.get('processed_amount')
+            processing_fee = request.POST.get('processing_fee', '0')
+            units_redeemed = request.POST.get('units_redeemed')
+            
+            try:
+                with transaction.atomic():
+                    # Update withdrawal request
+                    withdrawal_request.status = 'processed'
+                    withdrawal_request.processed_by = request.user.email
+                    withdrawal_request.processed_date = timezone.now()
+                    withdrawal_request.actual_processed_amount = Decimal(processed_amount)
+                    withdrawal_request.processing_fee = Decimal(processing_fee)
+                    withdrawal_request.units_redeemed = Decimal(units_redeemed) if units_redeemed else None
+                    withdrawal_request.save()
+                    
+                    # Update user's NAV if units were redeemed
+                    if units_redeemed:
+                        user_nav = UserNAV.objects.get(authorized_user=withdrawal_request.authorized_user)
+                        user_nav.available_unit -= Decimal(units_redeemed)
+                        user_nav.save()
+                    
+                    return JsonResponse({
+                        'success': True, 
+                        'message': 'Withdrawal processed successfully'
+                    })
+                    
+            except Exception as e:
+                return JsonResponse({
+                    'success': False, 
+                    'error': f'Error processing withdrawal: {str(e)}'
+                })
+    
+    context = {
+        'withdrawal_request': withdrawal_request,
+        'status_choices': WithdrawalRequest.STATUS_CHOICES,
+        'priority_choices': WithdrawalRequest.PRIORITY_CHOICES,
+    }
+    
+    return render(request, 'mainapp/fundmanager_withdrawal_detail.html', context)

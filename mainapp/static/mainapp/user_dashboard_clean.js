@@ -1,4 +1,37 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Declare global functions immediately to avoid timing issues
+    window.handleSetupBankDetails = window.handleSetupBankDetails || function() {
+        console.log('Global handleSetupBankDetails called');
+        if (typeof window.goToBankDetails === 'function') {
+            return window.goToBankDetails();
+        }
+        const bankDetailLink = document.getElementById('bank-detail-link');
+        if (bankDetailLink) {
+            bankDetailLink.click();
+            return true;
+        }
+        alert('Please use the "Bank Details" option in the sidebar menu.');
+        return false;
+    };
+
+    window.handleBackToDashboard = window.handleBackToDashboard || function() {
+        console.log('Global handleBackToDashboard called');
+        if (typeof window.goToMainDashboard === 'function') {
+            return window.goToMainDashboard();
+        }
+        if (typeof window.showMainDashboard === 'function') {
+            window.showMainDashboard();
+            return true;
+        }
+        const portfolioLink = document.getElementById('portfolio-link');
+        if (portfolioLink) {
+            portfolioLink.click();
+            return true;
+        }
+        window.location.href = '/user/dashboard/';
+        return true;
+    };
+
     // DOM element references
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.getElementById('mainContent');
@@ -101,6 +134,66 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Showing main dashboard');
         showSection(null); // null means show main dashboard
     }
+
+    // Make showMainDashboard globally accessible
+    window.showMainDashboard = showMainDashboard;
+
+    // Global navigation functions for use in dynamically loaded content
+    window.navigateToBankDetails = function() {
+        console.log('Navigating to bank details via global function');
+        // Use fresh DOM query to ensure element is available
+        const bankLink = document.getElementById('bank-detail-link');
+        if (bankLink) {
+            console.log('Bank detail link found, triggering click');
+            bankLink.click();
+            return true;
+        } else {
+            console.error('Bank detail link not found in DOM');
+            return false;
+        }
+    };
+
+    window.navigateToMainDashboard = function() {
+        console.log('Navigating to main dashboard via global function');
+        showMainDashboard();
+        return true;
+    };
+
+    // Make navigation functions available immediately
+    window.goToBankDetails = function() {
+        console.log('goToBankDetails called');
+        return window.navigateToBankDetails();
+    };
+
+    window.goToMainDashboard = function() {
+        console.log('goToMainDashboard called');
+        return window.navigateToMainDashboard();
+    };
+
+    // Debug function to check what's available globally
+    window.debugGlobalFunctions = function() {
+        console.log('Available global functions:');
+        console.log('- showMainDashboard:', typeof window.showMainDashboard);
+        console.log('- navigateToBankDetails:', typeof window.navigateToBankDetails);
+        console.log('- navigateToMainDashboard:', typeof window.navigateToMainDashboard);
+        console.log('- goToBankDetails:', typeof window.goToBankDetails);
+        console.log('- goToMainDashboard:', typeof window.goToMainDashboard);
+        console.log('Sidebar elements available:');
+        console.log('- bankDetailLink:', !!document.getElementById('bank-detail-link'));
+        console.log('- portfolioLink:', !!document.getElementById('portfolio-link'));
+        console.log('- withdrawRequestLink:', !!document.getElementById('withdrawRequestMenu'));
+    };
+
+    // Test functions for manual testing
+    window.testBankDetailsNavigation = function() {
+        console.log('Testing bank details navigation...');
+        return window.goToBankDetails();
+    };
+
+    window.testMainDashboardNavigation = function() {
+        console.log('Testing main dashboard navigation...');
+        return window.goToMainDashboard();
+    };
 
     // Portfolio link handler - Show main dashboard content
     if (portfolioLink) {
@@ -687,5 +780,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize
     console.log('Dashboard JavaScript initialized');
+    console.log('Global functions registered:');
+    console.log('- showMainDashboard:', typeof window.showMainDashboard);
+    console.log('- navigateToBankDetails:', typeof window.navigateToBankDetails);
+    console.log('- navigateToMainDashboard:', typeof window.navigateToMainDashboard);
+    console.log('- goToBankDetails:', typeof window.goToBankDetails);
+    console.log('- goToMainDashboard:', typeof window.goToMainDashboard);
+    
     renderNavChart();
 });
