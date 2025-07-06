@@ -47,63 +47,169 @@ document.addEventListener('DOMContentLoaded', function() {
     const bankDetailSection = document.getElementById('bank-detail-section');
     const withdrawRequestSection = document.getElementById('withdraw-request-section');
 
-    // Sidebar functionality
+    // ===== COMPLETE SIDEBAR SYSTEM - REWRITTEN =====
+    
+    // Sidebar state management
+    const sidebarState = {
+        isOpen: false,
+        isMobile: () => window.innerWidth <= 768,
+        isDesktop: () => window.innerWidth > 768
+    };
+
+    // Sidebar functions
     function openSidebar() {
-        if (sidebar) {
-            sidebar.classList.add('open');
-            document.body.classList.add('sidebar-open');
+        console.log('Opening sidebar...');
+        if (!sidebar) return;
+        
+        sidebarState.isOpen = true;
+        sidebar.classList.add('open');
+        document.body.classList.add('sidebar-open');
+        
+        // Mobile-specific handling
+        if (sidebarState.isMobile()) {
+            // Force positioning with JavaScript for mobile
+            sidebar.style.transform = 'translateX(0)';
+            sidebar.style.left = '0px';
+            sidebar.style.position = 'fixed';
+            sidebar.style.zIndex = '1050';
+            
+            // Show overlay
+            if (sidebarOverlay) {
+                sidebarOverlay.style.display = 'block';
+                sidebarOverlay.style.opacity = '1';
+            }
+            
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
         }
+        
+        console.log('Sidebar opened successfully');
     }
     
     function closeSidebar() {
-        if (sidebar) {
-            sidebar.classList.remove('open');
-            document.body.classList.remove('sidebar-open');
+        console.log('Closing sidebar...');
+        if (!sidebar) return;
+        
+        sidebarState.isOpen = false;
+        sidebar.classList.remove('open');
+        document.body.classList.remove('sidebar-open');
+        
+        // Mobile-specific handling
+        if (sidebarState.isMobile()) {
+            // Force positioning for mobile
+            sidebar.style.transform = 'translateX(-100%)';
+            sidebar.style.left = '-280px';
+            
+            // Hide overlay
+            if (sidebarOverlay) {
+                sidebarOverlay.style.display = 'none';
+                sidebarOverlay.style.opacity = '0';
+            }
+            
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }
+        
+        console.log('Sidebar closed successfully');
+    }
+    
+    function toggleSidebar() {
+        console.log('Toggling sidebar, current state:', sidebarState.isOpen);
+        if (sidebarState.isOpen) {
+            closeSidebar();
+        } else {
+            openSidebar();
         }
     }
+    
+    // Initialize sidebar positioning
+    function initializeSidebar() {
+        console.log('Initializing sidebar system...');
+        if (!sidebar) {
+            console.error('Sidebar element not found!');
+            return;
+        }
+        
+        if (sidebarState.isMobile()) {
+            // Mobile: start hidden
+            closeSidebar();
+            sidebar.style.transition = 'transform 0.3s ease, left 0.3s ease';
+        } else {
+            // Desktop: always visible
+            sidebar.style.transform = '';
+            sidebar.style.left = '';
+            sidebar.style.position = '';
+            sidebar.style.zIndex = '';
+            document.body.style.overflow = '';
+            if (sidebarOverlay) {
+                sidebarOverlay.style.display = 'none';
+            }
+        }
+        
+        console.log('Sidebar initialized for', sidebarState.isMobile() ? 'mobile' : 'desktop');
+    }
 
-    // Toggle sidebar on button click
+    // Event Handlers
+    
+    // Toggle button click
     if (toggleBtn) {
+        console.log('Setting up toggle button event listener');
         toggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
             e.stopPropagation();
-            if (sidebar && sidebar.classList.contains('open')) {
+            console.log('Toggle button clicked, window width:', window.innerWidth);
+            toggleSidebar();
+        });
+    } else {
+        console.warn('Toggle button not found!');
+    }
+
+    // Overlay click
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', function(e) {
+            console.log('Overlay clicked');
+            if (sidebarState.isMobile()) {
                 closeSidebar();
-            } else {
-                openSidebar();
             }
         });
     }
 
-    // Sidebar overlay click
-    if (sidebarOverlay) {
-        sidebarOverlay.addEventListener('click', function() {
-            closeSidebar();
-        });
-    }
-
-    // Close sidebar when clicking outside on mobile
+    // Click outside to close on mobile
     document.addEventListener('click', function(e) {
-        if (window.innerWidth <= 768 && 
-            sidebar && sidebar.classList.contains('open') && 
-            !sidebar.contains(e.target) && 
-            toggleBtn && !toggleBtn.contains(e.target)) {
-            closeSidebar();
+        if (sidebarState.isMobile() && sidebarState.isOpen) {
+            // Check if click is outside sidebar and toggle button
+            const isClickInsideSidebar = sidebar && sidebar.contains(e.target);
+            const isClickOnToggle = toggleBtn && toggleBtn.contains(e.target);
+            
+            if (!isClickInsideSidebar && !isClickOnToggle) {
+                console.log('Clicked outside sidebar on mobile');
+                closeSidebar();
+            }
         }
     });
 
-    // Close sidebar on escape key
+    // Escape key to close
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && sidebar && sidebar.classList.contains('open')) {
+        if (e.key === 'Escape' && sidebarState.isOpen) {
+            console.log('Escape key pressed');
             closeSidebar();
         }
     });
 
-    // Close sidebar when resizing to desktop
+    // Window resize handler
+    let resizeTimeout;
     window.addEventListener('resize', function() {
-        if (window.innerWidth > 767) {
-            closeSidebar();
-        }
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function() {
+            console.log('Window resized to:', window.innerWidth);
+            initializeSidebar();
+        }, 250);
     });
+
+    // Initialize on page load
+    initializeSidebar();
+
+    // ===== END SIDEBAR SYSTEM =====
 
     // Helper function to hide all sections and show specific one
     function showSection(sectionToShow) {

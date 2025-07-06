@@ -179,8 +179,8 @@ body {
     }
     
     .sidebar {
-        position: fixed; /* Fixed position for mobile overlay */
-        left: -280px;
+        position: fixed !important; /* Fixed position for mobile overlay */
+        left: -280px !important; /* Hidden by default */
         z-index: 1050; /* Higher for mobile overlay */
         top: 0;
         height: 100vh;
@@ -188,7 +188,7 @@ body {
     }
     
     .sidebar.open {
-        left: 0;
+        left: 0 !important;
     }
     
     .main-content {
@@ -208,7 +208,7 @@ body {
         z-index: 1049;
     }
     
-    .sidebar.open ~ .sidebar-overlay {
+    body.sidebar-open .sidebar-overlay {
         display: block;
     }
 }
