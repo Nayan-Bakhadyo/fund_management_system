@@ -714,6 +714,13 @@ body {
     transition: all 0.3s ease;
 }
 
+@media (max-width: 768px) {
+  .sidebar-logo img {
+    filter: drop-shadow(0 0 15px rgba(139, 92, 246, 0.5));
+    /* Always show glow on mobile */
+  }
+}
+
 .sidebar-logo:hover img {
     filter: drop-shadow(0 0 15px rgba(139, 92, 246, 0.5));
     transform: scale(1.05);
@@ -1780,6 +1787,58 @@ body.modal-open {
     padding: 1.5rem;
     max-width: 100%;
     overflow-x: hidden;
+}
+
+/* Transaction History Responsive Table & Card Layout */
+.transaction-history-container .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+@media (max-width: 768px) {
+  .transaction-history-container .table {
+    display: block;
+    width: 100%;
+    border: none;
+    background: none;
+  }
+  .transaction-history-container thead {
+    display: none;
+  }
+  .transaction-history-container tbody {
+    display: block;
+    width: 100%;
+  }
+  .transaction-history-container tr {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-primary);
+    margin-bottom: 1.2rem;
+    box-shadow: var(--shadow-md);
+    border-radius: var(--radius-md);
+    padding: 1rem 0.75rem;
+    border: 1px solid var(--border-color);
+    width: 100%;
+  }
+  .transaction-history-container td {
+    display: flex;
+    width: 100%;
+    padding: 0.5rem 0.25rem;
+    font-size: 1rem;
+    border: none;
+    align-items: center;
+    word-break: break-word;
+  }
+  .transaction-history-container td::before {
+    content: attr(data-label);
+    flex: 0 0 120px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-right: 0.75rem;
+    font-size: 0.98rem;
+    min-width: 110px;
+    text-align: left;
+  }
 }
 
 .portfolio-header {

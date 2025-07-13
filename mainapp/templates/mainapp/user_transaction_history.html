@@ -20,13 +20,13 @@
         <tbody>
             {% for tx in transactions %}
             <tr>
-                <td>{{ tx.date_time|date:"Y-m-d H:i" }}</td>
-                <td>{{ tx.get_transaction_type_display }}</td>
-                <td>{{ tx.purchase_unit|floatformat:0 }}</td>
-                <td>NRs. {{ tx.purchase_initiated_amount|floatformat:2 }}</td>
-                <td>NRs. {{ tx.unit_cost|floatformat:2 }}</td>
-                <td>{{ tx.remaining_credit|floatformat:2 }}</td>
-                <td>
+                <td data-label="Date">{{ tx.date_time|date:"Y-m-d H:i" }}</td>
+                <td data-label="Type">{{ tx.get_transaction_type_display }}</td>
+                <td data-label="Units">{{ tx.purchase_unit|floatformat:0 }}</td>
+                <td data-label="Amount">NRs. {{ tx.purchase_initiated_amount|floatformat:2 }}</td>
+                <td data-label="NAV">NRs. {{ tx.unit_cost|floatformat:2 }}</td>
+                <td data-label="Credit">{{ tx.remaining_credit|floatformat:2 }}</td>
+                <td data-label="Image">
                     {% if tx.transaction_image %}
                         <a href="{{ tx.transaction_image.url }}" target="_blank">View</a>
                     {% else %}
