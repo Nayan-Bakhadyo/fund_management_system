@@ -134,7 +134,10 @@ class FirmInvestment(models.Model):
         ('open', 'Open'),
         ('closed', 'Closed'),
     ]
+
     status = models.CharField(max_length=6, choices=STATUS_CHOICES, default='open')
+
+
 
     def __str__(self):
         return f"{self.investment_name}"
@@ -149,8 +152,10 @@ class InvestmentTransaction(models.Model):
         on_delete=models.CASCADE,
         related_name='transactions'
     )
+
     amount = models.DecimalField(max_digits=14, decimal_places=2)
     amount_type = models.CharField(max_length=11, choices=AMOUNT_TYPE_CHOICES)
+    stock_units_purchased = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True, help_text="Units of stock")
 
     def __str__(self):
         return f"{self.investment.investment_name} - {self.get_amount_type_display()} - {self.amount}"
@@ -200,7 +205,6 @@ class WithdrawalRequest(models.Model):
     Model to track withdrawal requests from users
     Handles complete withdrawal workflow from request to completion
     """
-    
     # Status choices for withdrawal workflow
     STATUS_CHOICES = [
         ('pending', 'Pending Review'),
@@ -237,6 +241,7 @@ class WithdrawalRequest(models.Model):
         related_name='withdrawal_requests'
     )
     
+
     # === USER PERSPECTIVE ===
     requested_amount = models.DecimalField(
         max_digits=14, 

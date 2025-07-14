@@ -675,6 +675,7 @@ def add_investment_transaction(request):
         investment_id = request.POST.get('investment')
         amount = request.POST.get('amount')
         amount_type = request.POST.get('amount_type')
+        stock_units_purchased = request.POST.get('stock_units_purchased', None)
 
         try:
             amount = Decimal(amount)
@@ -790,7 +791,8 @@ def add_investment_transaction(request):
                     transaction_obj = InvestmentTransaction.objects.create(
                         investment=investment,
                         amount=amount,
-                        amount_type=amount_type
+                        amount_type=amount_type,
+                        stock_units_purchased=stock_units_purchased if stock_units_purchased else None
                     )
 
                     # 3. Add another Total Capital Record entry
@@ -1033,16 +1035,23 @@ def withdraw_request(request):
     3. If yes, show withdrawal request form
     4. Validate withdrawal amount against available balance
     """
+    print(f"DEBUG - withdraw_request called with method: {request.method}")
+    
     try:
         authorized_user = AuthorizedUser.objects.get(email=request.user.email)
+        print(f"DEBUG - Found authorized user: {authorized_user.email}")
     except AuthorizedUser.DoesNotExist:
+        print("DEBUG - AuthorizedUser.DoesNotExist")
         return JsonResponse({'error': 'User not authorized'}, status=403)
     
     if request.method == 'GET':
+        print("DEBUG - Processing GET request")
         # Check if user has bank details
         try:
             bank_detail = UserBankDetail.objects.get(authorized_user=authorized_user)
+            print(f"DEBUG - Found bank details for user")
         except UserBankDetail.DoesNotExist:
+            print("DEBUG - No bank details found")
             bank_detail = None
         
         if not bank_detail:
@@ -1052,27 +1061,46 @@ def withdraw_request(request):
             })
             return JsonResponse({'html': html})
         
+        print("DEBUG - User has bank details, preparing withdrawal form")
         # User has bank details, show withdrawal form
         # Get user's available balance for validation
+        user_nav = None
+        latest_nav = None
+        total_available = Decimal('0.00')
+        
         try:
             user_nav = UserNAV.objects.get(authorized_user=authorized_user)
+            print(f"DEBUG - Found UserNAV: units={user_nav.available_unit}, credit={user_nav.available_credit_amount}")
             latest_nav = NAVRecord.objects.latest('id')
+            print(f"DEBUG - Latest NAV: {latest_nav.unit_cost}")
             
             # Calculate available balance: (units * current_nav) + credit
             available_portfolio_value = user_nav.available_unit * latest_nav.unit_cost
             total_available = available_portfolio_value + user_nav.available_credit_amount
+            print(f"DEBUG - Calculated total_available: {total_available}")
             
-        except (UserNAV.DoesNotExist, NAVRecord.DoesNotExist):
+        except (UserNAV.DoesNotExist, NAVRecord.DoesNotExist) as e:
+            print(f"DEBUG - Exception getting NAV data: {e}")
             total_available = Decimal('0.00')
         
+        # Calculate portfolio value for display
+        available_units = user_nav.available_unit if user_nav else Decimal('0.00')
+        available_credit = user_nav.available_credit_amount if user_nav else Decimal('0.00')
+        current_nav = latest_nav.unit_cost if latest_nav else Decimal('0.00')
+        portfolio_value = available_units * current_nav
+        
+        # Add CSRF token to context
+        from django.middleware.csrf import get_token
         html = render_to_string('mainapp/withdraw_request_form.html', {
             'authorized_user': authorized_user,
             'bank_detail': bank_detail,
             'total_available': total_available,
-            'available_units': user_nav.available_unit if 'user_nav' in locals() else 0,
-            'available_credit': user_nav.available_credit_amount if 'user_nav' in locals() else 0,
-            'current_nav': latest_nav.unit_cost if 'latest_nav' in locals() else 0,
-        })
+            'available_units': available_units,
+            'available_credit': available_credit,
+            'current_nav': current_nav,
+            'portfolio_value': portfolio_value,
+            'csrf_token': get_token(request),
+        }, request=request)
         return JsonResponse({'html': html})
     
     elif request.method == 'POST':
@@ -1126,6 +1154,8 @@ def withdraw_request(request):
                 available_balance_at_request=total_available,
                 available_units_at_request=user_nav.available_unit,
                 current_nav_at_request=latest_nav.unit_cost,
+                user_nav_at_request=user_nav,  # New FK relation
+                nav_record_at_request=latest_nav,  # New FK relation
                 created_from_ip=get_client_ip(request)
             )
             
@@ -1196,6 +1226,16 @@ def fundmanager_withdrawal_requests(request):
 @login_required
 def fundmanager_withdrawal_detail(request, withdrawal_id):
     """Fund manager detailed view for a specific withdrawal request"""
+    import sys
+    print("="*50, file=sys.stderr, flush=True)
+    print(f"FUNDMANAGER_WITHDRAWAL_DETAIL CALLED! withdrawal_id={withdrawal_id}", file=sys.stderr, flush=True)
+    print("="*50, file=sys.stderr, flush=True)
+    
+    # Also print to regular stdout
+    print("="*50)
+    print(f"FUNDMANAGER_WITHDRAWAL_DETAIL CALLED! withdrawal_id={withdrawal_id}")
+    print("="*50)
+    
     try:
         authorized_user = AuthorizedUser.objects.get(email=request.user.email)
         if authorized_user.role != 'fund_manager':
@@ -1210,6 +1250,27 @@ def fundmanager_withdrawal_detail(request, withdrawal_id):
     except WithdrawalRequest.DoesNotExist:
         return redirect('fundmanager_withdrawal_requests')
     
+    # Fetch UserNAV for that email (current data)
+    user_email = withdrawal_request.authorized_user.email
+    
+
+    # Get current UserNAV (real-time data)
+    user_nav = UserNAV.objects.filter(authorized_user__email=user_email).first()
+    
+    # Fetch current NAV records (latest by id)
+    try:
+        latest_nav_record = NAVRecord.objects.latest('id')
+    except NAVRecord.DoesNotExist:
+        latest_nav_record = None
+
+    
+    # Calculate current values (for Current Financial Detail card)
+    available_unit = user_nav.available_unit if user_nav else Decimal('0.00')
+    available_credit = user_nav.available_credit_amount if user_nav else Decimal('0.00')
+    unit_cost = latest_nav_record.unit_cost if latest_nav_record else Decimal('0.00')
+    portfolio_value = available_unit * unit_cost
+    
+
     if request.method == 'POST':
         action = request.POST.get('action')
         
@@ -1276,6 +1337,11 @@ def fundmanager_withdrawal_detail(request, withdrawal_id):
         'withdrawal_request': withdrawal_request,
         'status_choices': WithdrawalRequest.STATUS_CHOICES,
         'priority_choices': WithdrawalRequest.PRIORITY_CHOICES,
+        'user_nav': user_nav,
+        'available_unit': available_unit,
+        'available_credit': available_credit,
+        'unit_cost': unit_cost,
+        'portfolio_value': portfolio_value,
     }
     
     return render(request, 'mainapp/fundmanager_withdrawal_detail.html', context)

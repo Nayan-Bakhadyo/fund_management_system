@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AuthorizedUser, UserTransaction, UserNAV, NAVRecord, UserBankDetail, InvestmentCategory, FirmInvestment, UserContract, TotalCapitalRecord, InvestmentTransaction, UserTransactionUpload, UserRecurringPayment,AuditLog
+from .models import AuthorizedUser, UserTransaction, UserNAV, NAVRecord, UserBankDetail, InvestmentCategory, FirmInvestment, UserContract, TotalCapitalRecord, InvestmentTransaction, UserTransactionUpload, UserRecurringPayment,AuditLog, WithdrawalRequest
 
 admin.site.register(AuthorizedUser)
 admin.site.register(UserTransaction)
@@ -14,3 +14,4 @@ admin.site.register(InvestmentTransaction)
 admin.site.register(UserTransactionUpload)
 admin.site.register(UserRecurringPayment)
 admin.site.register(AuditLog)
+admin.site.register(WithdrawalRequest)

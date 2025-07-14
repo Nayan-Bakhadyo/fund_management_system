@@ -71,33 +71,10 @@
         </div>
         
         <div class="col-lg-4">
-            <!-- Available Balance Card -->
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h6 class="card-title mb-0">Available Balance</h6>
-                </div>
-                <div class="card-body">
-                    <div class="balance-item">
-                        <span class="balance-label">Portfolio Value:</span>
-                        <span class="balance-value">NRs. {{ available_units|floatformat:2 }} × {{ current_nav|floatformat:2 }}</span>
-                        <span class="balance-total">= NRs. {{ available_units|floatformat:2|mul:current_nav|floatformat:2 }}</span>
-                    </div>
-                    <div class="balance-item">
-                        <span class="balance-label">Available Credit:</span>
-                        <span class="balance-value">NRs. {{ available_credit|floatformat:2 }}</span>
-                    </div>
-                    <hr>
-                    <div class="balance-item total">
-                        <span class="balance-label"><strong>Total Available:</strong></span>
-                        <span class="balance-value"><strong>NRs. {{ total_available|floatformat:2 }}</strong></span>
-                    </div>
-                </div>
-            </div>
-
             <!-- Important Notes -->
             <div class="card">
-                <div class="card-header">
-                    <h6 class="card-title mb-0">Important Notes</h6>
+                <div class="card-header bg-light">
+                    <h6 class="card-title mb-0 text-dark">Important Notes</h6>
                 </div>
                 <div class="card-body">
                     <ul class="list-unstyled mb-0">
@@ -196,6 +173,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const amountInput = document.getElementById('requested_amount');
     const maxAmount = {{ total_available }};
     
+    console.log('Max amount for validation:', maxAmount);
+    
     if (amountInput) {
         amountInput.addEventListener('input', function() {
             const value = parseFloat(this.value);
@@ -255,27 +234,41 @@ document.addEventListener('DOMContentLoaded', function() {
 .balance-item {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
     font-size: 0.875rem;
+    padding: 0.25rem 0;
 }
 
 .balance-item.total {
     font-size: 1rem;
     margin-top: 0.5rem;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 0.75rem;
 }
 
 .balance-label {
     color: #6b7280;
+    font-weight: 500;
+    flex: 1;
 }
 
 .balance-value {
     color: #1f2937;
+    font-weight: 500;
 }
 
-.balance-total {
-    color: #059669;
-    font-weight: 500;
+.bank-details-display {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.bank-info {
+    color: #4b5563;
+    line-height: 1.6;
+    font-size: 0.875rem;
 }
 
 .btn-primary {
