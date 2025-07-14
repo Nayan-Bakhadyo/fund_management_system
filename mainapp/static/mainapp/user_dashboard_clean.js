@@ -410,9 +410,13 @@ document.addEventListener('DOMContentLoaded', function() {
             withdrawRequestSection.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
             
             // Fetch withdraw request form
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                             document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            
             fetch('/user/withdraw_request/', {
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
                 }
             })
             .then(response => {
@@ -424,10 +428,45 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(data => {
                 console.log('Withdraw request data received:', data);
+                console.log('Data keys:', Object.keys(data));
                 if (data.html) {
+                    console.log('HTML length:', data.html.length);
+                    console.log('HTML preview:', data.html.substring(0, 500) + '...');
+                    
+                    // Check if HTML contains template variables
+                    if (data.html.includes('available_units')) {
+                        console.log('✓ HTML contains available_units');
+                    } else {
+                        console.log('✗ HTML missing available_units');
+                    }
+                    
+                    if (data.html.includes('portfolio_value')) {
+                        console.log('✓ HTML contains portfolio_value');
+                    } else {
+                        console.log('✗ HTML missing portfolio_value');
+                    }
+                    
                     withdrawRequestSection.innerHTML = data.html;
+                    
+                    // Debug the rendered content
+                    setTimeout(() => {
+                        const portfolioValueElement = withdrawRequestSection.querySelector('.balance-total');
+                        if (portfolioValueElement) {
+                            console.log('Portfolio value element content:', portfolioValueElement.textContent);
+                        } else {
+                            console.log('Portfolio value element not found in rendered content');
+                        }
+                        
+                        const balanceItems = withdrawRequestSection.querySelectorAll('.balance-item');
+                        console.log('Found', balanceItems.length, 'balance items');
+                        balanceItems.forEach((item, index) => {
+                            console.log(`Balance item ${index}:`, item.textContent.trim());
+                        });
+                    }, 100);
+                    
                     attachWithdrawRequestFormHandler();
                 } else {
+                    console.error('No HTML in response data');
                     withdrawRequestSection.innerHTML = '<div class="alert alert-warning">No withdraw request form available.</div>';
                 }
             })
