@@ -640,48 +640,33 @@ document.addEventListener('DOMContentLoaded', function() {
         firmStatusMenu.addEventListener('click', function(e) {
             e.preventDefault();
             console.log('Firm status menu clicked');
-            try {
-                const firmModal = new bootstrap.Modal(document.getElementById('firmStatusModal'));
-                console.log('Modal created successfully');
-                firmModal.show();
-                console.log('Modal show() called');
-                loadFirmStatus();
-                console.log('loadFirmStatus() called');
-                if (window.innerWidth <= 767) closeSidebar();
-            } catch (error) {
-                console.error('Error in firm status click handler:', error);
-            }
+            const firmModal = new bootstrap.Modal(document.getElementById('firmStatusModal'));
+            firmModal.show();
+            loadFirmStatus();
+            if (window.innerWidth <= 767) closeSidebar();
         });
     }
 
     // Load firm status function
     function loadFirmStatus() {
-        console.log('loadFirmStatus called');
         const modalBody = document.getElementById('firm-status-dashboard');
-        console.log('Modal body element:', modalBody);
-        
         if (modalBody) {
             modalBody.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>';
-            console.log('Spinner added to modal body');
             
             fetch('/firm_status_dashboard/', {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
             .then(response => {
-                console.log('Response received:', response.status);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
-                console.log('Data received:', data);
                 if (data.html) {
                     modalBody.innerHTML = data.html;
-                    console.log('HTML content updated');
                     // Initialize charts after content is loaded
                     setTimeout(() => {
-                        console.log('Initializing firm status charts');
                         initializeFirmStatusCharts();
                     }, 100);
                 } else {
@@ -692,8 +677,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error loading firm status:', error);
                 modalBody.innerHTML = '<div class="alert alert-danger">Failed to load firm status. Please try again.</div>';
             });
-        } else {
-            console.error('Modal body element not found');
         }
     }
 

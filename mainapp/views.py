@@ -860,16 +860,24 @@ def add_investment_modal(request):
         investment_name = request.POST.get('investment_name')
         investment_category_id = request.POST.get('investment_category')
         status = request.POST.get('status')
+        share_symbol = request.POST.get('share_symbol', '').strip()
+        
         if investment_name and investment_category_id and status:
             # Check for duplicate investment name
             if FirmInvestment.objects.filter(investment_name=investment_name).exists():
                 return JsonResponse({"success": False, "error": "The Investment name already exists - Choose another name"})
             try:
                 category = InvestmentCategory.objects.get(pk=investment_category_id)
+                
+                # If share market category is selected, share_symbol should be provided
+                if category.category_name.lower() == 'share market' and not share_symbol:
+                    return JsonResponse({"success": False, "error": "Share symbol is required for share market investments."})
+                
                 investment = FirmInvestment.objects.create(
                     investment_name=investment_name,
                     investment_category=category,
-                    status=status
+                    status=status,
+                    share_symbol=share_symbol if share_symbol else None
                 )
                 return JsonResponse({"success": True})
             except InvestmentCategory.DoesNotExist:
@@ -1373,3 +1381,4 @@ def fundmanager_withdrawal_detail(request, withdrawal_id):
     }
     
     return render(request, 'mainapp/fundmanager_withdrawal_detail.html', context)
+

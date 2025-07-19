@@ -248,7 +248,10 @@ $(document).on('submit', '#addInvestment', function(e) {
         url: '/fundmanager/add_investment_modal/',
         type: 'POST',
         data: $(this).serialize(),
-        headers: {'X-Requested-With': 'XMLHttpRequest'},
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCSRFToken()
+        },
         success: function(response) {
             if (response.success) {
                 alert('Investment added successfully!');
@@ -285,7 +288,10 @@ $(document).off('submit', '#addInvestmentForm').on('submit', '#addInvestmentForm
         url: '/fundmanager/add_investment_modal/',
         type: 'POST',
         data: $(this).serialize(),
-        headers: {'X-Requested-With': 'XMLHttpRequest'},
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCSRFToken()
+        },
         success: function(response) {
             console.log(response); // Add this line
             if (response.success) {
@@ -318,7 +324,10 @@ $(document).off('submit', '#investmentTransactionForm').on('submit', '#investmen
         url: '/fundmanager/add_investment_transaction/', // <-- Make sure this is correct!
         type: 'POST',
         data: $(this).serialize(),
-        headers: {'X-Requested-With': 'XMLHttpRequest'},
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCSRFToken()
+        },
         success: function(response) {
             if (response.success) {
                 $('#investmentTransactionAlert').html(
@@ -365,7 +374,10 @@ $(document).off('submit', '#closeInvestmentForm').on('submit', '#closeInvestment
         url: '/fundmanager/close_investment_modal/',
         type: 'POST',
         data: $(this).serialize(),
-        headers: {'X-Requested-With': 'XMLHttpRequest'},
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCSRFToken()
+        },
         success: function(response) {
             if (response.success) {
                 $('#closeInvestmentAlert').html(
@@ -435,7 +447,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData(this);
             fetch(`/fundmanager/edit_user_upload/${encodeURIComponent(email)}/`, {
               method: 'POST',
-              headers: {'X-Requested-With': 'XMLHttpRequest'},
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCSRFToken()
+              },
               body: formData
             })
             .then(response => response.json())
@@ -547,3 +562,46 @@ function renderFirmStatusCharts() {
         }
     });
 }
+
+// Handle conditional display of share symbol field based on investment category
+$(document).on('change', '#investment_category', function() {
+    const selectedCategoryText = $(this).find('option:selected').text().toLowerCase();
+    const shareSymbolField = $('#shareSymbolField');
+    const shareSymbolInput = $('#share_symbol');
+    
+    if (selectedCategoryText.includes('share market')) {
+        shareSymbolField.show();
+        shareSymbolInput.attr('required', true);
+    } else {
+        shareSymbolField.hide();
+        shareSymbolInput.attr('required', false);
+        shareSymbolInput.val('');
+    }
+});
+
+// Handle conditional display of stock units field based on selected investment
+$(document).on('change', '#investment', function() {
+    const selectedOption = $(this).find('option:selected');
+    const category = selectedOption.data('category');
+    const stockUnitsField = $('#stockUnitsField');
+    const stockUnitsInput = $('#stock_units_purchased');
+    
+    if (category && category.includes('share market')) {
+        stockUnitsField.show();
+    } else {
+        stockUnitsField.hide();
+        stockUnitsInput.val('');
+    }
+});
+
+// Reset forms when modals are closed
+$(document).on('hidden.bs.modal', '#addInvestmentModal', function() {
+    $('#shareSymbolField').hide();
+    $('#share_symbol').attr('required', false);
+    $('#addInvestmentForm')[0].reset();
+});
+
+$(document).on('hidden.bs.modal', '#investmentTransaction', function() {
+    $('#stockUnitsField').hide();
+    $('#investmentTransactionForm')[0].reset();
+});

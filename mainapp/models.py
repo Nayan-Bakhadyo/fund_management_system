@@ -136,8 +136,12 @@ class FirmInvestment(models.Model):
     ]
 
     status = models.CharField(max_length=6, choices=STATUS_CHOICES, default='open')
-
-
+    share_symbol = models.CharField(
+        max_length=20, 
+        blank=True, 
+        null=True, 
+        help_text="Stock symbol for share market investments (e.g., NABIL, NICA, etc.)"
+    )
 
     def __str__(self):
         return f"{self.investment_name}"

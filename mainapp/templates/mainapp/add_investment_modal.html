@@ -33,6 +33,11 @@
               {% endfor %}
             </select>
           </div>
+          <div class="mb-3" id="shareSymbolField" style="display: none;">
+            <label for="share_symbol" class="form-label">Share Symbol</label>
+            <input type="text" class="form-control" id="share_symbol" name="share_symbol" maxlength="20" placeholder="e.g., NABIL, NICA, ADBL">
+            <div class="form-text">Enter the stock symbol for share market investments</div>
+          </div>
           <div class="mb-3">
             <label for="status" class="form-label">Status</label>
             <select class="form-control" id="status" name="status" required>

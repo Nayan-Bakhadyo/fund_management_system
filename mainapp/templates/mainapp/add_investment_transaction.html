@@ -15,7 +15,12 @@
             <select class="form-control" id="investment" name="investment" required>
               <option value="">Select Investment</option>
               {% for inv in investments %}
-                <option value="{{ inv.investment_id }}">{{ inv.investment_name }}</option>
+                <option value="{{ inv.investment_id }}" 
+                        data-category="{{ inv.investment_category.category_name|lower }}" 
+                        data-share-symbol="{{ inv.share_symbol|default:'' }}">
+                  {{ inv.investment_name }}
+                  {% if inv.share_symbol %} ({{ inv.share_symbol }}){% endif %}
+                </option>
               {% endfor %}
             </select>
           </div>
@@ -30,6 +35,11 @@
               <option value="investment">Investment</option>
               <option value="return">Return</option>
             </select>
+          </div>
+          <div class="mb-3" id="stockUnitsField" style="display: none;">
+            <label for="stock_units_purchased" class="form-label">Stock Units Purchased</label>
+            <input type="number" step="0.01" class="form-control" id="stock_units_purchased" name="stock_units_purchased" placeholder="Number of stock units">
+            <div class="form-text">Enter the number of stock units for share market investments</div>
           </div>
         </div>
         <div class="modal-footer">
