@@ -1451,10 +1451,6 @@ body {
     font-weight: 700;
     margin-bottom: 1.5rem;
     color: var(--text-primary);
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
 }
 
 .transaction-history-container .alert {
@@ -1847,8 +1843,6 @@ body.modal-open {
     vertical-align: middle;
   }
   .transaction-history-container .table th {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    color: white;
     font-weight: 600;
     text-align: center;
     border: none;
