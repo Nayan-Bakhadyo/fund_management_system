@@ -30,8 +30,8 @@ def fetch_today_share_price_df():
     print(df.shape[0])
     print(df.head())  # Show first 5 rows
     # Export to CSV
-    df.to_csv("utilities/share_price.csv", index=False)
-    print("Exported to share_price.csv")
+    df.to_csv("mainapp/utilities/share_price.csv", index=False)
+    print("Exported to mainapp/utilities/share_price.csv")
     return df
 
 
