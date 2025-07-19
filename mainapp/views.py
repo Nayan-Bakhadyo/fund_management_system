@@ -66,26 +66,35 @@ def send_verification_code(request):
 
     # HTML content
     html_content = f"""
-    <div style="max-width:480px;margin:0 auto;padding:24px 18px;background:#f6fff9;border-radius:14px;
-        border:2px solid #ffb703;font-family:sans-serif;">
-        <div style="text-align:center;margin-bottom:18px;">
-            <img src="https://beinvestmentfirm.com/static/mainapp/assets/BE_logo_final2.png" alt="BE Logo" style="width:88px;height:60px;border-radius:14px;box-shadow:0 2px 12px #b2f2dd;">
+    <div style="max-width:520px;margin:0 auto;padding:32px 24px;background:#ffffff;border-radius:16px;
+        box-shadow:0 10px 25px rgba(37,99,235,0.08), 0 4px 12px rgba(37,99,235,0.05);
+        border:1px solid rgba(37,99,235,0.1);font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+        <div style="text-align:center;margin-bottom:24px;">
+            <div style="width:80px;height:80px;margin:0 auto;background:linear-gradient(135deg,#f8fafc,#f1f5f9);
+                border-radius:16px;display:flex;align-items:center;justify-content:center;
+                box-shadow:0 4px 12px rgba(37,99,235,0.15);">
+                <div style="width:48px;height:48px;background:#2563eb;border-radius:12px;"></div>
+            </div>
         </div>
-        <h2 style="color:#38b000;text-align:center;margin-bottom:10px;">Email Verification</h2>
-        <p style="color:#ff8800;text-align:center;font-size:1.1rem;margin-bottom:18px;">
-            Welcome to <b>BE Investment Firm</b>!<br>
-            Please use the code below to verify your email address.
+        <h2 style="color:#2563eb;text-align:center;margin-bottom:12px;font-weight:700;font-size:1.75rem;">Email Verification</h2>
+        <p style="color:#64748b;text-align:center;font-size:1.1rem;margin-bottom:24px;line-height:1.5;">
+            Welcome to <b style="color:#1e293b;">BE Investment Firm</b>!<br>
+            Please use the verification code below to complete your registration.
         </p>
-        <div style="background:#fffbe6;border-radius:10px;padding:18px 0;margin:18px 0;text-align:center;border:1.5px solid #ffb703;">
-            <span style="font-size:2rem;letter-spacing:6px;color:#38b000;font-weight:700;">{code}</span>
+        <div style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-radius:12px;padding:24px;
+            margin:24px 0;text-align:center;border:2px solid rgba(37,99,235,0.1);">
+            <span style="font-size:2.2rem;letter-spacing:8px;color:#2563eb;font-weight:700;font-family:monospace;">{code}</span>
         </div>
-        <ul style="color:#40916c;font-size:0.98rem;margin-bottom:18px;">
-            <li>This code is valid for 10 minutes.</li>
-            <li>Do not share your code with anyone.</li>
-            <li>If you did not request this, please ignore this email.</li>
-        </ul>
-        <div style="text-align:center;color:#ff8800;font-size:0.95rem;">
-            Need help? Contact <a href="mailto:beinvestmentfirm@gmail.com" style="color:#38b000;">beinvestmentfirm@gmail.com</a>
+        <div style="background:#fef3c7;border-radius:8px;padding:16px;margin:20px 0;border-left:4px solid #f59e0b;">
+            <ul style="color:#1e293b;font-size:0.95rem;margin:0;padding-left:20px;">
+                <li>This code is valid for 10 minutes only</li>
+                <li>Do not share your code with anyone</li>
+                <li>If you did not request this, please ignore this email</li>
+            </ul>
+        </div>
+        <div style="text-align:center;color:#64748b;font-size:0.95rem;margin-top:24px;">
+            Need help? Contact <a href="mailto:beinvestmentfirm@gmail.com" 
+                style="color:#2563eb;text-decoration:none;font-weight:500;">beinvestmentfirm@gmail.com</a>
         </div>
     </div>
     """
@@ -111,26 +120,35 @@ def verify_email(request):
         to_email = [request.user.email]
 
         html_content = f"""
-        <div style="max-width:480px;margin:0 auto;padding:24px 18px;background:#fffbe6;border-radius:12px;
-            border:1.5px solid #bfa14a;font-family:sans-serif;">
-            <div style="text-align:center;margin-bottom:18px;">
-                <img src="https://yourdomain.com/static/mainapp/assets/be_logo.png" alt="BE Logo" style="width:56px;height:56px;border-radius:10px;">
+        <div style="max-width:520px;margin:0 auto;padding:32px 24px;background:#ffffff;border-radius:16px;
+            box-shadow:0 10px 25px rgba(37,99,235,0.08), 0 4px 12px rgba(37,99,235,0.05);
+            border:1px solid rgba(37,99,235,0.1);font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+            <div style="text-align:center;margin-bottom:24px;">
+                <div style="width:80px;height:80px;margin:0 auto;background:linear-gradient(135deg,#f8fafc,#f1f5f9);
+                    border-radius:16px;display:flex;align-items:center;justify-content:center;
+                    box-shadow:0 4px 12px rgba(37,99,235,0.15);">
+                    <div style="width:48px;height:48px;background:#2563eb;border-radius:12px;"></div>
+                </div>
             </div>
-            <h2 style="color:#bfa14a;text-align:center;margin-bottom:10px;">Email Verification</h2>
-            <p style="color:#14213d;text-align:center;font-size:1.1rem;margin-bottom:18px;">
-                Welcome to <b>BE Investment Firm</b>!<br>
-                Please use the code below to verify your email address.
+            <h2 style="color:#2563eb;text-align:center;margin-bottom:12px;font-weight:700;font-size:1.75rem;">Email Verification</h2>
+            <p style="color:#64748b;text-align:center;font-size:1.1rem;margin-bottom:24px;line-height:1.5;">
+                Welcome to <b style="color:#1e293b;">BE Investment Firm</b>!<br>
+                Please use the verification code below to complete your registration.
             </p>
-            <div style="background:#fff8e1;border-radius:8px;padding:18px 0;margin:18px 0;text-align:center;">
-                <span style="font-size:2rem;letter-spacing:6px;color:#14213d;font-weight:700;">{code}</span>
+            <div style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-radius:12px;padding:24px;
+                margin:24px 0;text-align:center;border:2px solid rgba(37,99,235,0.1);">
+                <span style="font-size:2.2rem;letter-spacing:8px;color:#2563eb;font-weight:700;font-family:monospace;">{code}</span>
             </div>
-            <ul style="color:#6c757d;font-size:0.98rem;margin-bottom:18px;">
-                <li>This code is valid for 10 minutes.</li>
-                <li>Do not share your code with anyone.</li>
-                <li>If you did not request this, please ignore this email.</li>
-            </ul>
-            <div style="text-align:center;color:#888;font-size:0.95rem;">
-                Need help? Contact <a href="mailto:beinvestmentfirm@gmail.com" style="color:#bfa14a;">beinvestmentfirm@gmail.com</a>
+            <div style="background:#fef3c7;border-radius:8px;padding:16px;margin:20px 0;border-left:4px solid #f59e0b;">
+                <ul style="color:#1e293b;font-size:0.95rem;margin:0;padding-left:20px;">
+                    <li>This code is valid for 10 minutes only</li>
+                    <li>Do not share your code with anyone</li>
+                    <li>If you did not request this, please ignore this email</li>
+                </ul>
+            </div>
+            <div style="text-align:center;color:#64748b;font-size:0.95rem;margin-top:24px;">
+                Need help? Contact <a href="mailto:beinvestmentfirm@gmail.com" 
+                    style="color:#2563eb;text-decoration:none;font-weight:500;">beinvestmentfirm@gmail.com</a>
             </div>
         </div>
         """
@@ -598,46 +616,56 @@ def send_transaction_email(user_email, transaction_type, amount, date, balance, 
     to_email = [user_email]
 
     html_content = f"""
-    <div style="max-width:520px;margin:0 auto;padding:28px 22px;background:#fffbe6;border-radius:14px;
-        border:1.5px solid #bfa14a;font-family:sans-serif;">
-        <div style="text-align:center;margin-bottom:18px;">
-            <img src="https://yourdomain.com/static/mainapp/assets/be_logo.png" alt="BE Logo" style="width:56px;height:56px;border-radius:10px;">
+    <div style="max-width:560px;margin:0 auto;padding:32px 24px;background:#ffffff;border-radius:16px;
+        box-shadow:0 10px 25px rgba(37,99,235,0.08), 0 4px 12px rgba(37,99,235,0.05);
+        border:1px solid rgba(37,99,235,0.1);font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+        <div style="text-align:center;margin-bottom:24px;">
+            <div style="width:80px;height:80px;margin:0 auto;background:linear-gradient(135deg,#f8fafc,#f1f5f9);
+                border-radius:16px;display:flex;align-items:center;justify-content:center;
+                box-shadow:0 4px 12px rgba(37,99,235,0.15);">
+                <div style="width:48px;height:48px;background:#2563eb;border-radius:12px;"></div>
+            </div>
         </div>
-        <h2 style="color:#bfa14a;text-align:center;margin-bottom:10px;">Transaction Alert</h2>
-        <p style="color:#14213d;text-align:center;font-size:1.1rem;margin-bottom:18px;">
+        <h2 style="color:#2563eb;text-align:center;margin-bottom:12px;font-weight:700;font-size:1.75rem;">Transaction Confirmation</h2>
+        <p style="color:#64748b;text-align:center;font-size:1.1rem;margin-bottom:24px;line-height:1.5;">
             Dear Investor,<br>
-            Your recent <b>{transaction_type}</b> has been processed successfully.
+            Your <b style="color:#1e293b;">{transaction_type}</b> transaction has been processed successfully.
         </p>
-        <div style="background:#fff8e1;border-radius:8px;padding:18px 0;margin:18px 0;text-align:center;">
-            <table style="margin:0 auto;font-size:1.05rem;color:#14213d;">
+        <div style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-radius:12px;padding:24px;
+            margin:24px 0;border:2px solid rgba(37,99,235,0.1);">
+            <table style="margin:0 auto;font-size:1.05rem;color:#1e293b;width:100%;border-spacing:0;">
                 <tr>
-                    <td style="padding:6px 18px;">Transaction ID:</td>
-                    <td style="padding:6px 0;font-weight:600;">{transaction_id}</td>
+                    <td style="padding:8px 16px;font-weight:500;">Transaction ID:</td>
+                    <td style="padding:8px 0;font-weight:700;color:#2563eb;">{transaction_id}</td>
                 </tr>
                 <tr>
-                    <td style="padding:6px 18px;">Type:</td>
-                    <td style="padding:6px 0;font-weight:600;">{transaction_type.capitalize()}</td>
+                    <td style="padding:8px 16px;font-weight:500;">Type:</td>
+                    <td style="padding:8px 0;font-weight:700;">{transaction_type.capitalize()}</td>
                 </tr>
                 <tr>
-                    <td style="padding:6px 18px;">Amount:</td>
-                    <td style="padding:6px 0;font-weight:600;">NRs. {amount:,.2f}</td>
+                    <td style="padding:8px 16px;font-weight:500;">Amount:</td>
+                    <td style="padding:8px 0;font-weight:700;color:#10b981;">NRs. {amount:,.2f}</td>
                 </tr>
                 <tr>
-                    <td style="padding:6px 18px;">Date:</td>
-                    <td style="padding:6px 0;font-weight:600;">{date}</td>
+                    <td style="padding:8px 16px;font-weight:500;">Date:</td>
+                    <td style="padding:8px 0;font-weight:700;">{date}</td>
                 </tr>
                 <tr>
-                    <td style="padding:6px 18px;">Balance:</td>
-                    <td style="padding:6px 0;font-weight:600;">NRs. {balance:,.2f}</td>
+                    <td style="padding:8px 16px;font-weight:500;">New Balance:</td>
+                    <td style="padding:8px 0;font-weight:700;color:#2563eb;">NRs. {balance:,.2f}</td>
                 </tr>
             </table>
         </div>
-        <ul style="color:#6c757d;font-size:0.98rem;margin-bottom:18px;">
-            <li>If you did not authorize this transaction, please contact us immediately.</li>
-            <li>Keep this email for your records.</li>
-        </ul>
-        <div style="text-align:center;color:#888;font-size:0.95rem;">
-            Need help? Contact <a href="mailto:beinvestmentfirm@gmail.com" style="color:#bfa14a;">beinvestmentfirm@gmail.com</a>
+        <div style="background:#fef3c7;border-radius:8px;padding:16px;margin:20px 0;border-left:4px solid #f59e0b;">
+            <ul style="color:#1e293b;font-size:0.95rem;margin:0;padding-left:20px;">
+                <li>If you did not authorize this transaction, please contact us immediately</li>
+                <li>Keep this email for your records</li>
+                <li>Your account balance reflects this transaction</li>
+            </ul>
+        </div>
+        <div style="text-align:center;color:#64748b;font-size:0.95rem;margin-top:24px;">
+            Need help? Contact <a href="mailto:beinvestmentfirm@gmail.com" 
+                style="color:#2563eb;text-decoration:none;font-weight:500;">beinvestmentfirm@gmail.com</a>
         </div>
     </div>
     """
