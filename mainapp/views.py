@@ -1382,3 +1382,119 @@ def fundmanager_withdrawal_detail(request, withdrawal_id):
     
     return render(request, 'mainapp/fundmanager_withdrawal_detail.html', context)
 
+@login_required
+def stock_performance_dashboard(request):
+    """Display stock performance dashboard showing profit/loss for share market investments."""
+    import csv
+    import os
+    
+    # Get all open share market investments
+    share_market_category = InvestmentCategory.objects.filter(category_name__icontains='share market').first()
+    if not share_market_category:
+        return render(request, 'mainapp/stock_performance_dashboard.html', {
+            'error': 'Share Market investment category not found.'
+        })
+    
+    share_investments = FirmInvestment.objects.filter(
+        investment_category=share_market_category,
+        status='open',
+        share_symbol__isnull=False
+    ).exclude(share_symbol='')
+    
+    # Load share price data from CSV
+    csv_path = os.path.join(settings.BASE_DIR, 'mainapp', 'utilities', 'share_price.csv')
+    share_prices = {}
+    
+    try:
+        with open(csv_path, 'r', newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                symbol = row['Symbol'].strip()
+                ltp_str = row['LTP'].replace(',', '').strip()
+                try:
+                    ltp = Decimal(ltp_str)
+                    share_prices[symbol] = ltp
+                except (ValueError, TypeError):
+                    continue
+    except FileNotFoundError:
+        return render(request, 'mainapp/stock_performance_dashboard.html', {
+            'error': 'Share price data file not found.'
+        })
+    
+    # Calculate performance for each investment
+    investment_performance = []
+    total_invested = Decimal('0')
+    total_current_value = Decimal('0')
+    total_returns = Decimal('0')
+    
+    for investment in share_investments:
+        # Get all transactions for this investment
+        investment_transactions = InvestmentTransaction.objects.filter(investment=investment)
+        returns_transactions = investment_transactions.filter(amount_type='return')
+        
+        # Calculate total invested amount
+        invested_amount = investment_transactions.filter(amount_type='investment').aggregate(
+            total=Sum('amount'))['total'] or Decimal('0')
+        
+        # Calculate total return amount
+        return_amount = returns_transactions.aggregate(
+            total=Sum('amount'))['total'] or Decimal('0')
+        
+        # Calculate total stock units
+        total_units = investment_transactions.filter(
+            amount_type='investment',
+            stock_units_purchased__isnull=False
+        ).aggregate(total=Sum('stock_units_purchased'))['total'] or Decimal('0')
+        
+        # Get current LTP for this share
+        current_ltp = share_prices.get(investment.share_symbol, Decimal('0'))
+        
+        # Calculate current market value
+        current_market_value = total_units * current_ltp if current_ltp > 0 else Decimal('0')
+        
+        # Calculate profit/loss
+        net_invested = invested_amount - return_amount
+        profit_loss = current_market_value - net_invested
+        profit_loss_percentage = (profit_loss / net_invested * 100) if net_invested > 0 else Decimal('0')
+        
+        # Calculate average buy price
+        avg_buy_price = invested_amount / total_units if total_units > 0 else Decimal('0')
+        
+        investment_data = {
+            'investment': investment,
+            'symbol': investment.share_symbol,
+            'invested_amount': invested_amount,
+            'return_amount': return_amount,
+            'net_invested': net_invested,
+            'total_units': total_units,
+            'avg_buy_price': avg_buy_price,
+            'current_ltp': current_ltp,
+            'current_market_value': current_market_value,
+            'profit_loss': profit_loss,
+            'profit_loss_percentage': profit_loss_percentage,
+            'transactions': investment_transactions.order_by('-id')
+        }
+        
+        investment_performance.append(investment_data)
+        
+        # Add to totals
+        total_invested += net_invested
+        total_current_value += current_market_value
+        total_returns += return_amount
+    
+    # Calculate overall performance
+    overall_profit_loss = total_current_value - total_invested
+    overall_profit_loss_percentage = (overall_profit_loss / total_invested * 100) if total_invested > 0 else Decimal('0')
+    
+    context = {
+        'investment_performance': investment_performance,
+        'total_invested': total_invested,
+        'total_current_value': total_current_value,
+        'total_returns': total_returns,
+        'overall_profit_loss': overall_profit_loss,
+        'overall_profit_loss_percentage': overall_profit_loss_percentage,
+        'share_market_count': len(investment_performance),
+    }
+    
+    return render(request, 'mainapp/stock_performance_dashboard.html', context)
+
