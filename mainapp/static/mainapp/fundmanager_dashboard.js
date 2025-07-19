@@ -1,3 +1,25 @@
+// CSRF Token helper function
+function getCSRFToken() {
+    // First try to get from meta tag
+    const metaTag = document.querySelector('meta[name="csrf-token"]');
+    if (metaTag) {
+        return metaTag.getAttribute('content');
+    }
+    // Fallback to cookie
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, 10) === 'csrftoken=') {
+                cookieValue = decodeURIComponent(cookie.substring(10));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 // Simple fuzzy search for email dropdown
 document.addEventListener("DOMContentLoaded", function() {
     const emailSearch = document.getElementById("email_search");
@@ -51,7 +73,7 @@ document.addEventListener("DOMContentLoaded", function() {
                                 fetch(form.action, {
                                     method: "POST",
                                     headers: {
-                                        "X-CSRFToken": csrftoken
+                                        "X-CSRFToken": getCSRFToken()
                                     },
                                     body: formData
                                 })
@@ -438,15 +460,32 @@ document.addEventListener('DOMContentLoaded', function() {
       e.preventDefault();
       // Show modal and loading spinner
       const modal = new bootstrap.Modal(document.getElementById('firmStatusModal'));
-      document.getElementById('firm-status-dashboard').innerHTML =
+      const modalBody = document.getElementById('firm-status-dashboard');
+      modalBody.innerHTML =
         '<div class="text-center py-5"><div class="spinner-border text-success" role="status"></div></div>';
       modal.show();
+      
       // Fetch dashboard content and render charts
-      fetch('/firm_status_dashboard/')
-        .then(response => response.json())
+      fetch('/firm_status_dashboard/', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
         .then(data => {
-          document.getElementById('firm-status-dashboard').innerHTML = data.html;
-          setTimeout(renderFirmStatusCharts, 100); // Give DOM time to update
+          if (data.html) {
+            modalBody.innerHTML = data.html;
+            setTimeout(renderFirmStatusCharts, 100); // Give DOM time to update
+          } else {
+            throw new Error('No HTML content received');
+          }
+        })
+        .catch(error => {
+          console.error('Error loading firm status:', error);
+          modalBody.innerHTML = '<div class="alert alert-danger">Failed to load firm status. Please try again.</div>';
         });
     });
   }
