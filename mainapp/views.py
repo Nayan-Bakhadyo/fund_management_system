@@ -722,12 +722,20 @@ def add_investment_transaction(request):
                     available_capital = latest_record.available_capital
                     total_circulating_unit = latest_record.total_circulating_unit
 
+                    # Initialize variables for all transaction types
+                    purchase_unit = 0
+                    new_invested_capital = invested_capital
+                    new_available_capital = available_capital
+
                     if amount_type == 'investment':
                         if amount > available_capital:
                             return JsonResponse({"success": False, "error": "Transaction amount exceeds available capital."})
                         new_invested_capital = invested_capital + amount
                         new_available_capital = available_capital - amount
                     elif amount_type == 'return':
+                        # Initialize purchase_unit for all return scenarios
+                        purchase_unit = 0
+                        
                         total_invested = InvestmentTransaction.objects.filter(
                             investment=investment, amount_type='investment'
                         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
@@ -774,7 +782,6 @@ def add_investment_transaction(request):
 
                             new_available_capital = available_capital + amount
                             new_invested_capital = invested_capital
-                            total_circulating_unit += purchase_unit
 
                         else:
                             # Only the profit portion above total_invested is subject to 20%
@@ -793,7 +800,6 @@ def add_investment_transaction(request):
                                 purchase_unit = profit_20 // unit_cost
                                 remaining_credit = profit_20 - (purchase_unit * unit_cost)
 
-                                be_user = AuthorizedUser.objects.get(email='beinvestmentfirm@gmail.com')
                                 UserTransaction.objects.create(
                                     authorized_user=be_user,
                                     transaction_type='deposit',
@@ -811,8 +817,9 @@ def add_investment_transaction(request):
                                 user_nav.save()
 
                             new_available_capital = available_capital + amount
-                            new_invested_capital = invested_capital - (amount - profit)
-                            total_circulating_unit += purchase_unit
+                            new_invested_capital = invested_capital - (amount - profit) if profit > 0 else invested_capital - amount
+                        
+                        total_circulating_unit += purchase_unit
                     else:
                         return JsonResponse({"success": False, "error": "Invalid amount type."})
                     
@@ -1440,11 +1447,18 @@ def stock_performance_dashboard(request):
         return_amount = returns_transactions.aggregate(
             total=Sum('amount'))['total'] or Decimal('0')
         
-        # Calculate total stock units
-        total_units = investment_transactions.filter(
+        # Calculate total stock units (investment units - return units)
+        investment_units = investment_transactions.filter(
             amount_type='investment',
             stock_units_purchased__isnull=False
         ).aggregate(total=Sum('stock_units_purchased'))['total'] or Decimal('0')
+        
+        return_units = investment_transactions.filter(
+            amount_type='return',
+            stock_units_purchased__isnull=False
+        ).aggregate(total=Sum('stock_units_purchased'))['total'] or Decimal('0')
+        
+        total_units = investment_units - return_units
         
         # Get current LTP for this share
         current_ltp = share_prices.get(investment.share_symbol, Decimal('0'))
@@ -1457,8 +1471,8 @@ def stock_performance_dashboard(request):
         profit_loss = current_market_value - net_invested
         profit_loss_percentage = (profit_loss / net_invested * 100) if net_invested > 0 else Decimal('0')
         
-        # Calculate average buy price
-        avg_buy_price = invested_amount / total_units if total_units > 0 else Decimal('0')
+        # Calculate average buy price (based on investment transactions only)
+        avg_buy_price = invested_amount / investment_units if investment_units > 0 else Decimal('0')
         
         investment_data = {
             'investment': investment,
