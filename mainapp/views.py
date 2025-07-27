@@ -1524,3 +1524,38 @@ def stock_performance_dashboard(request):
     
     return render(request, 'mainapp/stock_performance_dashboard.html', context)
 
+
+@login_required
+def user_uploads_status(request):
+    """View for users to see their transaction uploads and status"""
+    try:
+        user_email = request.user.email
+        uploads = UserTransactionUpload.objects.filter(email=user_email).order_by('-date_time')
+        
+        # Add status display logic to each upload
+        for upload in uploads:
+            if upload.is_valid and upload.is_credited:
+                upload.status_display = 'Complete'
+                upload.status_class = 'success'
+            elif upload.is_valid and not upload.is_credited:
+                upload.status_display = 'Pending'
+                upload.status_class = 'warning'
+            else:
+                upload.status_display = 'Invalid'
+                upload.status_class = 'danger'
+        
+        context = {
+            'uploads': uploads,
+            'user_email': user_email,
+        }
+        
+        return render(request, 'mainapp/user_uploads_status.html', context)
+        
+    except Exception as e:
+        context = {
+            'error': f'Error retrieving uploads: {str(e)}',
+            'uploads': [],
+            'user_email': request.user.email,
+        }
+        return render(request, 'mainapp/user_uploads_status.html', context)
+
