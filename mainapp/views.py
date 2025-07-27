@@ -18,6 +18,7 @@ from django.utils import timezone
 from decimal import Decimal
 import json
 from django.core.serializers.json import DjangoJSONEncoder
+import sys
 
 def mask_email(email):
     try:
@@ -46,7 +47,6 @@ def home(request):
 
 @login_required
 def send_verification_code(request):
-    import random
     code = random.randint(100000, 999999)
     request.session['verification_code'] = str(code)
     request.session['verification_email'] = request.user.email
@@ -1198,8 +1198,6 @@ def withdraw_request(request):
                 available_balance_at_request=total_available,
                 available_units_at_request=user_nav.available_unit,
                 current_nav_at_request=latest_nav.unit_cost,
-                user_nav_at_request=user_nav,  # New FK relation
-                nav_record_at_request=latest_nav,  # New FK relation
                 created_from_ip=get_client_ip(request)
             )
             
@@ -1270,7 +1268,6 @@ def fundmanager_withdrawal_requests(request):
 @login_required
 def fundmanager_withdrawal_detail(request, withdrawal_id):
     """Fund manager detailed view for a specific withdrawal request"""
-    import sys
     print("="*50, file=sys.stderr, flush=True)
     print(f"FUNDMANAGER_WITHDRAWAL_DETAIL CALLED! withdrawal_id={withdrawal_id}", file=sys.stderr, flush=True)
     print("="*50, file=sys.stderr, flush=True)
