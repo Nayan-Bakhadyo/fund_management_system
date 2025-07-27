@@ -938,47 +938,26 @@ def close_investment_modal(request):
                     available_capital = latest_record.available_capital
                     total_circulating_unit = latest_record.total_circulating_unit
 
+                    # Calculate profit/loss for the investment
                     invested_amount = transactions.filter(amount_type='investment').aggregate(total=Sum('amount'))['total'] or Decimal('0')
                     return_amount = transactions.filter(amount_type='return').aggregate(total=Sum('amount'))['total'] or Decimal('0')
-                    profit = return_amount - invested_amount
-
-                    if profit > 0:
-                        profit_20 = profit * Decimal('0.20')
-
-                        # Fetch latest NAVRecord by id
-                        latest_nav = NAVRecord.objects.latest('id')
-                        unit_cost = latest_nav.unit_cost
-
-                        # Calculate purchase_unit and remaining_credit
-                        purchase_unit = profit_20 // unit_cost
-                        remaining_credit = profit_20 - (purchase_unit * unit_cost)
-
-                        be_user = AuthorizedUser.objects.get(email='beinvestmentfirm@gmail.com')
-                        UserTransaction.objects.create(
-                            authorized_user=be_user,
-                            transaction_type='deposit',
-                            unit_cost=unit_cost,
-                            purchase_initiated_amount=profit_20,
-                            purchase_unit=purchase_unit,
-                            remaining_credit=remaining_credit,
-                            description=f"{investment.investment_name} - profit credited"
-                        )
-
-                        # --- Update UserNav for beinvestmentfirm@gmail.com ---
-                        user_nav = UserNAV.objects.get(authorized_user=be_user)
-                        user_nav.available_unit += purchase_unit
-                        user_nav.available_credit_amount += remaining_credit
-                        user_nav.save()
-                        # -----------------------------------------------------
-
-                        new_available_capital = available_capital
+                    profit_loss = return_amount - invested_amount
+                    
+                    # If investment is in loss, subtract the loss from invested capital
+                    if profit_loss < 0:
+                        loss_amount = abs(profit_loss)  # Make it positive
+                        new_invested_capital = invested_capital - loss_amount
+                        new_total_capital = new_invested_capital + available_capital
+                        
+                        # Create new TotalCapitalRecord to reflect the loss
                         TotalCapitalRecord.objects.create(
-                            total_capital=invested_capital + new_available_capital,
-                            invested_capital=invested_capital,
-                            available_capital=new_available_capital,
-                            total_circulating_unit=total_circulating_unit + purchase_unit
+                            total_capital=new_total_capital,
+                            invested_capital=new_invested_capital,
+                            available_capital=available_capital,
+                            total_circulating_unit=total_circulating_unit
                         )
 
+                    # Close the investment
                     investment.status = 'closed'
                     investment.save()
 

@@ -48,6 +48,7 @@ from mainapp.models import (
     TotalCapitalRecord, FirmInvestment, InvestmentTransaction, 
     NAVRecord, InvestmentCategory
 )
+from django.db.models import Sum
 
 def log_message(message):
     """Log messages with timestamp"""
@@ -163,13 +164,18 @@ def calculate_total_investment_value(share_prices):
     """Calculate total value of all firm investments"""
     total_value = Decimal('0')
     investment_details = []
+    total_closed_losses = Decimal('0')
     
-    # Get all investments
-    investments = FirmInvestment.objects.all()
+    # Get open investments
+    open_investments = FirmInvestment.objects.filter(status='open')
     
-    log_message(f"Found {investments.count()} total investments")
+    # Get closed investments 
+    closed_investments = FirmInvestment.objects.filter(status='closed')
     
-    for investment in investments:
+    log_message(f"Found {open_investments.count()} open investments and {closed_investments.count()} closed investments")
+    
+    # Calculate value for open investments
+    for investment in open_investments:
         try:
             investment_value = calculate_investment_value(investment, share_prices)
             total_value += investment_value
@@ -178,21 +184,63 @@ def calculate_total_investment_value(share_prices):
                 'name': investment.investment_name,
                 'type': 'Share Market' if is_share_market_investment(investment) else 'Other',
                 'symbol': investment.share_symbol or 'N/A',
-                'value': investment_value
+                'value': investment_value,
+                'status': 'open'
             })
             
         except Exception as e:
             log_message(f"Error calculating value for {investment.investment_name}: {str(e)}")
             continue
     
+    # Calculate losses from closed investments
+    for investment in closed_investments:
+        try:
+            transactions = InvestmentTransaction.objects.filter(investment=investment)
+            invested_amount = transactions.filter(amount_type='investment').aggregate(total=Sum('amount'))['total'] or Decimal('0')
+            return_amount = transactions.filter(amount_type='return').aggregate(total=Sum('amount'))['total'] or Decimal('0')
+            profit_loss = return_amount - invested_amount
+            
+            if profit_loss < 0:  # Only account for losses
+                loss_amount = abs(profit_loss)
+                total_closed_losses += loss_amount
+                
+                investment_details.append({
+                    'name': investment.investment_name,
+                    'type': 'Share Market' if is_share_market_investment(investment) else 'Other',
+                    'symbol': investment.share_symbol or 'N/A',
+                    'value': profit_loss,  # Negative value to show loss
+                    'status': 'closed (loss)'
+                })
+                
+                log_message(f"Closed investment loss: {investment.investment_name} = NRs. {profit_loss:,.2f}")
+            else:
+                # Even profitable closed investments should be shown
+                investment_details.append({
+                    'name': investment.investment_name,
+                    'type': 'Share Market' if is_share_market_investment(investment) else 'Other',
+                    'symbol': investment.share_symbol or 'N/A',
+                    'value': profit_loss,
+                    'status': 'closed (profit)'
+                })
+            
+        except Exception as e:
+            log_message(f"Error calculating loss for closed investment {investment.investment_name}: {str(e)}")
+            continue
+    
+    # Subtract total losses from the portfolio value
+    total_value_with_losses = total_value - total_closed_losses
+    
     # Log investment summary
     log_message("\n=== INVESTMENT PORTFOLIO SUMMARY ===")
     for detail in investment_details:
-        log_message(f"{detail['name']} ({detail['type']}): NRs. {detail['value']:,.2f}")
+        status_indicator = f" [{detail['status']}]"
+        log_message(f"{detail['name']} ({detail['type']}){status_indicator}: NRs. {detail['value']:,.2f}")
     
-    log_message(f"\nTotal Investment Portfolio Value: NRs. {total_value:,.2f}")
+    log_message(f"\nOpen Investments Value: NRs. {total_value:,.2f}")
+    log_message(f"Total Closed Investment Losses: NRs. {total_closed_losses:,.2f}")
+    log_message(f"Net Investment Portfolio Value: NRs. {total_value_with_losses:,.2f}")
     
-    return total_value
+    return total_value_with_losses
 
 def calculate_nav():
     """Main NAV calculation function"""
@@ -220,11 +268,11 @@ def calculate_nav():
         log_message("Error: Total circulating units is zero, cannot calculate NAV")
         return None
     
-    # Calculate total investment value
+    # Calculate total investment value (includes losses from closed investments)
     total_investment_value = calculate_total_investment_value(share_prices)
     
     # Calculate NAV
-    # NAV = (Available Capital + Current Investment Value) / Total Circulating Units
+    # NAV = (Available Capital + Current Investment Value - Closed Investment Losses) / Total Circulating Units
     total_portfolio_value = latest_capital.available_capital + total_investment_value
     nav_value = total_portfolio_value / latest_capital.total_circulating_unit
     
