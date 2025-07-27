@@ -901,6 +901,36 @@ def close_investment_modal(request):
                 with transaction.atomic():
                     investment = FirmInvestment.objects.get(pk=investment_id, status='open')
 
+                    # Check if this is a share market investment and validate remaining units
+                    if (investment.investment_category and 
+                        investment.investment_category.category_name.lower() == 'share market' and 
+                        investment.share_symbol):
+                        
+                        # Get all transactions for this investment
+                        investment_transactions = InvestmentTransaction.objects.filter(investment=investment)
+                        
+                        # Calculate total stock units purchased
+                        total_units_purchased = investment_transactions.filter(
+                            amount_type='investment',
+                            stock_units_purchased__isnull=False
+                        ).aggregate(total=Sum('stock_units_purchased'))['total'] or Decimal('0')
+                        
+                        # Calculate total stock units sold (returned)
+                        total_units_sold = investment_transactions.filter(
+                            amount_type='return',
+                            stock_units_purchased__isnull=False
+                        ).aggregate(total=Sum('stock_units_purchased'))['total'] or Decimal('0')
+                        
+                        # Calculate remaining units
+                        remaining_units = total_units_purchased - total_units_sold
+                        
+                        if remaining_units > 0:
+                            return JsonResponse({
+                                "success": False, 
+                                "error": f"Cannot close share market investment '{investment.investment_name}' ({investment.share_symbol}). "
+                                        f"There are {remaining_units} units remaining. Please sell all shares before closing the investment."
+                            })
+
                     transactions = InvestmentTransaction.objects.filter(investment=investment)
                     latest_record = TotalCapitalRecord.objects.latest('id')
                     total_capital = latest_record.total_capital
