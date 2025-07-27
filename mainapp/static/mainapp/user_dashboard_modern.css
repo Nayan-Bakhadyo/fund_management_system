@@ -111,7 +111,8 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    overflow: hidden;
+    overflow-y: auto; /* Enable vertical scrolling */
+    overflow-x: hidden; /* Hide horizontal overflow */
     margin: 0;
     border: none;
     flex-shrink: 0;
@@ -157,7 +158,7 @@ body {
 .sidebar .nav-link {
     width: 100%;
     max-width: 100%;
-    overflow: hidden;
+    overflow: visible; /* Allow content to be visible for proper scrolling */
 }
 
 /* Ensure main content doesn't affect sidebar */
@@ -271,6 +272,17 @@ body {
 
 .sidebar-menu::-webkit-scrollbar-track {
     background: transparent;
+}
+
+/* Enhanced sidebar scrolling */
+.sidebar {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch; /* iOS smooth scrolling */
+}
+
+.sidebar-menu {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch; /* iOS smooth scrolling */
 }
 
 .sidebar-menu .nav-item {
