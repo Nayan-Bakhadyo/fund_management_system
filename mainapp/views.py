@@ -1428,6 +1428,13 @@ def stock_performance_dashboard(request):
             'error': 'Share price data file not found.'
         })
     
+    # Get latest total capital record
+    try:
+        latest_capital_record = TotalCapitalRecord.objects.latest('id')
+        total_capital = latest_capital_record.total_capital
+    except TotalCapitalRecord.DoesNotExist:
+        total_capital = Decimal('0')
+    
     # Calculate performance for each investment
     investment_performance = []
     total_invested = Decimal('0')
@@ -1474,6 +1481,9 @@ def stock_performance_dashboard(request):
         # Calculate average buy price (based on investment transactions only)
         avg_buy_price = invested_amount / investment_units if investment_units > 0 else Decimal('0')
         
+        # Calculate percentage of total capital invested in this firm
+        capital_percentage = (net_invested / total_capital * 100) if total_capital > 0 else Decimal('0')
+        
         investment_data = {
             'investment': investment,
             'symbol': investment.share_symbol,
@@ -1486,6 +1496,7 @@ def stock_performance_dashboard(request):
             'current_market_value': current_market_value,
             'profit_loss': profit_loss,
             'profit_loss_percentage': profit_loss_percentage,
+            'capital_percentage': capital_percentage,
             'transactions': investment_transactions.order_by('-id')
         }
         
@@ -1507,6 +1518,7 @@ def stock_performance_dashboard(request):
         'total_returns': total_returns,
         'overall_profit_loss': overall_profit_loss,
         'overall_profit_loss_percentage': overall_profit_loss_percentage,
+        'total_capital': total_capital,
         'share_market_count': len(investment_performance),
     }
     

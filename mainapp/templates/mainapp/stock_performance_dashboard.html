@@ -440,6 +440,15 @@
                                     <div class="metric-value">Nrs. {{ stock.current_market_value|indian_format }}</div>
                                 </div>
 
+                                <div class="text-center mb-3">
+                                    <small class="text-muted">% of Total Capital</small>
+                                    <div class="metric-value text-primary">
+                                        <i class="fas fa-chart-pie me-1"></i>
+                                        {{ stock.capital_percentage|floatformat:2 }}%
+                                    </div>
+                                    <small class="text-muted">(of Nrs. {{ total_capital|indian_format }})</small>
+                                </div>
+
                                 <div class="text-center">
                                     <small class="text-muted">Profit/Loss</small>
                                     <div class="metric-value {% if stock.profit_loss >= 0 %}profit-positive{% else %}profit-negative{% endif %}">
