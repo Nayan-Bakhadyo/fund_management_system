@@ -19,15 +19,6 @@ from decimal import Decimal
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 
-def update_nav_record():
-    latest_capital = TotalCapitalRecord.objects.latest('id')
-    if not latest_capital or latest_capital.total_circulating_unit == 0:
-        return None  # Avoid division by zero or missing data
-
-    nav = (latest_capital.invested_capital + latest_capital.available_capital) / latest_capital.total_circulating_unit
-    nav_record = NAVRecord.objects.create(unit_cost=nav)
-    return nav_record
-
 def mask_email(email):
     try:
         local, domain = email.split('@')
@@ -98,6 +89,11 @@ def send_verification_code(request):
         </div>
     </div>
     """
+
+    text_content = f"""Your BE Investment Firm verification code is: {code}
+This code is valid for 10 minutes. Do not share your code with anyone.
+If you did not request this, please ignore this email.
+Contact beinvestmentfirm@gmail.com for help."""
 
     email = EmailMultiAlternatives(subject, text_content, from_email, to_email)
     email.attach_alternative(html_content, "text/html")
@@ -280,7 +276,6 @@ def add_transaction(request):
                         total_circulating_unit=new_total_circulating_unit
                     )
 
-                update_nav_record()  # <-- Call after atomic block
                 return JsonResponse({
                     "success": True,
                     "transaction_type": "Deposit",
@@ -356,7 +351,6 @@ def add_transaction(request):
                             available_capital=new_available_capital,
                             total_circulating_unit=new_total_circulating_unit
                         )
-                    update_nav_record() 
                     return JsonResponse({
                         "success": True,
                         "transaction_type": "Withdrawal",
@@ -837,7 +831,6 @@ def add_investment_transaction(request):
                         available_capital=new_available_capital,
                         total_circulating_unit=total_circulating_unit
                     )
-                update_nav_record()
                 return JsonResponse({
                     "success": True,
                     "investment": investment.investment_name,
@@ -959,7 +952,6 @@ def close_investment_modal(request):
                     investment.status = 'closed'
                     investment.save()
 
-                update_nav_record()
                 return JsonResponse({"success": True})
             except FirmInvestment.DoesNotExist:
                 return JsonResponse({"success": False, "error": "Selected investment does not exist or is already closed."})
