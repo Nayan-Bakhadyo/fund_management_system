@@ -430,8 +430,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // Delegate edit button click
   dashboardContent.addEventListener('click', function(e) {
     if (e.target.classList.contains('edit-upload-btn')) {
-      const email = e.target.getAttribute('data-email');
-      fetch(`/fundmanager/edit_user_upload/${encodeURIComponent(email)}/`)
+      const uploadId = e.target.getAttribute('data-upload-id');
+      fetch(`/fundmanager/edit_user_upload/${uploadId}/`)
         .then(response => response.json())
         .then(data => {
           // Remove any existing modal
@@ -445,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function() {
           document.getElementById('editUserUploadForm').onsubmit = function(ev) {
             ev.preventDefault();
             const formData = new FormData(this);
-            fetch(`/fundmanager/edit_user_upload/${encodeURIComponent(email)}/`, {
+            fetch(`/fundmanager/edit_user_upload/${uploadId}/`, {
               method: 'POST',
               headers: {
                 'X-Requested-With': 'XMLHttpRequest',

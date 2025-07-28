@@ -986,14 +986,14 @@ def upload_transaction(request):
             return JsonResponse({'success': False, 'error': 'All fields are required.'})
 
         try:
-            obj, created = UserTransactionUpload.objects.update_or_create(
+            # Create a new upload record every time
+            obj = UserTransactionUpload.objects.create(
                 email=email,
-                defaults={
-                    'transaction_file': transaction_file,
-                    'amount': amount,
-                    'description': description,
-                    'date_time': timezone.now()
-                }
+                transaction_file=transaction_file,
+                amount=amount,
+                description=description,
+                is_valid=True,
+                is_credited=False
             )
             return JsonResponse({'success': True})
         except Exception as e:
@@ -1013,12 +1013,12 @@ def pending_user_uploads(request):
     return JsonResponse({'html': html})
 
 @login_required
-def edit_user_upload(request, email):
+def edit_user_upload(request, upload_id):
     authorized_user = AuthorizedUser.objects.get(email=request.user.email)
     if authorized_user.role != 'fund_manager':
         return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
 
-    upload = get_object_or_404(UserTransactionUpload, email=email)
+    upload = get_object_or_404(UserTransactionUpload, id=upload_id)
     if request.method == 'POST':
         is_valid = request.POST.get('is_valid') == 'true'
         is_credited = request.POST.get('is_credited') == 'true'

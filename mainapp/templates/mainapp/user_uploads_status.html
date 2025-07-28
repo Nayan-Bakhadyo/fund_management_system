@@ -258,6 +258,7 @@
                                 <div class="text-center mb-3">
                                     <div class="upload-amount">Nrs. {{ upload.amount|indian_format }}</div>
                                     <div class="upload-date">{{ upload.date_time|date:"M d, Y H:i" }}</div>
+                                    <small class="text-muted">Upload ID: {{ upload.id }}</small>
                                 </div>
                                 
                                 {% if upload.description %}

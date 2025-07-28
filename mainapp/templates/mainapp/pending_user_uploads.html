@@ -1,6 +1,7 @@
 <table class="table table-bordered table-hover align-middle">
     <thead class="table-light">
         <tr>
+            <th>ID</th>
             <th>Email</th>
             <th>Date/Time</th>
             <th>File</th>
@@ -14,6 +15,7 @@
     <tbody>
     {% for upload in uploads %}
         <tr>
+            <td>{{ upload.id }}</td>
             <td>{{ upload.email }}</td>
             <td>{{ upload.date_time }}</td>
             <td>
@@ -28,11 +30,11 @@
             <td>{{ upload.is_valid }}</td>
             <td>{{ upload.is_credited }}</td>
             <td>
-                <button class="btn btn-sm btn-primary edit-upload-btn" data-email="{{ upload.email }}">Edit</button>
+                <button class="btn btn-sm btn-primary edit-upload-btn" data-upload-id="{{ upload.id }}">Edit</button>
             </td>
         </tr>
     {% empty %}
-        <tr><td colspan="8" class="text-center">No pending uploads.</td></tr>
+        <tr><td colspan="9" class="text-center">No pending uploads.</td></tr>
     {% endfor %}
     </tbody>
 </table>

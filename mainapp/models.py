@@ -175,7 +175,7 @@ class TotalCapitalRecord(models.Model):
         return f"Total Capital on {self.date_time.strftime('%Y-%m-%d %H:%M:%S')}: {self.total_capital}"
 
 class UserTransactionUpload(models.Model):
-    email = models.EmailField(primary_key=True)
+    email = models.EmailField()
     date_time = models.DateTimeField(auto_now_add=True)
     transaction_file = models.FileField(upload_to='user_transaction_uploads/', null=True, blank=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2)

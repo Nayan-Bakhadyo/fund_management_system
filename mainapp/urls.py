@@ -32,7 +32,7 @@ urlpatterns = [
     path('fundmanager/withdrawal_detail/<str:withdrawal_id>/', views.fundmanager_withdrawal_detail, name='fundmanager_withdrawal_detail'),
 
     path('fundmanager/pending_user_uploads/', views.pending_user_uploads, name='pending_user_uploads'),
-    path('fundmanager/edit_user_upload/<str:email>/', views.edit_user_upload, name='edit_user_upload'),
+    path('fundmanager/edit_user_upload/<int:upload_id>/', views.edit_user_upload, name='edit_user_upload'),
     path('user/payment_detail/', views.payment_detail, name='payment_detail'),
     path('user/uploads_status/', views.user_uploads_status, name='user_uploads_status'),
     path('stock_performance_dashboard/', views.stock_performance_dashboard, name='stock_performance_dashboard'),
