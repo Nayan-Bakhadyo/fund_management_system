@@ -2,6 +2,7 @@
 
 # NAV Calculation Script for BE Investment Firm
 # Calculates NAV based on stock market performance and investment data
+# Includes 7.5% capital gains tax on open stock investment profits
 # Usage: ./calculate_nav.sh
 
 # Set script directory and Django project path
@@ -110,7 +111,7 @@ def calculate_investment_value(investment, share_prices):
         return calculate_other_investment_value(investment, transactions)
 
 def calculate_share_market_value(investment, transactions, share_prices):
-    """Calculate value for share market investments using LTP"""
+    """Calculate value for share market investments using LTP with 7.5% capital gains tax"""
     symbol = investment.share_symbol.strip().upper()
     
     if symbol not in share_prices:
@@ -133,15 +134,27 @@ def calculate_share_market_value(investment, transactions, share_prices):
     
     # Calculate current market value
     current_ltp = share_prices[symbol]
-    market_value = total_units * current_ltp
+    gross_market_value = total_units * current_ltp
+    
+    # Calculate capital gains and apply 7.5% tax if there's profit
+    capital_gain = gross_market_value - net_invested
+    capital_gains_tax = Decimal('0')
+    
+    if capital_gain > 0:
+        capital_gains_tax = capital_gain * Decimal('0.075')  # 7.5% tax on gains
+    
+    # Net market value after tax
+    market_value = gross_market_value - capital_gains_tax
     
     log_message(f"  Share Market Investment: {investment.investment_name}")
     log_message(f"    Symbol: {symbol}")
     log_message(f"    Total Units: {total_units}")
     log_message(f"    Current LTP: {current_ltp}")
-    log_message(f"    Market Value: {market_value}")
+    log_message(f"    Gross Market Value: {gross_market_value}")
     log_message(f"    Net Invested: {net_invested}")
-    log_message(f"    Gain/Loss: {market_value - net_invested}")
+    log_message(f"    Capital Gain: {capital_gain}")
+    log_message(f"    Capital Gains Tax (7.5%): {capital_gains_tax}")
+    log_message(f"    Net Market Value (after tax): {market_value}")
     
     return market_value
 
@@ -268,11 +281,12 @@ def calculate_nav():
         log_message("Error: Total circulating units is zero, cannot calculate NAV")
         return None
     
-    # Calculate total investment value (includes losses from closed investments)
+    # Calculate total investment value (includes losses from closed investments and capital gains tax)
     total_investment_value = calculate_total_investment_value(share_prices)
     
     # Calculate NAV
     # NAV = (Available Capital + Current Investment Value - Closed Investment Losses) / Total Circulating Units
+    # Note: Investment values already account for 7.5% capital gains tax on stock profits
     total_portfolio_value = latest_capital.available_capital + total_investment_value
     nav_value = total_portfolio_value / latest_capital.total_circulating_unit
     
