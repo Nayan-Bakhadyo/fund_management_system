@@ -1266,6 +1266,7 @@ body {
 /* Enhanced Navigation Links */
 .nav-link {
     position: relative;
+    padding-left: 1rem;
     overflow: hidden;
 }
 
@@ -1585,6 +1586,7 @@ body {
 .content-section [class*="col-"] {
     padding-right: 0.75rem !important;
     padding-left: 0.75rem !important;
+    padding-bottom: 0.5rem;
     max-width: 100% !important;
 }
 
