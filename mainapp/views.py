@@ -417,6 +417,12 @@ def user_dashboard(request):
     # Calculate unrealized profit/loss
     unrealized_pl = total_amount - total_invested
     
+    # Calculate unrealized profit/loss percentage
+    if total_invested > 0:
+        unrealized_pl_percentage = (unrealized_pl / total_invested) * 100
+    else:
+        unrealized_pl_percentage = 0
+    
     # Fetch NAV data for chart
     nav_records = NAVRecord.objects.order_by('date_time')
     nav_dates = [nav.date_time.strftime('%Y-%m-%d') for nav in nav_records]
@@ -430,6 +436,7 @@ def user_dashboard(request):
         'nav_date': nav_date,
         'total_units': total_units,
         'unrealized_pl': unrealized_pl,
+        'unrealized_pl_percentage': unrealized_pl_percentage,
         'nav_dates_json': json.dumps(nav_dates, cls=DjangoJSONEncoder),
         'nav_unit_costs_json': json.dumps(nav_unit_costs, cls=DjangoJSONEncoder),
     })
@@ -463,6 +470,12 @@ def portfolio(request):
     # Calculate unrealized profit/loss
     available_credit = user_nav.available_credit_amount if user_nav else 0
     unrealized_pl = total_amount - total_invested
+    
+    # Calculate unrealized profit/loss percentage
+    if total_invested > 0:
+        unrealized_pl_percentage = (unrealized_pl / total_invested) * 100
+    else:
+        unrealized_pl_percentage = 0
 
     nav_records = NAVRecord.objects.order_by('date_time')
     nav_dates = [nav.date_time.strftime('%Y-%m-%d') for nav in nav_records]
@@ -477,6 +490,7 @@ def portfolio(request):
         'nav_dates_json': json.dumps(nav_dates, cls=DjangoJSONEncoder),
         'nav_unit_costs_json': json.dumps(nav_unit_costs, cls=DjangoJSONEncoder),
         'unrealized_pl': unrealized_pl,
+        'unrealized_pl_percentage': unrealized_pl_percentage,
         'total_invested': total_invested,
     }
     return render(request, 'mainapp/portfolio.html', context)
@@ -574,6 +588,12 @@ def fundmanager_user_portfolio(request):
     total_invested = total_deposit - total_withdrawal
     # Calculate unrealized profit/loss
     unrealized_pl = total_amount - total_invested
+    
+    # Calculate unrealized profit/loss percentage
+    if total_invested > 0:
+        unrealized_pl_percentage = (unrealized_pl / total_invested) * 100
+    else:
+        unrealized_pl_percentage = 0
 
     nav_records = NAVRecord.objects.order_by('date_time')
     nav_dates = [nav.date_time.strftime('%Y-%m-%d') for nav in nav_records]
@@ -589,6 +609,7 @@ def fundmanager_user_portfolio(request):
         'nav_dates_json': json.dumps(nav_dates, cls=DjangoJSONEncoder),
         'nav_unit_costs_json': json.dumps(nav_unit_costs, cls=DjangoJSONEncoder),
         'unrealized_pl': unrealized_pl,
+        'unrealized_pl_percentage': unrealized_pl_percentage,
         'total_invested': total_invested,
         'available_credit': available_credit,
     }

@@ -163,6 +163,9 @@
                                 <h3 style="color: {% if unrealized_pl > 0 %}var(--success-color){% elif unrealized_pl < 0 %}var(--error-color){% else %}#6b7280{% endif %};">
                                     {% if unrealized_pl > 0 %}+{% endif %}NRs. {{ unrealized_pl|floatformat:2 }}
                                 </h3>
+                                <div style="color: {% if unrealized_pl > 0 %}var(--success-color){% elif unrealized_pl < 0 %}var(--error-color){% else %}#6b7280{% endif %}; font-size: 0.9rem; font-weight: 600; margin-top: 4px;">
+                                    {% if unrealized_pl_percentage > 0 %}+{% endif %}{{ unrealized_pl_percentage|floatformat:2 }}%
+                                </div>
                                 <p>Unrealized Profit/Loss</p>
                             </div>
                         </div>
