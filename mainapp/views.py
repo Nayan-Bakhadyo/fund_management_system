@@ -231,7 +231,7 @@ def add_transaction(request):
             remaining_credit = (amount + a) - (purchase_nav * unit_cost)
 
             try:
-                with transaction.atomic():
+                with transaction.atomic():                  # Need to perform transaction inconsistency problem
                     nav.available_unit += purchase_nav
                     nav.available_credit_amount = remaining_credit
                     nav.save()
