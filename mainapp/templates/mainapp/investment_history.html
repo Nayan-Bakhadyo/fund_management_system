@@ -131,9 +131,13 @@
                 padding-right: 0 !important;
                 padding-left: 0 !important;
             }
-            .d-md-none, .px-3, .px-md-4 {
-                padding-right: 0 !important;
-                padding-left: 0.8rem !important;
+            .d-md-none .px-3, .px-3 {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+            .px-md-4 {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
             }
             .investment-card {
                 margin-bottom: 15px;
@@ -281,21 +285,27 @@
                 {% if investments %}
                 <div class="summary-stats px-3 px-md-4">
                     <div class="row">
-                        <div class="col-md-4 summary-item mb-3 mb-md-0">
+                        <div class="col-3 summary-item">
                             <div class="summary-value">{{ total_investments }}</div>
-                            <div class="summary-label">Closed Investments</div>
+                            <div class="summary-label">Closed</div>
                         </div>
-                        <div class="col-md-4 summary-item mb-3 mb-md-0">
+                        <div class="col-3 summary-item">
                             <div class="summary-value" style="color: #28a745;">
                                 {{ profitable_count }}
                             </div>
-                            <div class="summary-label">Profitable</div>
+                            <div class="summary-label">Profit</div>
                         </div>
-                        <div class="col-md-4 summary-item">
+                        <div class="col-3 summary-item">
                             <div class="summary-value" style="color: #dc3545;">
                                 {{ loss_count }}
                             </div>
-                            <div class="summary-label">Loss-making</div>
+                            <div class="summary-label">Loss</div>
+                        </div>
+                        <div class="col-3 summary-item">
+                            <div class="summary-value" style="color: {% if average_return > 0 %}#28a745{% elif average_return < 0 %}#dc3545{% else %}#6c757d{% endif %};">
+                                {% if average_return > 0 %}+{% endif %}{{ average_return|floatformat:1 }}%
+                            </div>
+                            <div class="summary-label">Avg Return</div>
                         </div>
                     </div>
                 </div>

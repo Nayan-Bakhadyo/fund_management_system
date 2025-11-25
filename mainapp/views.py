@@ -605,12 +605,20 @@ def investment_history(request):
     # Sort by profit/loss percentage (descending)
     investment_data.sort(key=lambda x: x['profit_loss_percentage'], reverse=True)
     
+    # Calculate average return percentage
+    if investment_data:
+        total_return_percentage = sum(inv['profit_loss_percentage'] for inv in investment_data)
+        average_return = total_return_percentage / len(investment_data)
+    else:
+        average_return = Decimal('0')
+    
     context = {
         'investments': investment_data,
         'authorized_user': authorized_user,
         'total_investments': len(investment_data),
         'profitable_count': profitable_count,
         'loss_count': loss_count,
+        'average_return': average_return,
     }
     
     return render(request, 'mainapp/investment_history.html', context)
