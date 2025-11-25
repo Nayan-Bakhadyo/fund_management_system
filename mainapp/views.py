@@ -556,6 +556,66 @@ def bank_detail(request):
     return JsonResponse({'html': html})
 
 @login_required
+def investment_history(request):
+    """Display all closed investments with profit/loss percentages"""
+    try:
+        authorized_user = AuthorizedUser.objects.get(email=request.user.email)
+    except AuthorizedUser.DoesNotExist:
+        return render(request, 'mainapp/investment_history.html', {'error': 'User not found', 'investments': []})
+
+    # Get all closed investments
+    closed_investments = FirmInvestment.objects.filter(status='closed').prefetch_related('transactions')
+    
+    investment_data = []
+    profitable_count = 0
+    loss_count = 0
+    
+    for investment in closed_investments:
+        # Calculate total invested and total returned
+        total_invested = investment.transactions.filter(amount_type='investment').aggregate(
+            total=Sum('amount'))['total'] or Decimal('0')
+        total_returned = investment.transactions.filter(amount_type='return').aggregate(
+            total=Sum('amount'))['total'] or Decimal('0')
+        
+        # Calculate profit/loss
+        profit_loss = total_returned - total_invested
+        
+        # Calculate profit/loss percentage
+        if total_invested > 0:
+            profit_loss_percentage = (profit_loss / total_invested) * 100
+        else:
+            profit_loss_percentage = Decimal('0')
+        
+        is_profit = profit_loss > 0
+        
+        if is_profit:
+            profitable_count += 1
+        elif profit_loss < 0:
+            loss_count += 1
+        
+        investment_data.append({
+            'investment': investment,
+            'total_invested': total_invested,
+            'total_returned': total_returned,
+            'profit_loss': profit_loss,
+            'profit_loss_percentage': profit_loss_percentage,
+            'is_profit': is_profit,
+        })
+    
+    # Sort by profit/loss percentage (descending)
+    investment_data.sort(key=lambda x: x['profit_loss_percentage'], reverse=True)
+    
+    context = {
+        'investments': investment_data,
+        'authorized_user': authorized_user,
+        'total_investments': len(investment_data),
+        'profitable_count': profitable_count,
+        'loss_count': loss_count,
+    }
+    
+    return render(request, 'mainapp/investment_history.html', context)
+
+@login_required
 def fundmanager_user_portfolio(request):
     email = request.GET.get('email')
     user_obj = get_object_or_404(AuthorizedUser, email=email)
