@@ -188,10 +188,10 @@ class Command(BaseCommand):
         total_value = Decimal('0')
         investment_details = []
         
-        # Get all investments
-        investments = FirmInvestment.objects.all()
+        # Get only open investments (closed investments' P&L is already in available_capital)
+        investments = FirmInvestment.objects.filter(status='open')
         
-        self.log(f"Found {investments.count()} total investments")
+        self.log(f"Found {investments.count()} open investments")
         
         for investment in investments:
             try:
