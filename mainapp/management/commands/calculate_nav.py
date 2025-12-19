@@ -132,6 +132,11 @@ class Command(BaseCommand):
 
     def calculate_share_market_value(self, investment, transactions, share_prices):
         """Calculate value for share market investments using LTP"""
+        # Check if share_symbol exists and is not empty
+        if not investment.share_symbol or not investment.share_symbol.strip():
+            self.log(f"Warning: No share symbol for {investment.investment_name}, using net invested amount", 'WARNING')
+            return self.calculate_other_investment_value(investment, transactions)
+        
         symbol = investment.share_symbol.strip().upper()
         
         if symbol not in share_prices:
