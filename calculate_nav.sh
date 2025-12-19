@@ -112,6 +112,11 @@ def calculate_investment_value(investment, share_prices):
 
 def calculate_share_market_value(investment, transactions, share_prices):
     """Calculate value for share market investments using LTP with 7.5% capital gains tax"""
+    # Check if share_symbol exists and is not empty
+    if not investment.share_symbol or not investment.share_symbol.strip():
+        log_message(f"Warning: No share symbol for {investment.investment_name}, using net invested amount")
+        return calculate_other_investment_value(investment, transactions)
+    
     symbol = investment.share_symbol.strip().upper()
     
     if symbol not in share_prices:
