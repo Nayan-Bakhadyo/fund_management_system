@@ -427,7 +427,39 @@ def user_dashboard(request):
     nav_records = NAVRecord.objects.order_by('date_time')
     nav_dates = [nav.date_time.strftime('%Y-%m-%d') for nav in nav_records]
     nav_unit_costs = [float(nav.unit_cost) for nav in nav_records]
-    
+
+    # Fetch all open investments grouped by category
+    open_investments = FirmInvestment.objects.filter(status='open').select_related('investment_category').prefetch_related('transactions')
+    investments_by_category = {}
+    for inv in open_investments:
+        cat = inv.investment_category
+        total_invested = inv.transactions.filter(amount_type='investment').aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        total_returned = inv.transactions.filter(amount_type='return').aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        net_invested = total_invested - total_returned
+        is_share = bool(inv.share_symbol)
+
+        entry = {
+            'investment': inv,
+            'total_invested': total_invested,
+            'total_returned': total_returned,
+            'net_invested': net_invested,
+            'is_share': is_share,
+        }
+
+        cat_key = cat.category_name
+        if cat_key not in investments_by_category:
+            investments_by_category[cat_key] = {
+                'category': cat,
+                'investments': [],
+                'category_total_invested': Decimal('0'),
+                'category_net_invested': Decimal('0'),
+            }
+        investments_by_category[cat_key]['investments'].append(entry)
+        investments_by_category[cat_key]['category_total_invested'] += total_invested
+        investments_by_category[cat_key]['category_net_invested'] += net_invested
+
+    investment_categories = list(investments_by_category.values())
+
     return render(request, 'mainapp/user_dashboard.html', {
         'authorized_user': authorized_user,
         'portfolio_value': total_amount,
@@ -439,6 +471,7 @@ def user_dashboard(request):
         'unrealized_pl_percentage': unrealized_pl_percentage,
         'nav_dates_json': json.dumps(nav_dates, cls=DjangoJSONEncoder),
         'nav_unit_costs_json': json.dumps(nav_unit_costs, cls=DjangoJSONEncoder),
+        'investment_categories': investment_categories,
     })
 
 @login_required
