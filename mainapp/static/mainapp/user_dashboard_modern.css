@@ -2324,7 +2324,6 @@ body.modal-open {
 
 .modern-chart-container canvas {
     max-width: 100% !important;
-    height: auto !important;
 }
 
 /* Chart responsive design */

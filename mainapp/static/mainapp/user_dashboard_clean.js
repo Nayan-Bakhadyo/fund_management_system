@@ -697,6 +697,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const ctx = canvas.getContext('2d');
+            const grad = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height || 300);
+            grad.addColorStop(0, 'rgba(16,185,129,0.35)');
+            grad.addColorStop(0.6, 'rgba(59,130,246,0.10)');
+            grad.addColorStop(1, 'rgba(16,185,129,0.0)');
             window.navChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -704,14 +708,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     datasets: [{
                         label: 'Unit Cost (NAV)',
                         data: navUnitCosts,
-                        borderColor: '#bfa14a',
-                        backgroundColor: 'rgba(191,161,74,0.08)',
+                        borderColor: '#10b981',
+                        backgroundColor: grad,
                         tension: 0.4,
                         fill: true,
                         pointRadius: 0,
-                        pointHoverRadius: 5,
-                        pointHoverBackgroundColor: '#bfa14a',
-                        borderWidth: 2.5
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: '#10b981',
+                        pointHoverBorderColor: '#fff',
+                        pointHoverBorderWidth: 2,
+                        borderWidth: 3
                     }]
                 },
                 options: {
@@ -721,23 +727,32 @@ document.addEventListener('DOMContentLoaded', function() {
                     plugins: {
                         legend: { display: false },
                         tooltip: {
+                            backgroundColor: 'rgba(15,23,42,0.85)',
+                            titleColor: '#94a3b8',
+                            bodyColor: '#10b981',
+                            borderColor: '#10b981',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: false,
                             callbacks: {
-                                label: function(ctx) {
-                                    return 'NAV: NRs. ' + ctx.parsed.y.toFixed(2);
-                                }
+                                title: function(ctx) { return ctx[0].label; },
+                                label: function(ctx) { return 'NAV: NRs. ' + ctx.parsed.y.toFixed(2); }
                             }
                         }
                     },
                     scales: {
                         x: {
                             grid: { display: false },
-                            ticks: { color: '#6b7280', font: { size: 11 }, maxTicksLimit: 8 }
+                            border: { display: false },
+                            ticks: { color: '#9ca3af', font: { size: 11 }, maxTicksLimit: 6 }
                         },
                         y: {
                             beginAtZero: false,
-                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            grid: { color: 'rgba(0,0,0,0.04)', drawBorder: false },
+                            border: { display: false },
                             ticks: {
-                                color: '#6b7280',
+                                color: '#9ca3af',
+                                font: { size: 11 },
                                 callback: function(v) { return 'NRs. ' + v.toFixed(2); }
                             }
                         }
