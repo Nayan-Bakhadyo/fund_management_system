@@ -1226,6 +1226,8 @@ def all_users_portfolio(request):
             'total_value': float(total_value),
         })
 
+    user_list.sort(key=lambda u: u['total_value'], reverse=True)
+
     html = render_to_string('mainapp/all_users_portfolio.html', {
         'user_list': user_list,
         'unit_cost': float(unit_cost),

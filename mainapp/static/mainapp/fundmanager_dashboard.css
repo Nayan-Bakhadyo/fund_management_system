@@ -50,7 +50,7 @@ body {
     border-right: 2px solid var(--border-gold);
     display: flex;
     flex-direction: column;
-    z-index: 1100;
+    z-index: 1040;
     transition: width var(--transition), left var(--transition);
     overflow: hidden;
 }
@@ -171,7 +171,7 @@ body {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.42);
-    z-index: 1050;
+    z-index: 1035;
     backdrop-filter: blur(2px);
 }
 
