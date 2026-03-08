@@ -113,12 +113,17 @@ body {
     overflow: hidden;
 }
 .sidebar-menu .nav-link i {
-    font-size: 1rem;
+    font-size: 1.05rem;
     flex-shrink: 0;
     width: 20px;
+    min-width: 20px;
     text-align: center;
     color: var(--brand-gold);
     transition: color var(--transition);
+    margin-right: 0.6rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 .sidebar-menu .nav-link span { flex: 1; }
 
