@@ -622,6 +622,7 @@ function renderFirmStatusCharts() {
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 cutout: '55%',
                 plugins: {
                     legend: { display: false },

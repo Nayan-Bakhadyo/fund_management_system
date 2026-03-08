@@ -88,6 +88,17 @@
 .fsd-bar-track { height: 10px; border-radius: 10px; background: #f1f5f9; overflow: hidden; }
 .fsd-bar-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, #2563eb, #3b82f6); transition: width 0.8s ease; }
 .fsd-bar-fill.reserve { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.fsd-cat-grid {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 1.5rem;
+    align-items: center;
+}
+@media (max-width: 500px) {
+    .fsd-cat-grid {
+        grid-template-columns: 1fr;
+    }
+}
 </style>
 
 {% if latest_record %}
@@ -162,8 +173,8 @@
     {% if category_values != '[]' %}
     <div class="fsd-chart-card" style="margin-top:0;">
         <div class="fsd-chart-title"><i class="bi bi-diagram-3-fill"></i> Active Investment by Category</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:center;">
-            <div class="fsd-chart-wrap" style="max-width:260px;margin:0 auto;">
+        <div class="fsd-cat-grid">
+            <div style="height:220px;position:relative;">
                 <canvas id="categoryPieChart"
                     data-labels='{{ category_labels }}'
                     data-data='{{ category_values }}'></canvas>
