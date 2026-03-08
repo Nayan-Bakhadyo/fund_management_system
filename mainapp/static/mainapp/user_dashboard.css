@@ -362,6 +362,10 @@ button[type="submit"]:hover {
 .inv-breakdown-legend {
     font-size: 0.85rem;
 }
+/* Override the global .content-section canvas { height: auto !important } rule */
+#categoryBreakdownChart {
+    height: 100% !important;
+}
 @media (max-width: 600px) {
     .inv-breakdown-grid {
         grid-template-columns: 1fr;
