@@ -8,6 +8,7 @@ from django.db.models import Max, Sum
 from django.utils import timezone
 from .models import AuthorizedUser, UserRecurringPayment, UserTransaction, UserNAV, NAVRecord, UserBankDetail, InvestmentCategory, FirmInvestment, TotalCapitalRecord, InvestmentTransaction, UserTransactionUpload, WithdrawalRequest
 import random
+import os
 from django import template
 from django.contrib.auth import logout
 from django.urls import reverse
@@ -522,9 +523,20 @@ def portfolio(request):
     else:
         unrealized_pl_percentage = 0
 
-    nav_records = NAVRecord.objects.order_by('date_time')
-    nav_dates = [nav.date_time.strftime('%Y-%m-%d') for nav in nav_records]
-    nav_unit_costs = [float(nav.unit_cost) for nav in nav_records]
+    # Deduplicate consecutive identical NAV values and sample to max 40 points
+    all_nav_records = list(NAVRecord.objects.order_by('date_time'))
+    unique_nav_records = []
+    for i, nav_rec in enumerate(all_nav_records):
+        if i == 0 or i == len(all_nav_records) - 1 or nav_rec.unit_cost != all_nav_records[i - 1].unit_cost:
+            unique_nav_records.append(nav_rec)
+    MAX_NAV_POINTS = 40
+    if len(unique_nav_records) > MAX_NAV_POINTS:
+        step = len(unique_nav_records) / MAX_NAV_POINTS
+        sampled = [unique_nav_records[round(i * step)] for i in range(MAX_NAV_POINTS - 1)]
+        sampled.append(unique_nav_records[-1])
+        unique_nav_records = sampled
+    nav_dates = [nav_rec.date_time.strftime('%Y-%m-%d') for nav_rec in unique_nav_records]
+    nav_unit_costs = [float(nav_rec.unit_cost) for nav_rec in unique_nav_records]
 
     context = {
         'total_units': total_units,
@@ -730,12 +742,14 @@ def fundmanager_user_portfolio(request):
 
 def indian_number_format(amount):
     # Format number as per Indian system (e.g., 10,00,000.00)
-    s = f"{amount:,.2f}"
+    is_negative = float(amount) < 0
+    s = f"{abs(float(amount)):,.2f}"
     x = s.split('.')
     if len(x[0]) > 3:
         x[0] = x[0][:-3].replace(',', '')[::-1]
         x[0] = ','.join([x[0][i:i+2] for i in range(0, len(x[0]), 2)])[::-1] + ',' + s[-6:-3]
-    return x[0] + '.' + x[1]
+    result = x[0] + '.' + x[1]
+    return ('-' + result) if is_negative else result
 
 
 def send_transaction_email(user_email, transaction_type, amount, date, balance, transaction_id):
@@ -1199,24 +1213,89 @@ def firm_status_dashboard(request):
     latest_record = TotalCapitalRecord.objects.order_by('-id').first()
     history = TotalCapitalRecord.objects.order_by('date_time').values('date_time', 'total_capital')
 
-    # Category breakdown of active (open) investments by net invested amount
+    # Load share prices from CSV (same source used by calculate_nav command)
+    share_prices = {}
+    csv_path = os.path.join('mainapp', 'utilities', 'share_price.csv')
+    try:
+        import csv as _csv
+        with open(csv_path, 'r') as f:
+            for row in _csv.DictReader(f):
+                try:
+                    share_prices[row['Symbol'].strip().upper()] = Decimal(row['LTP'].replace(',', ''))
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    # Compute per-investment current values for open investments
     open_investments = FirmInvestment.objects.filter(status='open').select_related('investment_category').prefetch_related('transactions')
+    share_market_value = Decimal('0')
+    non_share_book_value = Decimal('0')
     category_data = {}
+    investment_breakdown = []  # for template detail rows
+
     for inv in open_investments:
-        cat_name = inv.investment_category.category_name
         total_invested = inv.transactions.filter(amount_type='investment').aggregate(total=Sum('amount'))['total'] or Decimal('0')
         total_returned = inv.transactions.filter(amount_type='return').aggregate(total=Sum('amount'))['total'] or Decimal('0')
         net_invested = total_invested - total_returned
-        category_data[cat_name] = category_data.get(cat_name, Decimal('0')) + net_invested
+
+        # Determine current value (market for shares, book for others)
+        is_share = bool(inv.share_symbol and inv.share_symbol.strip())
+        if is_share:
+            symbol = inv.share_symbol.strip().upper()
+            units_bought = inv.transactions.filter(amount_type='investment', stock_units_purchased__isnull=False).aggregate(t=Sum('stock_units_purchased'))['t'] or Decimal('0')
+            units_sold = inv.transactions.filter(amount_type='return', stock_units_purchased__isnull=False).aggregate(t=Sum('stock_units_purchased'))['t'] or Decimal('0')
+            stock_units = units_bought - units_sold
+            ltp = share_prices.get(symbol)
+            if ltp:
+                gross_value = stock_units * ltp
+                # Apply 7.5% capital gains tax provision on unrealized profits
+                capital_gain = gross_value - net_invested
+                if capital_gain > 0:
+                    current_value = gross_value - (capital_gain * Decimal('0.075'))
+                else:
+                    current_value = gross_value
+            else:
+                current_value = net_invested  # fallback to book if price missing
+            share_market_value += current_value
+        else:
+            current_value = net_invested
+            non_share_book_value += current_value
+
+        investment_breakdown.append({
+            'name': inv.investment_name,
+            'is_share': is_share,
+            'symbol': inv.share_symbol or '',
+            'net_invested': net_invested,
+            'current_value': current_value,
+            'unrealized_pl': current_value - net_invested,
+        })
+
+        # Category data (use current value for accurate chart)
+        cat_name = inv.investment_category.category_name
+        category_data[cat_name] = category_data.get(cat_name, Decimal('0')) + current_value
 
     category_labels = json.dumps(list(category_data.keys()))
     category_values = json.dumps([float(v) for v in category_data.values()])
+
+    # Current portfolio value = reserve cash + share market value + non-share book value
+    # This equals NAV × circulating_units (= users' total minus small credit amounts)
+    latest_nav_record = NAVRecord.objects.order_by('-id').first()
+    available_capital = latest_record.available_capital if latest_record else Decimal('0')
+    current_portfolio_value = available_capital + share_market_value + non_share_book_value
+    book_total = latest_record.total_capital if latest_record else Decimal('0')
+    unrealized_pl = share_market_value - (latest_record.invested_capital - non_share_book_value) if latest_record else Decimal('0')
 
     html = render_to_string('mainapp/firm_status_dashboard.html', {
         'latest_record': latest_record,
         'history': list(history),
         'category_labels': category_labels,
         'category_values': category_values,
+        'current_portfolio_value': current_portfolio_value,
+        'unrealized_pl': unrealized_pl,
+        'share_market_value': share_market_value,
+        'non_share_book_value': non_share_book_value,
+        'investment_breakdown': investment_breakdown,
     })
     return JsonResponse({'html': html})
 

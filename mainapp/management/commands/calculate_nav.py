@@ -159,16 +159,26 @@ class Command(BaseCommand):
         
         # Calculate current market value
         current_ltp = share_prices[symbol]
-        market_value = total_units * current_ltp
+        gross_market_value = total_units * current_ltp
+        
+        # Apply 7.5% capital gains tax provision on unrealized profits
+        capital_gain = gross_market_value - net_invested
+        capital_gains_tax = Decimal('0')
+        if capital_gain > 0:
+            capital_gains_tax = capital_gain * Decimal('0.075')
+        
+        market_value = gross_market_value - capital_gains_tax
         
         if self.verbose:
             self.log(f"  Share Market Investment: {investment.investment_name}")
             self.log(f"    Symbol: {symbol}")
             self.log(f"    Total Units: {total_units}")
             self.log(f"    Current LTP: {current_ltp}")
-            self.log(f"    Market Value: {market_value}")
+            self.log(f"    Gross Market Value: {gross_market_value}")
             self.log(f"    Net Invested: {net_invested}")
-            self.log(f"    Gain/Loss: {market_value - net_invested}")
+            self.log(f"    Capital Gain: {capital_gain}")
+            self.log(f"    Capital Gains Tax (7.5%): {capital_gains_tax}")
+            self.log(f"    Net Market Value: {market_value}")
         
         return market_value
 
@@ -257,8 +267,8 @@ class Command(BaseCommand):
         total_portfolio_value = latest_capital.available_capital + total_investment_value
         nav_value = total_portfolio_value / latest_capital.total_circulating_unit
         
-        # Round to 2 decimal places
-        nav_value = nav_value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        # Round to 6 decimal places
+        nav_value = nav_value.quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP)
         
         self.log("\n=== NAV CALCULATION DETAILS ===")
         self.log(f"Available Capital: NRs. {latest_capital.available_capital:,.2f}")

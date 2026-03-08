@@ -28,9 +28,9 @@ class UserTransaction(models.Model):
     )
     date_time = models.DateTimeField(auto_now_add=True)
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPE_CHOICES, default='Withdrawal')
-    unit_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    unit_cost = models.DecimalField(max_digits=12, decimal_places=6, default=0)
     purchase_initiated_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    purchase_unit = models.DecimalField(max_digits=12, decimal_places=2)
+    purchase_unit = models.DecimalField(max_digits=12, decimal_places=6)
     remaining_credit = models.DecimalField(max_digits=12, decimal_places=2)
     transaction_image = models.ImageField(upload_to='transaction_images/', null=True, blank=True)
     description = models.CharField(max_length=255, blank=True, null=True)  
@@ -54,7 +54,7 @@ class UserNAV(models.Model):
 
 class NAVRecord(models.Model):
     date_time = models.DateTimeField(auto_now_add=True)
-    unit_cost = models.DecimalField(max_digits=10, decimal_places=2, default=10.00)
+    unit_cost = models.DecimalField(max_digits=10, decimal_places=6, default=10.00)
 
     def __str__(self):
         return f"NAV on {self.date_time.strftime('%Y-%m-%d %H:%M:%S')}: Unit Cost {self.unit_cost}"
