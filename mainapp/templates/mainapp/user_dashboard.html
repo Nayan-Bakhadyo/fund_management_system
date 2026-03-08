@@ -199,7 +199,7 @@
                         <div style="background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.07);padding:1.5rem;">
                             <div class="inv-breakdown-grid">
                                 <div class="inv-breakdown-chart">
-                                    <canvas id="categoryBreakdownChart"
+                                    <canvas id="categoryBreakdownChart" style="max-height:220px;"
                                         data-labels='[{% for c in investment_categories %}"{{ c.category.category_name|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}]'
                                         data-data='[{% for c in investment_categories %}{{ c.category_net_invested|floatformat:2 }}{% if not forloop.last %},{% endif %}{% endfor %}]'></canvas>
                                 </div>
@@ -537,6 +537,7 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     cutout: '58%',
                     plugins: {
                         legend: { display: false },

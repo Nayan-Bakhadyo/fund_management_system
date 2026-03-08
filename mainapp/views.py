@@ -425,13 +425,20 @@ def user_dashboard(request):
     
     # Fetch NAV data for chart – deduplicate consecutive identical values,
     # but always keep the first and last record for full timeline coverage.
+    # Then sample down to max 40 points to keep the chart readable.
     all_nav_records = list(NAVRecord.objects.order_by('date_time'))
     unique_nav_records = []
-    for i, nav in enumerate(all_nav_records):
-        if i == 0 or i == len(all_nav_records) - 1 or nav.unit_cost != all_nav_records[i - 1].unit_cost:
-            unique_nav_records.append(nav)
-    nav_dates = [nav.date_time.strftime('%Y-%m-%d') for nav in unique_nav_records]
-    nav_unit_costs = [float(nav.unit_cost) for nav in unique_nav_records]
+    for i, nav_rec in enumerate(all_nav_records):
+        if i == 0 or i == len(all_nav_records) - 1 or nav_rec.unit_cost != all_nav_records[i - 1].unit_cost:
+            unique_nav_records.append(nav_rec)
+    MAX_NAV_POINTS = 40
+    if len(unique_nav_records) > MAX_NAV_POINTS:
+        step = len(unique_nav_records) / MAX_NAV_POINTS
+        sampled = [unique_nav_records[round(i * step)] for i in range(MAX_NAV_POINTS - 1)]
+        sampled.append(unique_nav_records[-1])
+        unique_nav_records = sampled
+    nav_dates = [nav_rec.date_time.strftime('%Y-%m-%d') for nav_rec in unique_nav_records]
+    nav_unit_costs = [float(nav_rec.unit_cost) for nav_rec in unique_nav_records]
 
     # Fetch all open investments grouped by category
     open_investments = FirmInvestment.objects.filter(status='open').select_related('investment_category').prefetch_related('transactions')

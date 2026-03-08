@@ -705,25 +705,41 @@ document.addEventListener('DOMContentLoaded', function() {
                         label: 'Unit Cost (NAV)',
                         data: navUnitCosts,
                         borderColor: '#bfa14a',
-                        backgroundColor: 'rgba(191,161,74,0.1)',
-                        tension: 0.3,
+                        backgroundColor: 'rgba(191,161,74,0.08)',
+                        tension: 0.4,
                         fill: true,
-                        pointRadius: 3,
-                        pointBackgroundColor: '#bfa14a'
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        pointHoverBackgroundColor: '#bfa14a',
+                        borderWidth: 2.5
                     }]
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
                     plugins: {
-                        legend: { display: false }
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    return 'NAV: NRs. ' + ctx.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
                     },
                     scales: {
                         x: {
-                            title: { display: true, text: 'Date' }
+                            grid: { display: false },
+                            ticks: { color: '#6b7280', font: { size: 11 }, maxTicksLimit: 8 }
                         },
                         y: {
-                            title: { display: true, text: 'Unit Cost' },
-                            beginAtZero: false
+                            beginAtZero: false,
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            ticks: {
+                                color: '#6b7280',
+                                callback: function(v) { return 'NRs. ' + v.toFixed(2); }
+                            }
                         }
                     }
                 }
