@@ -200,8 +200,8 @@
                             {% for cat_data in investment_categories %}
                             <div class="col-12">
                                 <div class="card shadow-sm border-0" style="border-radius: 14px; overflow: hidden;">
-                                    <div class="card-header d-flex align-items-center justify-content-between py-3 px-4" style="background: linear-gradient(135deg, #1a1a2e, #16213e); border-bottom: 2px solid rgba(192,160,98,0.4);">
-                                        <div class="d-flex align-items-center gap-3">
+                                    <div class="card-header active-inv-card-header d-flex align-items-center justify-content-between py-3 px-4" style="background: linear-gradient(135deg, #1a1a2e, #16213e); border-bottom: 2px solid rgba(192,160,98,0.4);">
+                                        <div class="active-inv-left d-flex align-items-center gap-2">
                                             <span class="fw-bold text-white fs-6">
                                                 <i class="bi bi-folder2-open me-2" style="color: #c0a062;"></i>{{ cat_data.category.category_name }}
                                             </span>
@@ -212,7 +212,7 @@
                                                 {{ cat_data.category.category_time_frame }}
                                             </span>
                                         </div>
-                                        <div class="text-end">
+                                        <div class="active-inv-amount text-end" style="flex-shrink: 0; padding-left: 0.75rem;">
                                             <small class="text-muted d-block" style="font-size: 0.72rem;">Net Invested</small>
                                             <span class="fw-bold" style="color: #c0a062;">NRs. {{ cat_data.category_net_invested|floatformat:0 }}</span>
                                         </div>

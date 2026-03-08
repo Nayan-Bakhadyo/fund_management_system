@@ -325,6 +325,21 @@ body {
     .sidebar-menu {
         max-height: calc(100vh - 70px); /* mobile: adjust for logo height */
     }
+
+    /* Active investment cards - mobile header fix */
+    .active-inv-card-header {
+        flex-wrap: wrap;
+        row-gap: 0.5rem;
+    }
+    .active-inv-left {
+        flex-wrap: wrap;
+        row-gap: 0.25rem;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    .active-inv-amount {
+        padding-right: 0.5rem !important;
+    }
 }
 button[type="submit"] {
     background: #bfa14a;

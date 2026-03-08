@@ -40,13 +40,40 @@ document.addEventListener("DOMContentLoaded", function() {
     const toggleBtn = document.getElementById("sidebarToggle");
     const topbar = document.querySelector(".topbar");
     const mainContent = document.querySelector(".main-content");
-    if (sidebar && toggleBtn && topbar && mainContent) {
+    const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+    if (sidebar && toggleBtn) {
         toggleBtn.addEventListener("click", function() {
-            sidebar.classList.toggle("collapsed");
-            topbar.classList.toggle("collapsed");
-            mainContent.classList.toggle("collapsed");
+            if (window.innerWidth < 768) {
+                // Mobile: slide-in overlay sidebar
+                sidebar.classList.toggle("open");
+                if (sidebarOverlay) sidebarOverlay.classList.toggle("active");
+            } else {
+                // Desktop: collapse/expand sidebar
+                sidebar.classList.toggle("collapsed");
+                if (topbar) topbar.classList.toggle("collapsed");
+                if (mainContent) mainContent.classList.toggle("collapsed");
+            }
         });
     }
+
+    // Close sidebar when overlay is tapped on mobile
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener("click", function() {
+            sidebar.classList.remove("open");
+            sidebarOverlay.classList.remove("active");
+        });
+    }
+
+    // Auto-close sidebar on mobile when a nav link is clicked
+    document.querySelectorAll(".sidebar-menu .nav-link").forEach(function(link) {
+        link.addEventListener("click", function() {
+            if (window.innerWidth < 768) {
+                sidebar.classList.remove("open");
+                if (sidebarOverlay) sidebarOverlay.classList.remove("active");
+            }
+        });
+    });
 });
 
 // Add transaction form loading
@@ -406,16 +433,21 @@ $(document).off('submit', '#closeInvestmentForm').on('submit', '#closeInvestment
 // Load pending uploads
 document.addEventListener('DOMContentLoaded', function() {
   const dashboardContent = document.getElementById('dashboard-content');
-  const pendingUploadsLink = document.createElement('a');
-  pendingUploadsLink.href = "#";
-  pendingUploadsLink.id = "pendingUploadsLink";
-  pendingUploadsLink.textContent = "Pending User Upload Transactions";
-  pendingUploadsLink.className = "nav-link";
-  const sidebarMenu = document.querySelector('.sidebar-menu');
-  if (sidebarMenu) {
-    const li = document.createElement('li');
-    li.appendChild(pendingUploadsLink);
-    sidebarMenu.appendChild(li);
+  // Use the existing link in HTML if present; otherwise create it dynamically
+  let pendingUploadsLink = document.getElementById('pendingUploadsLink');
+  if (!pendingUploadsLink) {
+    pendingUploadsLink = document.createElement('a');
+    pendingUploadsLink.href = "#";
+    pendingUploadsLink.id = "pendingUploadsLink";
+    pendingUploadsLink.textContent = "Pending Uploads";
+    pendingUploadsLink.className = "nav-link";
+    const sidebarMenu = document.querySelector('.sidebar-menu');
+    if (sidebarMenu) {
+      const li = document.createElement('li');
+      li.className = "nav-item";
+      li.appendChild(pendingUploadsLink);
+      sidebarMenu.appendChild(li);
+    }
   }
 
   pendingUploadsLink.addEventListener('click', function(e) {
