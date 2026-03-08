@@ -1186,9 +1186,25 @@ def payment_detail(request):
 def firm_status_dashboard(request):
     latest_record = TotalCapitalRecord.objects.order_by('-id').first()
     history = TotalCapitalRecord.objects.order_by('date_time').values('date_time', 'total_capital')
+
+    # Category breakdown of active (open) investments by net invested amount
+    open_investments = FirmInvestment.objects.filter(status='open').select_related('investment_category').prefetch_related('transactions')
+    category_data = {}
+    for inv in open_investments:
+        cat_name = inv.investment_category.category_name
+        total_invested = inv.transactions.filter(amount_type='investment').aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        total_returned = inv.transactions.filter(amount_type='return').aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        net_invested = total_invested - total_returned
+        category_data[cat_name] = category_data.get(cat_name, Decimal('0')) + net_invested
+
+    category_labels = json.dumps(list(category_data.keys()))
+    category_values = json.dumps([float(v) for v in category_data.values()])
+
     html = render_to_string('mainapp/firm_status_dashboard.html', {
         'latest_record': latest_record,
         'history': list(history),
+        'category_labels': category_labels,
+        'category_values': category_values,
     })
     return JsonResponse({'html': html})
 

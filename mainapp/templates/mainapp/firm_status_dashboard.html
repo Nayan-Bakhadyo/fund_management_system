@@ -158,6 +158,21 @@
         </div>
     </div>
 
+    <!-- Active Investment by Category Pie Chart -->
+    {% if category_values != '[]' %}
+    <div class="fsd-chart-card" style="margin-top:0;">
+        <div class="fsd-chart-title"><i class="bi bi-diagram-3-fill"></i> Active Investment by Category</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:center;">
+            <div class="fsd-chart-wrap" style="max-width:260px;margin:0 auto;">
+                <canvas id="categoryPieChart"
+                    data-labels='{{ category_labels }}'
+                    data-data='{{ category_values }}'></canvas>
+            </div>
+            <div id="categoryLegend" style="font-size:0.85rem;"></div>
+        </div>
+    </div>
+    {% endif %}
+
 </div>
 {% else %}
 <div style="text-align:center;padding:3rem 1rem;color:#94a3b8;">
