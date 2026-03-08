@@ -345,6 +345,33 @@ button[type="submit"]:hover {
     color: #fff;
 }
 
+/* Investment Breakdown chart grid */
+.inv-breakdown-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: center;
+}
+.inv-breakdown-chart {
+    max-width: 240px;
+    width: 100%;
+    margin: 0 auto;
+}
+.inv-breakdown-legend {
+    font-size: 0.85rem;
+}
+@media (max-width: 600px) {
+    .inv-breakdown-grid {
+        grid-template-columns: 1fr;
+    }
+    .inv-breakdown-chart {
+        max-width: 200px;
+    }
+    .inv-breakdown-legend {
+        padding-top: 0.5rem;
+    }
+}
+
 .sidebar-gold-divider {
     border: none;
     border-top: 3px solid #bfa14a;

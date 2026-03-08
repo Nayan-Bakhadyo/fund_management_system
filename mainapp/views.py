@@ -423,10 +423,15 @@ def user_dashboard(request):
     else:
         unrealized_pl_percentage = 0
     
-    # Fetch NAV data for chart
-    nav_records = NAVRecord.objects.order_by('date_time')
-    nav_dates = [nav.date_time.strftime('%Y-%m-%d') for nav in nav_records]
-    nav_unit_costs = [float(nav.unit_cost) for nav in nav_records]
+    # Fetch NAV data for chart – deduplicate consecutive identical values,
+    # but always keep the first and last record for full timeline coverage.
+    all_nav_records = list(NAVRecord.objects.order_by('date_time'))
+    unique_nav_records = []
+    for i, nav in enumerate(all_nav_records):
+        if i == 0 or i == len(all_nav_records) - 1 or nav.unit_cost != all_nav_records[i - 1].unit_cost:
+            unique_nav_records.append(nav)
+    nav_dates = [nav.date_time.strftime('%Y-%m-%d') for nav in unique_nav_records]
+    nav_unit_costs = [float(nav.unit_cost) for nav in unique_nav_records]
 
     # Fetch all open investments grouped by category
     open_investments = FirmInvestment.objects.filter(status='open').select_related('investment_category').prefetch_related('transactions')
