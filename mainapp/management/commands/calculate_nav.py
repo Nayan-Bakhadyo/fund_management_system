@@ -282,6 +282,12 @@ class Command(BaseCommand):
             self.log("DRY RUN: NAV record NOT saved to database", 'WARNING')
             return nav_value
         
+        # Skip if NAV hasn't changed from the latest record
+        latest_nav = NAVRecord.objects.order_by('-date_time').first()
+        if latest_nav and latest_nav.unit_cost == nav_value:
+            self.log(f"NAV unchanged at {nav_value} — skipping record creation")
+            return latest_nav
+        
         try:
             nav_record = NAVRecord.objects.create(unit_cost=nav_value)
             self.log(f"New NAV record created with ID: {nav_record.id}", 'SUCCESS')
