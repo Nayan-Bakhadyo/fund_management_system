@@ -394,11 +394,11 @@ def user_dashboard(request):
     
     # Fetch latest NAV record
     latest_nav_record = NAVRecord.objects.order_by('-date_time').first()
-    nav = latest_nav_record.unit_cost if latest_nav_record else 0
+    unit_cost = latest_nav_record.unit_cost if latest_nav_record else 0
     nav_date = latest_nav_record.date_time.strftime('%B %d, %Y') if latest_nav_record else 'N/A'
     
     # Calculate total amount (Portfolio Value)
-    total_amount = (total_units * nav) + (user_nav.available_credit_amount if user_nav else 0)
+    total_amount = (total_units * unit_cost) + (user_nav.available_credit_amount if user_nav else 0)
     total_amount_format = indian_number_format(total_amount)
     
     # Calculate total invested amount
@@ -469,7 +469,7 @@ def user_dashboard(request):
         'authorized_user': authorized_user,
         'portfolio_value': total_amount,
         'portfolio_value_format': total_amount_format,
-        'current_nav': nav,
+        'current_nav': unit_cost,
         'nav_date': nav_date,
         'total_units': total_units,
         'unrealized_pl': unrealized_pl,
