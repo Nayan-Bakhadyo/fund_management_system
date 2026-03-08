@@ -1208,7 +1208,8 @@ def all_users_portfolio(request):
     unit_cost = Decimal(str(latest_nav_record.unit_cost)) if latest_nav_record else Decimal('10.0')
     nav_date = latest_nav_record.date_time.strftime('%Y-%m-%d') if latest_nav_record else '—'
 
-    users = AuthorizedUser.objects.filter(role='user').order_by('email')
+    from django.db.models import Q
+    users = AuthorizedUser.objects.filter(Q(role='user') | Q(email='beinvestmentfirm@gmail.com')).order_by('email')
     user_list = []
     for user in users:
         try:
