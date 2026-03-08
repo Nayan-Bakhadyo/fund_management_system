@@ -5,7 +5,7 @@ import csv
 import os
 from mainapp.models import (
     TotalCapitalRecord, FirmInvestment, InvestmentTransaction, 
-    NAVRecord, InvestmentCategory
+    NAVRecord, InvestmentCategory, UserNAV
 )
 
 
@@ -262,9 +262,21 @@ class Command(BaseCommand):
         # Calculate total investment value
         total_investment_value = self.calculate_total_investment_value(share_prices)
         
+        # Subtract total user credits from available_capital.
+        # Credits are small leftover amounts from deposits that couldn't buy a whole unit.
+        # They are already included in available_capital (the full deposit amount was added),
+        # but each user's total is computed as (units × NAV) + credit. To avoid
+        # double-counting credits (once in NAV via available_capital, once explicitly),
+        # we exclude them from the NAV numerator.
+        from django.db.models import Sum
+        total_user_credits = UserNAV.objects.aggregate(
+            total=Sum('available_credit_amount')
+        )['total'] or Decimal('0')
+        
         # Calculate NAV
-        # NAV = (Available Capital + Current Investment Value) / Total Circulating Units
-        total_portfolio_value = latest_capital.available_capital + total_investment_value
+        # NAV = (Available Capital - Total Credits + Current Investment Value) / Total Circulating Units
+        adjusted_available = latest_capital.available_capital - total_user_credits
+        total_portfolio_value = adjusted_available + total_investment_value
         nav_value = total_portfolio_value / latest_capital.total_circulating_unit
         
         # Round to 6 decimal places
@@ -272,6 +284,8 @@ class Command(BaseCommand):
         
         self.log("\n=== NAV CALCULATION DETAILS ===")
         self.log(f"Available Capital: NRs. {latest_capital.available_capital:,.2f}")
+        self.log(f"Total User Credits (excluded): NRs. {total_user_credits:,.2f}")
+        self.log(f"Adjusted Available Capital: NRs. {adjusted_available:,.2f}")
         self.log(f"Current Investment Value: NRs. {total_investment_value:,.2f}")
         self.log(f"Total Portfolio Value: NRs. {total_portfolio_value:,.2f}")
         self.log(f"Total Circulating Units: {latest_capital.total_circulating_unit:,}")
