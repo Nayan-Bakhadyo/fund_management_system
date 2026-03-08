@@ -554,17 +554,23 @@ function renderFirmStatusCharts() {
 
     // Pie Chart
     new Chart(pieCanvas.getContext('2d'), {
-        type: 'pie',
+        type: 'doughnut',
         data: {
             labels: ['Invested Capital', 'Reserve Cash'],
             datasets: [{
                 data: [invested, reserve],
-                backgroundColor: ['#0d6efd', '#ffc107'],
+                backgroundColor: ['#2563eb', '#f59e0b'],
+                borderColor: ['#1d4ed8', '#d97706'],
+                borderWidth: 2,
+                hoverOffset: 8
             }]
         },
         options: {
             responsive: true,
-            plugins: { legend: { position: 'bottom' } }
+            cutout: '60%',
+            plugins: {
+                legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 } } }
+            }
         }
     });
 
@@ -576,24 +582,46 @@ function renderFirmStatusCharts() {
             datasets: [{
                 label: 'Total Capital',
                 data: lineData,
-                borderColor: '#198754',
-                backgroundColor: 'rgba(25,135,84,0.1)',
+                borderColor: '#bfa14a',
+                backgroundColor: 'rgba(191,161,74,0.10)',
                 fill: true,
-                tension: 0.3,
-                pointRadius: 3,
-                pointBackgroundColor: '#198754'
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: '#bfa14a',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
             }]
         },
         options: {
             responsive: true,
             plugins: { legend: { display: false } },
             scales: {
-                x: { title: { display: true, text: 'Date' } },
-                y: { title: { display: true, text: 'Total Capital' }, beginAtZero: false }
+                x: { grid: { display: false }, title: { display: false } },
+                y: { title: { display: false }, beginAtZero: false, grid: { color: 'rgba(0,0,0,0.05)' } }
             }
         }
     });
 }
+
+// All Users Portfolio
+document.addEventListener('DOMContentLoaded', function() {
+    const allUsersLink = document.getElementById('allUsersPortfolioLink');
+    const dashboardContent = document.getElementById('dashboard-content');
+    if (allUsersLink && dashboardContent) {
+        allUsersLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            dashboardContent.innerHTML =
+                '<div class="text-center py-5"><div class="spinner-border" style="color:#bfa14a;" role="status"></div></div>';
+            fetch('/fundmanager/all_users_portfolio/')
+                .then(response => response.json())
+                .then(data => { dashboardContent.innerHTML = data.html; })
+                .catch(() => {
+                    dashboardContent.innerHTML =
+                        '<div class="alert alert-danger m-3">Failed to load user data. Please try again.</div>';
+                });
+        });
+    }
+});
 
 // Handle conditional display of share symbol field based on investment category
 $(document).on('change', '#investment_category', function() {

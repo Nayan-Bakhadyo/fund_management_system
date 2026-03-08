@@ -20,7 +20,7 @@
     <!-- ── Sidebar ── -->
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-header" style="overflow:hidden;">
-            <img src="{% static 'mainapp/assets/BE_logo.png' %}" alt="BE" class="sidebar-logo" style="width:52px;max-width:52px;height:52px;object-fit:contain;display:block;border-radius:8px;">
+            <img src="{% static 'mainapp/assets/BE_logo_final2.png' %}" alt="BE" class="sidebar-logo" style="width:80px;max-width:80px;height:auto;object-fit:contain;display:block;">
             <span class="sidebar-title">Fund Manager</span>
         </div>
         <ul class="sidebar-menu">
@@ -77,6 +77,11 @@
                     <i class="bi bi-cloud-upload"></i><span>Pending Uploads</span>
                 </a>
             </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" id="allUsersPortfolioLink">
+                    <i class="bi bi-people"></i><span>All Users</span>
+                </a>
+            </li>
         </ul>
     </nav>
 
@@ -129,6 +134,10 @@
                     <div class="fm-quick-card" onclick="document.getElementById('pendingUploadsLink').click()">
                         <i class="bi bi-cloud-upload"></i>
                         <span>Pending Uploads</span>
+                    </div>
+                    <div class="fm-quick-card" onclick="document.getElementById('allUsersPortfolioLink').click()">
+                        <i class="bi bi-people"></i>
+                        <span>All Users</span>
                     </div>
                     <div class="fm-quick-card" onclick="document.getElementById('addInvestmentLink').click()">
                         <i class="bi bi-wallet2"></i>

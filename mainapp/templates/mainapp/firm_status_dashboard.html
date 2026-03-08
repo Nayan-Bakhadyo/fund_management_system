@@ -1,54 +1,167 @@
 {% load indian_format %}
+<style>
+/* Firm Status Dashboard – inline styles for modal AJAX content */
+.fsd-wrap { font-family: 'Segoe UI', system-ui, sans-serif; padding: 0.25rem 0; }
+
+/* Stat cards row */
+.fsd-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+}
+@media (max-width: 900px) { .fsd-stats { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px) { .fsd-stats { grid-template-columns: 1fr 1fr; gap: 0.6rem; } }
+
+.fsd-stat {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.25rem 1rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    border-left: 4px solid transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    position: relative;
+    overflow: hidden;
+}
+.fsd-stat::after {
+    content: '';
+    position: absolute;
+    top: -10px; right: -10px;
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    opacity: 0.08;
+}
+.fsd-stat.capital   { border-left-color: #22c55e; } .fsd-stat.capital::after   { background: #22c55e; }
+.fsd-stat.invested  { border-left-color: #3b82f6; } .fsd-stat.invested::after  { background: #3b82f6; }
+.fsd-stat.reserve   { border-left-color: #f59e0b; } .fsd-stat.reserve::after   { background: #f59e0b; }
+.fsd-stat.units     { border-left-color: #8b5cf6; } .fsd-stat.units::after     { background: #8b5cf6; }
+
+.fsd-stat-icon {
+    font-size: 1.4rem;
+    margin-bottom: 0.15rem;
+}
+.fsd-stat.capital  .fsd-stat-icon { color: #22c55e; }
+.fsd-stat.invested .fsd-stat-icon { color: #3b82f6; }
+.fsd-stat.reserve  .fsd-stat-icon { color: #f59e0b; }
+.fsd-stat.units    .fsd-stat-icon { color: #8b5cf6; }
+
+.fsd-stat-label { font-size: 0.78rem; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+.fsd-stat-value { font-size: 1.35rem; font-weight: 800; color: #0f172a; line-height: 1.2; }
+.fsd-stat.capital  .fsd-stat-value { color: #16a34a; }
+.fsd-stat.invested .fsd-stat-value { color: #2563eb; }
+.fsd-stat.reserve  .fsd-stat-value { color: #d97706; }
+.fsd-stat.units    .fsd-stat-value { color: #7c3aed; }
+
+/* Charts section */
+.fsd-charts {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 1.25rem;
+    margin-bottom: 1rem;
+}
+@media (max-width: 768px) { .fsd-charts { grid-template-columns: 1fr; } }
+
+.fsd-chart-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.25rem 1.25rem 1rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+}
+.fsd-chart-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #14213d;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.fsd-chart-title i { color: #bfa14a; font-size: 1rem; }
+.fsd-chart-wrap { position: relative; width: 100%; }
+.fsd-chart-wrap canvas { max-height: 260px; }
+
+/* Capital breakdown bar */
+.fsd-bar-wrap { margin: 0.5rem 0 1rem; }
+.fsd-bar-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: #64748b; margin-bottom: 0.3rem; }
+.fsd-bar-track { height: 10px; border-radius: 10px; background: #f1f5f9; overflow: hidden; }
+.fsd-bar-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, #2563eb, #3b82f6); transition: width 0.8s ease; }
+.fsd-bar-fill.reserve { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+</style>
 
 {% if latest_record %}
-<div class="firm-status-container">
-  <div class="firm-status-stats">
-    <div class="firm-stat-card">
-      <div class="stat-card-body">
-        <div class="stat-title">Total Capital</div>
-        <div class="stat-value text-success">NRs. {{ latest_record.total_capital|indian_format }}</div>
-      </div>
-    </div>
-    <div class="firm-stat-card">
-      <div class="stat-card-body">
-        <div class="stat-title">Total Invested Capital</div>
-        <div class="stat-value text-primary">NRs. {{ latest_record.invested_capital|indian_format }}</div>
-      </div>
-    </div>
-    <div class="firm-stat-card">
-      <div class="stat-card-body">
-        <div class="stat-title">Total Reserve Cash</div>
-        <div class="stat-value text-warning">NRs. {{ latest_record.available_capital|indian_format }}</div>
-      </div>
-    </div>
-    <div class="firm-stat-card">
-      <div class="stat-card-body">
-        <div class="stat-title">Total Circulating Unit</div>
-        <div class="stat-value text-info">{{ latest_record.total_circulating_unit|floatformat:0 }}</div>
-      </div>
-    </div>
-  </div>
+<div class="fsd-wrap">
 
-  <div class="firm-status-charts">
-  <div class="firm-status-charts">
-    <div class="chart-card">
-      <div class="chart-title gradient-text-primary">Capital Distribution</div>
-      <div class="chart-wrapper">
-        <canvas id="capitalPieChart"
-            data-invested="{{ latest_record.invested_capital|floatformat:2 }}"
-            data-reserve="{{ latest_record.available_capital|floatformat:2 }}"></canvas>
-      </div>
+    <!-- Stat Cards -->
+    <div class="fsd-stats">
+        <div class="fsd-stat capital">
+            <i class="bi bi-cash-coin fsd-stat-icon"></i>
+            <div class="fsd-stat-label">Total Capital</div>
+            <div class="fsd-stat-value">NRs. {{ latest_record.total_capital|indian_format }}</div>
+        </div>
+        <div class="fsd-stat invested">
+            <i class="bi bi-graph-up-arrow fsd-stat-icon"></i>
+            <div class="fsd-stat-label">Invested Capital</div>
+            <div class="fsd-stat-value">NRs. {{ latest_record.invested_capital|indian_format }}</div>
+        </div>
+        <div class="fsd-stat reserve">
+            <i class="bi bi-safe fsd-stat-icon"></i>
+            <div class="fsd-stat-label">Reserve Cash</div>
+            <div class="fsd-stat-value">NRs. {{ latest_record.available_capital|indian_format }}</div>
+        </div>
+        <div class="fsd-stat units">
+            <i class="bi bi-layers fsd-stat-icon"></i>
+            <div class="fsd-stat-label">Circulating Units</div>
+            <div class="fsd-stat-value">{{ latest_record.total_circulating_unit|floatformat:0 }}</div>
+        </div>
     </div>
-    <div class="chart-card">
-      <div class="chart-title gradient-text-success">Total Capital Over Time</div>
-      <div class="chart-wrapper">
-        <canvas id="capitalLineChart"
-        data-labels='[{% for rec in history %}"{{ rec.date_time|date:"Y-m-d" }}"{% if not forloop.last %},{% endif %}{% endfor %}]'
-        data-data='[{% for rec in history %}{{ rec.total_capital|floatformat:2 }}{% if not forloop.last %},{% endif %}{% endfor %}]'></canvas>
-      </div>
+
+    <!-- Capital Breakdown Bar -->
+    {% if latest_record.total_capital > 0 %}
+    {% with invested_pct=latest_record.invested_capital|floatformat:0 %}
+    <div style="background:#fff;border-radius:14px;padding:1.1rem 1.25rem;box-shadow:0 2px 10px rgba(0,0,0,0.07);margin-bottom:1.25rem;">
+        <div style="font-size:0.88rem;font-weight:700;color:#14213d;margin-bottom:0.75rem;"><i class="bi bi-bar-chart-fill" style="color:#bfa14a;margin-right:0.4rem;"></i>Capital Allocation</div>
+        <div class="fsd-bar-wrap">
+            <div class="fsd-bar-label"><span>Invested Capital</span><span>NRs. {{ latest_record.invested_capital|indian_format }}</span></div>
+            <div class="fsd-bar-track">
+                <div class="fsd-bar-fill" style="width:{% widthratio latest_record.invested_capital latest_record.total_capital 100 %}%"></div>
+            </div>
+        </div>
+        <div class="fsd-bar-wrap">
+            <div class="fsd-bar-label"><span>Reserve Cash</span><span>NRs. {{ latest_record.available_capital|indian_format }}</span></div>
+            <div class="fsd-bar-track">
+                <div class="fsd-bar-fill reserve" style="width:{% widthratio latest_record.available_capital latest_record.total_capital 100 %}%"></div>
+            </div>
+        </div>
     </div>
-  </div>
+    {% endwith %}
+    {% endif %}
+
+    <!-- Charts -->
+    <div class="fsd-charts">
+        <div class="fsd-chart-card">
+            <div class="fsd-chart-title"><i class="bi bi-pie-chart-fill"></i> Distribution</div>
+            <div class="fsd-chart-wrap">
+                <canvas id="capitalPieChart"
+                    data-invested="{{ latest_record.invested_capital|floatformat:2 }}"
+                    data-reserve="{{ latest_record.available_capital|floatformat:2 }}"></canvas>
+            </div>
+        </div>
+        <div class="fsd-chart-card">
+            <div class="fsd-chart-title"><i class="bi bi-graph-up"></i> Total Capital Over Time</div>
+            <div class="fsd-chart-wrap">
+                <canvas id="capitalLineChart"
+                    data-labels='[{% for rec in history %}"{{ rec.date_time|date:"Y-m-d" }}"{% if not forloop.last %},{% endif %}{% endfor %}]'
+                    data-data='[{% for rec in history %}{{ rec.total_capital|floatformat:2 }}{% if not forloop.last %},{% endif %}{% endfor %}]'></canvas>
+            </div>
+        </div>
+    </div>
+
 </div>
 {% else %}
-<div class="alert alert-warning text-center">No capital records found.</div>
+<div style="text-align:center;padding:3rem 1rem;color:#94a3b8;">
+    <i class="bi bi-inbox" style="font-size:2.5rem;display:block;margin-bottom:0.75rem;"></i>
+    No capital records found yet.
+</div>
 {% endif %}

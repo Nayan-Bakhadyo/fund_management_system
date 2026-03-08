@@ -1,0 +1,104 @@
+{% load indian_format %}
+<style>
+.aup-wrap { font-family: 'Segoe UI', system-ui, sans-serif; padding: 0.5rem 0; }
+.aup-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
+.aup-title { font-size: 1.4rem; font-weight: 700; color: #14213d; display: flex; align-items: center; gap: 0.5rem; }
+.aup-title i { color: #bfa14a; }
+.aup-meta { font-size: 0.82rem; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.4rem 0.85rem; }
+.aup-meta span { color: #bfa14a; font-weight: 700; }
+.aup-search-bar { width: 100%; margin-bottom: 1rem; }
+.aup-search-bar input {
+    width: 100%; padding: 0.55rem 1rem; border: 1.5px solid #d1d5db; border-radius: 8px;
+    font-size: 0.93rem; outline: none; transition: border-color 0.2s;
+}
+.aup-search-bar input:focus { border-color: #bfa14a; box-shadow: 0 0 0 3px rgba(191,161,74,0.12); }
+.aup-table-wrap { overflow-x: auto; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+.aup-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; background: #fff; }
+.aup-table thead tr { background: linear-gradient(135deg, #14213d 0%, #1e3a5f 100%); }
+.aup-table th {
+    color: #fff; font-weight: 600; padding: 0.85rem 1.1rem;
+    text-align: left; border: none; font-size: 0.83rem; letter-spacing: 0.4px;
+}
+.aup-table th.right { text-align: right; }
+.aup-table td { padding: 0.75rem 1.1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+.aup-table td.right { text-align: right; font-variant-numeric: tabular-nums; }
+.aup-table tbody tr:hover { background: rgba(191,161,74,0.05); }
+.aup-table tbody tr:last-child td { border-bottom: none; }
+.aup-badge-user {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    background: rgba(20,33,61,0.07); color: #14213d;
+    border-radius: 20px; padding: 0.25rem 0.75rem; font-size: 0.82rem; font-weight: 500;
+}
+.aup-value { font-weight: 700; color: #14213d; }
+.aup-credit { font-size: 0.8rem; color: #64748b; }
+.aup-units-badge {
+    background: rgba(191,161,74,0.12); color: #92700e;
+    border: 1px solid rgba(191,161,74,0.3); border-radius: 6px;
+    padding: 0.2rem 0.6rem; font-size: 0.82rem; font-weight: 600;
+}
+.aup-empty { text-align: center; padding: 3rem 1rem; color: #94a3b8; }
+.aup-totals-row td { background: linear-gradient(135deg, rgba(20,33,61,0.05), rgba(20,33,61,0.02)); font-weight: 700; color: #14213d; border-top: 2px solid rgba(191,161,74,0.4); }
+</style>
+
+<div class="aup-wrap">
+    <div class="aup-header">
+        <div class="aup-title"><i class="bi bi-people-fill"></i> All Users — Portfolio Summary</div>
+        <div class="aup-meta">Current NAV: <span>NRs. {{ unit_cost }}</span> &nbsp;|&nbsp; As of <span>{{ nav_date }}</span></div>
+    </div>
+    <div class="aup-search-bar">
+        <input type="text" id="aupSearch" placeholder="&#128269;  Search by email..." autocomplete="off">
+    </div>
+    {% if user_list %}
+    <div class="aup-table-wrap">
+        <table class="aup-table" id="aupTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Email</th>
+                    <th class="right">Unit Balance</th>
+                    <th class="right">Credit Amount</th>
+                    <th class="right">Total Portfolio Value</th>
+                </tr>
+            </thead>
+            <tbody id="aupTableBody">
+                {% for u in user_list %}
+                <tr class="aup-row">
+                    <td style="color:#94a3b8;font-size:0.82rem;">{{ forloop.counter }}</td>
+                    <td><span class="aup-badge-user"><i class="bi bi-person"></i>{{ u.email }}</span></td>
+                    <td class="right"><span class="aup-units-badge">{{ u.units|floatformat:2 }}</span></td>
+                    <td class="right aup-credit">NRs. {{ u.credit|floatformat:2 }}</td>
+                    <td class="right"><span class="aup-value">NRs. {{ u.total_value|floatformat:0 }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="aup-totals-row">
+                    <td colspan="2">Totals ({{ user_list|length }} users)</td>
+                    <td class="right"><span class="aup-units-badge">{{ total_units|floatformat:2 }}</span></td>
+                    <td class="right">—</td>
+                    <td class="right">NRs. {{ grand_total|floatformat:0 }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    {% else %}
+    <div class="aup-empty"><i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:0.5rem;"></i>No users found.</div>
+    {% endif %}
+</div>
+
+<script>
+(function() {
+    // Live search
+    const searchInput = document.getElementById('aupSearch');
+    const tbody = document.getElementById('aupTableBody');
+    if (searchInput && tbody) {
+        searchInput.addEventListener('input', function() {
+            const q = this.value.toLowerCase();
+            tbody.querySelectorAll('.aup-row').forEach(function(row) {
+                const email = row.querySelector('.aup-badge-user').textContent.toLowerCase();
+                row.style.display = (!q || email.includes(q)) ? '' : 'none';
+            });
+        });
+    }
+})();
+</script>

@@ -1192,6 +1192,49 @@ def firm_status_dashboard(request):
     })
     return JsonResponse({'html': html})
 
+
+@login_required
+@require_GET
+def all_users_portfolio(request):
+    """Return a JSON response with all users' portfolio summary for fund manager view."""
+    try:
+        authorized_user = AuthorizedUser.objects.get(email=request.user.email)
+        if authorized_user.role != 'fund_manager':
+            return JsonResponse({'error': 'Unauthorized'}, status=403)
+    except AuthorizedUser.DoesNotExist:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+
+    latest_nav_record = NAVRecord.objects.order_by('-id').first()
+    unit_cost = Decimal(str(latest_nav_record.unit_cost)) if latest_nav_record else Decimal('10.0')
+    nav_date = latest_nav_record.date_time.strftime('%Y-%m-%d') if latest_nav_record else '—'
+
+    users = AuthorizedUser.objects.filter(role='user').order_by('email')
+    user_list = []
+    for user in users:
+        try:
+            user_nav = UserNAV.objects.get(authorized_user=user)
+            units = user_nav.available_unit
+            credit = user_nav.available_credit_amount
+        except UserNAV.DoesNotExist:
+            units = Decimal('0')
+            credit = Decimal('0')
+        total_value = (units * unit_cost) + credit
+        user_list.append({
+            'email': user.email,
+            'units': float(units),
+            'credit': float(credit),
+            'total_value': float(total_value),
+        })
+
+    html = render_to_string('mainapp/all_users_portfolio.html', {
+        'user_list': user_list,
+        'unit_cost': float(unit_cost),
+        'nav_date': nav_date,
+        'grand_total': sum(u['total_value'] for u in user_list),
+        'total_units': sum(u['units'] for u in user_list),
+    })
+    return JsonResponse({'html': html})
+
 @login_required
 def withdraw_request(request):
     """

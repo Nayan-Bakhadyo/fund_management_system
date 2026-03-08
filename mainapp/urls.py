@@ -38,6 +38,7 @@ urlpatterns = [
     path('user/uploads_status/', views.user_uploads_status, name='user_uploads_status'),
     path('stock_performance_dashboard/', views.stock_performance_dashboard, name='stock_performance_dashboard'),
     path('firm_status_dashboard/', views.firm_status_dashboard, name='firm_status_dashboard'),
+    path('fundmanager/all_users_portfolio/', views.all_users_portfolio, name='all_users_portfolio'),
      
     path('auth/', include('social_django.urls', namespace='social')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
