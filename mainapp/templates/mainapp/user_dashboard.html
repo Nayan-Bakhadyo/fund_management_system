@@ -192,6 +192,23 @@
                         </div>
                     </div>
 
+                    <!-- Active Investment Category Pie Chart -->
+                    {% if investment_categories %}
+                    <div style="margin-bottom:2rem;">
+                        <h2 class="section-title gradient-accent">Investment Breakdown</h2>
+                        <div style="background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.07);padding:1.5rem;">
+                            <div class="inv-breakdown-grid">
+                                <div class="inv-breakdown-chart">
+                                    <canvas id="categoryBreakdownChart" style="max-height:220px;"
+                                        data-labels='[{% for c in investment_categories %}"{{ c.category.category_name|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}]'
+                                        data-data='[{% for c in investment_categories %}{{ c.category_net_invested|floatformat:2 }}{% if not forloop.last %},{% endif %}{% endfor %}]'></canvas>
+                                </div>
+                                <div id="categoryBreakdownLegend" class="inv-breakdown-legend"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <!-- Active Investments by Category -->
                     {% if investment_categories %}
                     <div class="active-investments-section" style="margin-bottom: 2rem;">
@@ -498,6 +515,59 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     
     <script>
+        // Category Breakdown Pie Chart
+        (function() {
+            const canvas = document.getElementById('categoryBreakdownChart');
+            if (!canvas) return;
+            const labels = JSON.parse(canvas.getAttribute('data-labels') || '[]');
+            const data = JSON.parse(canvas.getAttribute('data-data') || '[]');
+            if (!labels.length) return;
+            const colors = ['#2563eb','#bfa14a','#22c55e','#f59e0b','#8b5cf6','#ec4899','#14b8a6','#f97316'];
+            new Chart(canvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderColor: '#fff',
+                        borderWidth: 3,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '58%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                    const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                                    return ' NRs. ' + ctx.parsed.toLocaleString() + ' (' + pct + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            // Custom legend
+            const legendEl = document.getElementById('categoryBreakdownLegend');
+            if (legendEl) {
+                const total = data.reduce((a, b) => a + b, 0);
+                legendEl.innerHTML = labels.map(function(label, i) {
+                    const pct = total > 0 ? ((data[i] / total) * 100).toFixed(1) : 0;
+                    return '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;">'
+                        + '<span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:' + colors[i] + ';flex-shrink:0;"></span>'
+                        + '<span style="flex:1;color:#1a1a2e;font-weight:600;">' + label + '</span>'
+                        + '<span style="color:#64748b;">' + pct + '%</span>'
+                        + '</div>';
+                }).join('');
+            }
+        })();
+
         // Service Worker Registration
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("{% static 'serviceworker.js' %}");

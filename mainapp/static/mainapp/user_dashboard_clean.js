@@ -824,6 +824,55 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
             }
+            // Category Doughnut Chart
+            const catCanvas = document.getElementById('categoryPieChart');
+            if (catCanvas) {
+                const catLabels = JSON.parse(catCanvas.getAttribute('data-labels') || '[]');
+                const catData = JSON.parse(catCanvas.getAttribute('data-data') || '[]');
+                const catColors = ['#2563eb','#bfa14a','#22c55e','#f59e0b','#8b5cf6','#ec4899','#14b8a6','#f97316'];
+                new Chart(catCanvas.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: catLabels,
+                        datasets: [{
+                            data: catData,
+                            backgroundColor: catColors.slice(0, catLabels.length),
+                            borderColor: '#fff',
+                            borderWidth: 3,
+                            hoverOffset: 10
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '55%',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                        const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                                        return ' NRs. ' + ctx.parsed.toLocaleString() + ' (' + pct + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                const legendEl = document.getElementById('categoryLegend');
+                if (legendEl) {
+                    const total = catData.reduce((a, b) => a + b, 0);
+                    legendEl.innerHTML = catLabels.map(function(label, i) {
+                        const pct = total > 0 ? ((catData[i] / total) * 100).toFixed(1) : 0;
+                        return '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.55rem;">'
+                            + '<span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:' + catColors[i] + ';flex-shrink:0;"></span>'
+                            + '<span style="flex:1;color:#374151;font-weight:500;">' + label + '</span>'
+                            + '<span style="color:#64748b;">' + pct + '%</span>'
+                            + '</div>';
+                    }).join('');
+                }
+            }
         } catch (error) {
             console.error('Error initializing firm status charts:', error);
         }
