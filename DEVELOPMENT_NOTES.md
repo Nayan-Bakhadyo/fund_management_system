@@ -15,7 +15,8 @@
 - **Static files**: `collectstatic` in deploy.sh handles it
 
 ## NAV System
-- **Formula**: `NAV = (available_capital + current_investment_value) / total_circulating_units`
+- **Formula**: `NAV = (available_capital - total_user_credits + current_investment_value) / total_circulating_units`
+- **Credit exclusion**: User credits (leftover fractions from deposits that couldn't buy a whole unit) are subtracted from available_capital in the NAV formula. This prevents double-counting since each user's total is `(units × NAV) + credit`.
 - **Single calculator**: `python manage.py calculate_nav` (the ONLY source of truth)
 - `calculate_nav.sh` is a thin wrapper that calls the management command
 - **Precision**: 6 decimal places (model + calculation), stored in `NAVRecord.unit_cost`
@@ -57,3 +58,4 @@
 6. **deploy.sh CSV conflict**: share_price.csv local changes blocked git pull → added git stash/pop
 7. **Duplicate NAV records**: ~288 identical records/day from 5-min cron → added skip-if-unchanged logic
 8. **indian_number_format**: Was stripping negative signs → fixed
+9. **Credit double-counting in NAV**: `available_capital` included user credit amounts (deposit remainders), but user totals were computed as `units × NAV + credit`, inflating "Total Users" by ~25 NRs. Fix: subtract `sum(UserNAV.available_credit_amount)` from available_capital in NAV formula. Gap reduced from 25.37 to 0.005 (rounding only).

@@ -38,6 +38,10 @@
 }
 .aup-empty { text-align: center; padding: 3rem 1rem; color: #94a3b8; }
 .aup-totals-row td { background: linear-gradient(135deg, rgba(20,33,61,0.05), rgba(20,33,61,0.02)); font-weight: 700; color: #14213d; border-top: 2px solid rgba(191,161,74,0.4); }
+.aup-pl-positive { color: #16a34a; font-weight: 700; }
+.aup-pl-negative { color: #dc2626; font-weight: 700; }
+.aup-pl-neutral { color: #64748b; font-weight: 700; }
+.aup-pl-pct { font-size: 0.78rem; margin-left: 0.3rem; }
 </style>
 
 <div class="aup-wrap">
@@ -58,6 +62,8 @@
                     <th class="right">Unit Balance</th>
                     <th class="right">Credit Amount</th>
                     <th class="right">Total Portfolio Value</th>
+                    <th class="right">Total Invested</th>
+                    <th class="right">P&amp;L</th>
                 </tr>
             </thead>
             <tbody id="aupTableBody">
@@ -68,6 +74,18 @@
                     <td class="right"><span class="aup-units-badge">{{ u.units|floatformat:2 }}</span></td>
                     <td class="right aup-credit">NRs. {{ u.credit|floatformat:2 }}</td>
                     <td class="right"><span class="aup-value">NRs. {{ u.total_value|floatformat:0 }}</span></td>
+                    <td class="right">NRs. {{ u.total_invested|floatformat:0 }}</td>
+                    <td class="right">
+                        {% if u.pl_amount > 0 %}
+                            <span class="aup-pl-positive">+NRs. {{ u.pl_amount|floatformat:0 }}</span>
+                            <span class="aup-pl-pct aup-pl-positive">(+{{ u.pl_percentage|floatformat:1 }}%)</span>
+                        {% elif u.pl_amount < 0 %}
+                            <span class="aup-pl-negative">-NRs. {{ u.pl_amount|floatformat:0|slice:"1:" }}</span>
+                            <span class="aup-pl-pct aup-pl-negative">({{ u.pl_percentage|floatformat:1 }}%)</span>
+                        {% else %}
+                            <span class="aup-pl-neutral">NRs. 0</span>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -77,6 +95,8 @@
                     <td class="right"><span class="aup-units-badge">{{ total_units|floatformat:2 }}</span></td>
                     <td class="right">—</td>
                     <td class="right">NRs. {{ grand_total|floatformat:0 }}</td>
+                    <td class="right">—</td>
+                    <td class="right">—</td>
                 </tr>
             </tfoot>
         </table>

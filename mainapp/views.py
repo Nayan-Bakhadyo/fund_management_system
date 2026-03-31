@@ -1315,7 +1315,7 @@ def all_users_portfolio(request):
     unit_cost = Decimal(str(latest_nav_record.unit_cost)) if latest_nav_record else Decimal('10.0')
     nav_date = latest_nav_record.date_time.strftime('%Y-%m-%d') if latest_nav_record else '—'
 
-    from django.db.models import Q
+    from django.db.models import Q, Sum
     users = AuthorizedUser.objects.filter(Q(role='user') | Q(email='beinvestmentfirm@gmail.com')).order_by('email')
     user_list = []
     for user in users:
@@ -1327,11 +1327,28 @@ def all_users_portfolio(request):
             units = Decimal('0')
             credit = Decimal('0')
         total_value = (units * unit_cost) + credit
+
+        total_deposit = UserTransaction.objects.filter(
+            authorized_user=user,
+            transaction_type='deposit'
+        ).aggregate(total=Sum('purchase_initiated_amount'))['total'] or Decimal('0')
+        total_withdrawal = UserTransaction.objects.filter(
+            authorized_user=user,
+            transaction_type='withdrawal'
+        ).aggregate(total=Sum('purchase_initiated_amount'))['total'] or Decimal('0')
+        total_invested = Decimal(str(total_deposit)) - Decimal(str(total_withdrawal))
+
+        pl_amount = total_value - total_invested
+        pl_percentage = float((pl_amount / total_invested * 100)) if total_invested > 0 else 0
+
         user_list.append({
             'email': user.email,
             'units': float(units),
             'credit': float(credit),
             'total_value': float(total_value),
+            'total_invested': float(total_invested),
+            'pl_amount': float(pl_amount),
+            'pl_percentage': pl_percentage,
         })
 
     user_list.sort(key=lambda u: u['total_value'], reverse=True)
