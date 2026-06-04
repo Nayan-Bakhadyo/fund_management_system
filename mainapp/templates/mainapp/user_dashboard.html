@@ -249,6 +249,7 @@
                                                         <th class="py-2 text-muted fw-semibold border-0">Outstanding</th>
                                                         <th class="py-2 text-muted fw-semibold border-0">Interest Rate</th>
                                                         <th class="py-2 text-muted fw-semibold border-0">Interest Earned</th>
+                                                        <th class="py-2 text-muted fw-semibold border-0">Accrued</th>
                                                         <th class="py-2 text-muted fw-semibold border-0">Expected / Month</th>
                                                         <th class="py-2 text-muted fw-semibold border-0">Maturity</th>
                                                     </tr>
@@ -286,6 +287,11 @@
                                                         <td class="py-3 border-0">
                                                             {% if inv_data.interest_earned > 0 %}
                                                             <span class="text-success fw-semibold">NRs. {{ inv_data.interest_earned|floatformat:0 }}</span>
+                                                            {% else %}<span class="text-muted">—</span>{% endif %}
+                                                        </td>
+                                                        <td class="py-3 border-0">
+                                                            {% if inv_data.accrued_interest > 0 %}
+                                                            <span class="text-warning fw-semibold" title="Unpaid interest since last payment">NRs. {{ inv_data.accrued_interest|floatformat:0 }}</span>
                                                             {% else %}<span class="text-muted">—</span>{% endif %}
                                                         </td>
                                                         <td class="py-3 border-0">

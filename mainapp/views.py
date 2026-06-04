@@ -529,13 +529,27 @@ def user_dashboard(request):
 
         interest_earned = Decimal('0')
         expected_monthly_interest = Decimal('0')
+        accrued_interest = Decimal('0')
         if is_loan:
+            from datetime import date as _d
             interest_earned = inv.transactions.filter(amount_type='interest').aggregate(total=Sum('amount'))['total'] or Decimal('0')
             if inv.interest_rate and inv.interest_rate_period and net_invested > 0:
                 if inv.interest_rate_period == 'monthly':
                     expected_monthly_interest = net_invested * inv.interest_rate / 100
                 else:
                     expected_monthly_interest = net_invested * inv.interest_rate / 100 / 12
+                # Accrued interest since last payment
+                last_txn = inv.transactions.filter(
+                    amount_type__in=('interest', 'investment')
+                ).order_by('-date').first()
+                if last_txn and last_txn.date:
+                    days = (_d.today() - last_txn.date).days
+                    if days > 0:
+                        if inv.interest_rate_period == 'monthly':
+                            daily_rate = inv.interest_rate / Decimal('100') / Decimal('30')
+                        else:
+                            daily_rate = inv.interest_rate / Decimal('100') / Decimal('365')
+                        accrued_interest = (net_invested * daily_rate * days).quantize(Decimal('0.01'))
 
         entry = {
             'investment': inv,
@@ -546,6 +560,7 @@ def user_dashboard(request):
             'is_loan': is_loan,
             'interest_earned': interest_earned,
             'expected_monthly_interest': expected_monthly_interest,
+            'accrued_interest': accrued_interest,
         }
 
         cat_key = cat.category_name
@@ -920,15 +935,22 @@ def user_contract(request):
 @login_required
 def add_investment_transaction(request):
     if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        from datetime import datetime as _dt, date as _date
         investment_id = request.POST.get('investment')
         amount = request.POST.get('amount')
         amount_type = request.POST.get('amount_type')
         stock_units_purchased = request.POST.get('stock_units_purchased', None)
+        transaction_date_str = request.POST.get('transaction_date', '').strip()
 
         try:
             amount = Decimal(amount)
         except (TypeError, ValueError):
             return JsonResponse({"success": False, "error": "Invalid amount."})
+
+        try:
+            transaction_date = _dt.strptime(transaction_date_str, '%Y-%m-%d').date() if transaction_date_str else _date.today()
+        except ValueError:
+            transaction_date = _date.today()
 
         if investment_id and amount and amount_type:
             try:
@@ -953,73 +975,118 @@ def add_investment_transaction(request):
                         new_invested_capital = invested_capital + amount
                         new_available_capital = available_capital - amount
                     elif amount_type == 'return':
-                        # Initialize purchase_unit for all return scenarios
                         purchase_unit = 0
-                        
-                        total_invested = InvestmentTransaction.objects.filter(
-                            investment=investment, amount_type='investment'
-                        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
 
-                        total_return_before = InvestmentTransaction.objects.filter(
-                            investment=investment, amount_type='return'
-                        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+                        if investment.is_loan:
+                            # ---- LOAN PAYMENT: auto-split into accrued interest + principal ----
+                            from datetime import date as _d2
+                            total_disbursed = InvestmentTransaction.objects.filter(
+                                investment=investment, amount_type='investment'
+                            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+                            total_principal_repaid = InvestmentTransaction.objects.filter(
+                                investment=investment, amount_type='return'
+                            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+                            outstanding_principal = total_disbursed - total_principal_repaid
 
-                        # Calculate what the total return will be after this transaction
-                        total_return_after = total_return_before + amount
+                            # Find accrual start: latest 'interest' or 'investment' transaction date
+                            last_interest = InvestmentTransaction.objects.filter(
+                                investment=investment, amount_type__in=('interest', 'investment')
+                            ).order_by('-date').first()
+                            accrual_start = last_interest.date if last_interest else transaction_date
 
-                        if total_return_before > total_invested:
-                            # All returns are profit, so 20% of this amount goes to beinvestmentfirm.com
-                            profit_20 = amount * Decimal('0.20')
+                            # Calculate accrued interest up to transaction_date
+                            days = (transaction_date - accrual_start).days
+                            accrued_interest = Decimal('0')
+                            if days > 0 and outstanding_principal > 0 and investment.interest_rate and investment.interest_rate_period:
+                                if investment.interest_rate_period == 'monthly':
+                                    daily_rate = investment.interest_rate / Decimal('100') / Decimal('30')
+                                else:
+                                    daily_rate = investment.interest_rate / Decimal('100') / Decimal('365')
+                                accrued_interest = (outstanding_principal * daily_rate * days).quantize(Decimal('0.01'))
 
-                            # Fetch latest NAVRecord by id
-                            latest_nav = NAVRecord.objects.latest('id')
-                            unit_cost = latest_nav.unit_cost
-                            
-                            be_user = AuthorizedUser.objects.get(email='beinvestmentfirm@gmail.com')
-                            be_user_nav = UserNAV.objects.get(authorized_user=be_user)
+                            interest_portion = min(amount, accrued_interest)
+                            principal_portion = amount - interest_portion
 
-                            profit_20 = profit_20 + be_user_nav.available_credit_amount
-                            # Calculate purchase units and remaining credit
-
-                            purchase_unit = profit_20 // unit_cost
-                            remaining_credit = profit_20 - (purchase_unit * unit_cost)
-
-                            UserTransaction.objects.create(
-                                authorized_user=be_user,
-                                transaction_type='deposit',
-                                unit_cost=unit_cost,
-                                purchase_initiated_amount=profit_20,
-                                purchase_unit=purchase_unit,
-                                remaining_credit=remaining_credit,
-                                description=f"{investment.investment_name} - profit credited"
-                            )
-
-                            # Update UserNav for beinvestmentfirm@gmail.com
-                            user_nav = UserNAV.objects.get(authorized_user=be_user)
-                            user_nav.available_unit += purchase_unit
-                            user_nav.available_credit_amount = remaining_credit
-                            user_nav.save()
-
-                            new_available_capital = available_capital + amount
-                            new_invested_capital = invested_capital
-
-                        else:
-                            # Only the profit portion above total_invested is subject to 20%
-                            profit = total_return_after - total_invested
-                            if profit > 0:
-                                profit_20 = profit * Decimal('0.20')
-
+                            # Apply 20% fee on interest portion (profit)
+                            if interest_portion > 0:
                                 latest_nav = NAVRecord.objects.latest('id')
                                 unit_cost = latest_nav.unit_cost
-
                                 be_user = AuthorizedUser.objects.get(email='beinvestmentfirm@gmail.com')
                                 be_user_nav = UserNAV.objects.get(authorized_user=be_user)
-                                
-                                profit_20 = profit_20 + be_user_nav.available_credit_amount
-
+                                profit_20 = interest_portion * Decimal('0.20') + be_user_nav.available_credit_amount
                                 purchase_unit = profit_20 // unit_cost
                                 remaining_credit = profit_20 - (purchase_unit * unit_cost)
+                                UserTransaction.objects.create(
+                                    authorized_user=be_user,
+                                    transaction_type='deposit',
+                                    unit_cost=unit_cost,
+                                    purchase_initiated_amount=profit_20,
+                                    purchase_unit=purchase_unit,
+                                    remaining_credit=remaining_credit,
+                                    description=f"{investment.investment_name} - interest income credited"
+                                )
+                                user_nav = UserNAV.objects.get(authorized_user=be_user)
+                                user_nav.available_unit += purchase_unit
+                                user_nav.available_credit_amount = remaining_credit
+                                user_nav.save()
+                                total_circulating_unit += purchase_unit
 
+                                # Record the interest portion as a separate 'interest' transaction
+                                InvestmentTransaction.objects.create(
+                                    investment=investment,
+                                    amount=interest_portion,
+                                    amount_type='interest',
+                                    date=transaction_date,
+                                )
+
+                            # Record principal portion as 'return' (created below if > 0)
+                            new_available_capital = available_capital + amount
+                            new_invested_capital = invested_capital - principal_portion
+
+                            # Replace the generic transaction creation below with principal-only record
+                            if principal_portion > 0:
+                                InvestmentTransaction.objects.create(
+                                    investment=investment,
+                                    amount=principal_portion,
+                                    amount_type='return',
+                                    date=transaction_date,
+                                )
+                            # Skip the generic transaction_obj creation at the end
+                            TotalCapitalRecord.objects.create(
+                                total_capital=new_invested_capital + new_available_capital,
+                                invested_capital=new_invested_capital,
+                                available_capital=new_available_capital,
+                                total_circulating_unit=total_circulating_unit
+                            )
+                            return JsonResponse({
+                                "success": True,
+                                "investment": investment.investment_name,
+                                "amount": str(amount),
+                                "amount_type": "Loan Payment (interest: {}, principal: {})".format(
+                                    interest_portion, principal_portion)
+                            })
+
+                        else:
+                            # ---- NON-LOAN RETURN: existing logic ----
+                            total_invested = InvestmentTransaction.objects.filter(
+                                investment=investment, amount_type='investment'
+                            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+                            total_return_before = InvestmentTransaction.objects.filter(
+                                investment=investment, amount_type='return'
+                            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+                            total_return_after = total_return_before + amount
+
+                            if total_return_before > total_invested:
+                                profit_20 = amount * Decimal('0.20')
+                                latest_nav = NAVRecord.objects.latest('id')
+                                unit_cost = latest_nav.unit_cost
+                                be_user = AuthorizedUser.objects.get(email='beinvestmentfirm@gmail.com')
+                                be_user_nav = UserNAV.objects.get(authorized_user=be_user)
+                                profit_20 = profit_20 + be_user_nav.available_credit_amount
+                                purchase_unit = profit_20 // unit_cost
+                                remaining_credit = profit_20 - (purchase_unit * unit_cost)
                                 UserTransaction.objects.create(
                                     authorized_user=be_user,
                                     transaction_type='deposit',
@@ -1029,16 +1096,39 @@ def add_investment_transaction(request):
                                     remaining_credit=remaining_credit,
                                     description=f"{investment.investment_name} - profit credited"
                                 )
-
-                                # Update UserNav for beinvestmentfirm@gmail.com
                                 user_nav = UserNAV.objects.get(authorized_user=be_user)
                                 user_nav.available_unit += purchase_unit
                                 user_nav.available_credit_amount = remaining_credit
                                 user_nav.save()
+                                new_available_capital = available_capital + amount
+                                new_invested_capital = invested_capital
+                            else:
+                                profit = total_return_after - total_invested
+                                if profit > 0:
+                                    profit_20 = profit * Decimal('0.20')
+                                    latest_nav = NAVRecord.objects.latest('id')
+                                    unit_cost = latest_nav.unit_cost
+                                    be_user = AuthorizedUser.objects.get(email='beinvestmentfirm@gmail.com')
+                                    be_user_nav = UserNAV.objects.get(authorized_user=be_user)
+                                    profit_20 = profit_20 + be_user_nav.available_credit_amount
+                                    purchase_unit = profit_20 // unit_cost
+                                    remaining_credit = profit_20 - (purchase_unit * unit_cost)
+                                    UserTransaction.objects.create(
+                                        authorized_user=be_user,
+                                        transaction_type='deposit',
+                                        unit_cost=unit_cost,
+                                        purchase_initiated_amount=profit_20,
+                                        purchase_unit=purchase_unit,
+                                        remaining_credit=remaining_credit,
+                                        description=f"{investment.investment_name} - profit credited"
+                                    )
+                                    user_nav = UserNAV.objects.get(authorized_user=be_user)
+                                    user_nav.available_unit += purchase_unit
+                                    user_nav.available_credit_amount = remaining_credit
+                                    user_nav.save()
+                                new_available_capital = available_capital + amount
+                                new_invested_capital = invested_capital - (amount - profit) if profit > 0 else invested_capital - amount
 
-                            new_available_capital = available_capital + amount
-                            new_invested_capital = invested_capital - (amount - profit) if profit > 0 else invested_capital - amount
-                        
                         total_circulating_unit += purchase_unit
                     elif amount_type == 'interest':
                         # Interest income is pure profit from the first payment.
@@ -1081,6 +1171,7 @@ def add_investment_transaction(request):
                         investment=investment,
                         amount=amount,
                         amount_type=amount_type,
+                        date=transaction_date,
                         stock_units_purchased=stock_units_purchased if stock_units_purchased else None
                     )
 

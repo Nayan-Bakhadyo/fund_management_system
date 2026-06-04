@@ -19,13 +19,20 @@
                 <option value="{{ inv.investment_id }}"
                         data-category="{{ inv.investment_category.category_name|lower }}"
                         data-share-symbol="{{ inv.share_symbol|default:'' }}"
-                        data-is-loan="{% if inv.is_loan %}true{% else %}false{% endif %}">
+                        data-is-loan="{% if inv.is_loan %}true{% else %}false{% endif %}"
+                        data-interest-rate="{{ inv.interest_rate|default:'' }}"
+                        data-interest-period="{{ inv.interest_rate_period|default:'' }}">
                   {{ inv.investment_name }}
                   {% if inv.share_symbol %} ({{ inv.share_symbol }}){% endif %}
                   {% if inv.is_loan and inv.interest_rate %} — {{ inv.interest_rate }}% {{ inv.get_interest_rate_period_display }}{% endif %}
                 </option>
               {% endfor %}
             </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="transaction_date" class="form-label">Transaction Date</label>
+            <input type="date" class="form-control" id="transaction_date" name="transaction_date" required>
           </div>
 
           <div class="mb-3">
@@ -38,8 +45,8 @@
             <select class="form-control" id="amount_type" name="amount_type" required>
               <option value="">Select Type</option>
               <option value="investment">Investment / Loan Disbursement</option>
-              <option value="return">Return / Principal Repayment</option>
-              <option value="interest" class="loan-only" style="display:none;">Interest Income</option>
+              <option value="return">Return / Loan Payment</option>
+              <option value="interest" class="loan-only" style="display:none;">Interest Income (manual)</option>
             </select>
           </div>
 
@@ -50,7 +57,7 @@
             <div class="form-text">Enter the number of stock units for share market investments</div>
           </div>
 
-          <!-- Loan info panel (read-only reminder) -->
+          <!-- Loan info panel -->
           <div id="loanInfoPanel" style="display:none;" class="alert alert-info py-2 px-3 small mb-0"></div>
         </div>
         <div class="modal-footer">
@@ -68,7 +75,14 @@
   var amtTypeSelect  = document.getElementById('amount_type');
   var stockField     = document.getElementById('stockUnitsField');
   var loanPanel      = document.getElementById('loanInfoPanel');
+  var dateInput      = document.getElementById('transaction_date');
   var interestOption = amtTypeSelect ? amtTypeSelect.querySelector('option[value="interest"]') : null;
+
+  // Default date to today
+  if (dateInput && !dateInput.value) {
+    var today = new Date();
+    dateInput.value = today.toISOString().slice(0, 10);
+  }
 
   function updateForm() {
     if (!invSelect) return;
@@ -81,10 +95,9 @@
     // Stock units field
     stockField.style.display = isShare ? '' : 'none';
 
-    // Interest Income option
+    // Interest Income option (manual override, shown for loans only)
     if (interestOption) {
       interestOption.style.display = isLoan ? '' : 'none';
-      // If a non-loan investment is selected and interest was chosen, reset
       if (!isLoan && amtTypeSelect.value === 'interest') {
         amtTypeSelect.value = '';
       }
@@ -92,8 +105,12 @@
 
     // Loan info panel
     if (isLoan) {
-      var text = opt.textContent.trim();
-      loanPanel.textContent = 'Loan: ' + text + '. Use "Interest Income" for monthly interest payments and "Return / Principal Repayment" for principal repayments.';
+      var rate   = opt.getAttribute('data-interest-rate');
+      var period = opt.getAttribute('data-interest-period') === 'monthly' ? '/month' : '/year';
+      loanPanel.innerHTML =
+        '<strong>Loan payment:</strong> Interest (' + (rate ? rate + '% ' + period : 'rate not set') + ') is collected first; ' +
+        'the remainder reduces outstanding principal. Use "Interest Income (manual)" only to record a pure interest payment ' +
+        'without any principal reduction.';
       loanPanel.style.display = '';
     } else {
       loanPanel.style.display = 'none';

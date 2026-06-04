@@ -182,20 +182,65 @@ class Command(BaseCommand):
         
         return market_value
 
+    def calculate_loan_accrued_interest(self, investment, transactions):
+        """Calculate interest accrued since the last interest payment (or disbursement) for an open loan."""
+        from datetime import date
+        transactions = list(transactions)
+
+        outstanding_principal = sum(
+            t.amount for t in transactions if t.amount_type == 'investment'
+        ) - sum(
+            t.amount for t in transactions if t.amount_type == 'return'
+        )
+
+        if outstanding_principal <= 0:
+            return Decimal('0')
+
+        if not investment.interest_rate or not investment.interest_rate_period:
+            return Decimal('0')
+
+        # Last interest or investment transaction sets the accrual start
+        dated = [t for t in transactions if t.date and t.amount_type in ('interest', 'investment')]
+        if not dated:
+            return Decimal('0')
+
+        last_payment_date = max(t.date for t in dated)
+        days = (date.today() - last_payment_date).days
+        if days <= 0:
+            return Decimal('0')
+
+        if investment.interest_rate_period == 'monthly':
+            daily_rate = investment.interest_rate / Decimal('100') / Decimal('30')
+        else:
+            daily_rate = investment.interest_rate / Decimal('100') / Decimal('365')
+
+        accrued = outstanding_principal * daily_rate * days
+        if self.verbose:
+            self.log(f"    Outstanding Principal: {outstanding_principal}")
+            self.log(f"    Days since last payment: {days}")
+            self.log(f"    Accrued Interest: {accrued}")
+        return accrued
+
     def calculate_other_investment_value(self, investment, transactions):
         """Calculate value for non-share market investments using net invested amount"""
+        transactions = list(transactions)
         net_value = Decimal('0')
-        
-        for transaction in transactions:
-            if transaction.amount_type == 'investment':
-                net_value += transaction.amount
-            elif transaction.amount_type == 'return':
-                net_value -= transaction.amount
-        
+
+        for t in transactions:
+            if t.amount_type == 'investment':
+                net_value += t.amount
+            elif t.amount_type == 'return':
+                net_value -= t.amount
+
+        # For open loans add accrued but unpaid interest so NAV reflects daily growth
+        if investment.is_loan:
+            accrued = self.calculate_loan_accrued_interest(investment, transactions)
+            net_value += accrued
+
         if self.verbose:
             self.log(f"  Other Investment: {investment.investment_name}")
-            self.log(f"    Net Value: {net_value}")
-        
+            self.log(f"    Net Value (incl. accrued interest): {net_value}")
+
         return max(net_value, Decimal('0'))  # Don't allow negative values
 
     def calculate_total_investment_value(self, share_prices):

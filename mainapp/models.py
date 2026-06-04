@@ -1,4 +1,5 @@
 from django.db import models
+from datetime import date as _today
 
 # Create your models here.
 
@@ -173,6 +174,7 @@ class InvestmentTransaction(models.Model):
 
     amount = models.DecimalField(max_digits=14, decimal_places=2)
     amount_type = models.CharField(max_length=11, choices=AMOUNT_TYPE_CHOICES)
+    date = models.DateField(default=_today.today)
     stock_units_purchased = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True, help_text="Units of stock")
 
     def __str__(self):
