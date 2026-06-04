@@ -11,156 +11,64 @@
     <link rel="icon" type="image/png" href="{% static 'mainapp/assets/BE_logo.png' %}">
     <link rel="stylesheet" href="{% static 'mainapp/user_dashboard_modern.css' %}">
     <style>
-        /* ── Page header ─────────────────────────────────────── */
-        .page-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 0.2rem;
-        }
-        .page-subtitle { color: var(--text-secondary); font-size: 0.9rem; }
+        .page-title  { font-size:1.5rem; font-weight:700; color:var(--text-primary); margin-bottom:.2rem; }
+        .page-subtitle { color:var(--text-secondary); font-size:.9rem; }
 
-        /* ── Summary stat cards ───────────────────────────────── */
+        /* Stat cards */
         .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 14px;
             padding: 16px 20px;
-            border: 1px solid rgba(255,255,255,0.07);
-            position: relative;
-            overflow: hidden;
         }
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            opacity: 0.12;
-            border-radius: inherit;
-        }
-        .stat-card-gold   { background: linear-gradient(135deg, #3a2a00 0%, #1e1400 100%); border-color: rgba(240,180,41,0.35); }
-        .stat-card-gold   .stat-value { color: #f0b429; }
-        .stat-card-green  { background: linear-gradient(135deg, #002a1a 0%, #001510 100%); border-color: rgba(52,211,153,0.3);  }
-        .stat-card-green  .stat-value { color: #34d399; }
-        .stat-card-blue   { background: linear-gradient(135deg, #001a3a 0%, #000e20 100%); border-color: rgba(96,165,250,0.3);  }
-        .stat-card-blue   .stat-value { color: #60a5fa; }
-
         .stat-label {
-            color: rgba(255,255,255,0.5);
-            font-size: 0.72rem;
+            color: var(--text-secondary);
+            font-size: .72rem;
             text-transform: uppercase;
-            letter-spacing: 0.7px;
-            margin-bottom: 5px;
+            letter-spacing: .6px;
+            margin-bottom: 4px;
         }
         .stat-value {
-            font-size: clamp(1.05rem, 4vw, 1.35rem);
+            font-size: clamp(1rem, 4vw, 1.3rem);
             font-weight: 700;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .stat-pct {
-            font-size: 0.75rem;
-            margin-top: 3px;
-            opacity: 0.55;
-        }
+        .stat-pct { font-size:.75rem; color:var(--text-secondary); margin-top:2px; }
 
-        /* ── Sankey card ──────────────────────────────────────── */
+        /* Chart card */
         .sankey-card {
-            border-radius: 18px;
-            padding: 6px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 4px;
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
-            /* dark gradient matching the sidebar palette */
-            background: linear-gradient(160deg, #0d1b2a 0%, #0a1628 50%, #0d1117 100%);
-            border: 1px solid rgba(240,180,41,0.2);
-            box-shadow: 0 0 40px rgba(240,180,41,0.06), 0 8px 32px rgba(0,0,0,0.4);
         }
-        #sankeyChart {
-            min-width: 700px;
-            width: 100%;
-        }
+        #sankeyChart { min-width: 680px; width: 100%; }
 
-        /* ── Legend pills ─────────────────────────────────────── */
+        /* Legend */
         .legend-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 20px;
-            padding: 4px 10px;
-            font-size: 0.78rem;
-            color: var(--text-secondary);
+            display:inline-flex; align-items:center; gap:6px;
+            background:var(--bg-tertiary);
+            border:1px solid var(--border-color);
+            border-radius:20px; padding:3px 10px;
+            font-size:.78rem; color:var(--text-secondary);
         }
-        .legend-dot {
-            width: 9px; height: 9px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
+        .legend-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
 
-        /* ── Rotate hint ──────────────────────────────────────── */
-        .rotate-hint {
-            display: none;
-            font-size: 0.78rem;
-            color: rgba(240,180,41,0.7);
-            text-align: center;
-            padding: 4px 0 8px;
-        }
-        @media (max-width: 576px) and (orientation: portrait) {
-            .rotate-hint { display: block; }
-        }
+        .rotate-hint { display:none; font-size:.78rem; color:var(--text-secondary); text-align:center; padding:4px 0 8px; }
+        @media(max-width:576px) and (orientation:portrait){ .rotate-hint{ display:block; } }
     </style>
 </head>
 <body>
 <div class="dashboard-container">
 
-    <!-- Sidebar -->
-    <nav class="sidebar" id="sidebar">
-        <div class="sidebar-logo w-100 d-flex justify-content-center align-items-center"
-             style="position:sticky;top:0;z-index:2;background:inherit;">
-            <a href="{% url 'user_dashboard' %}">
-                <img src="{% static 'mainapp/assets/BE_logo_final2.png' %}" alt="BE Logo" class="be-logo"
-                     style="width:90px;max-width:90px;display:block;margin:1.5rem auto 1rem auto;">
-            </a>
-        </div>
-        <ul class="sidebar-menu">
-            <li><hr class="sidebar-gold-divider"></li>
-            <li class="nav-item">
-                <a href="{% url 'user_dashboard' %}" class="nav-link">
-                    <i class="bi bi-briefcase"></i> My Portfolio
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{% url 'user_uploads_status' %}" class="nav-link">
-                    <i class="bi bi-file-check"></i> Upload Status
-                </a>
-            </li>
-            <li><hr class="sidebar-gold-divider"></li>
-            <li class="nav-item">
-                <a href="{% url 'portfolio_sankey' %}" class="nav-link active">
-                    <i class="bi bi-diagram-3"></i> Capital Flow
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{% url 'stock_performance_dashboard' %}" class="nav-link">
-                    <i class="bi bi-graph-up"></i> Stock Performance
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{% url 'firm_status_dashboard' %}" class="nav-link">
-                    <i class="bi bi-bar-chart"></i> Firm's Portfolio
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{% url 'investment_history' %}" class="nav-link">
-                    <i class="bi bi-clock-history"></i> Investment History
-                </a>
-            </li>
-        </ul>
-    </nav>
+    {% include 'mainapp/_sidebar.html' with active_page='capital_flow' %}
 
-    <!-- Mobile overlay -->
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
-    <!-- Main content -->
     <div class="main-content" id="mainContent">
         <header class="topbar">
             <div class="topbar-left">
@@ -169,8 +77,7 @@
             </div>
             <div class="topbar-right">
                 <div class="user-profile">
-                    <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}"
-                         alt="User DP" class="user-dp">
+                    <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}" alt="User DP" class="user-dp">
                     <div class="user-info">
                         <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
                         <div class="user-email" title="{{ user.email }}">{{ user.email }}</div>
@@ -181,11 +88,8 @@
         </header>
 
         <main class="dashboard-main">
-
             <div class="mb-4">
-                <div class="page-title">
-                    <i class="bi bi-diagram-3 me-2" style="color:#f0b429;"></i>Capital Flow
-                </div>
+                <div class="page-title"><i class="bi bi-diagram-3 me-2" style="color:#c0a062;"></i>Capital Flow</div>
                 <div class="page-subtitle">How the firm's capital flows across investment categories</div>
             </div>
 
@@ -193,53 +97,44 @@
             <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>{{ error }}</div>
             {% else %}
 
-            <!-- Summary stat cards -->
+            <!-- Stats -->
             <div class="row g-3 mb-4">
                 <div class="col-12 col-sm-4">
-                    <div class="stat-card stat-card-gold">
+                    <div class="stat-card">
                         <div class="stat-label">Total Capital</div>
-                        <div class="stat-value">NRs. {{ total_capital|floatformat:0 }}</div>
+                        <div class="stat-value" style="color:var(--primary-color);">NRs. {{ total_capital|floatformat:0 }}</div>
                     </div>
                 </div>
                 <div class="col-6 col-sm-4">
-                    <div class="stat-card stat-card-green">
+                    <div class="stat-card">
                         <div class="stat-label">Invested</div>
-                        <div class="stat-value">NRs. {{ invested_capital|floatformat:0 }}</div>
-                        {% if total_capital > 0 %}
-                        <div class="stat-pct">{% widthratio invested_capital total_capital 100 %}% deployed</div>
-                        {% endif %}
+                        <div class="stat-value" style="color:#10b981;">NRs. {{ invested_capital|floatformat:0 }}</div>
+                        {% if total_capital > 0 %}<div class="stat-pct">{% widthratio invested_capital total_capital 100 %}% deployed</div>{% endif %}
                     </div>
                 </div>
                 <div class="col-6 col-sm-4">
-                    <div class="stat-card stat-card-blue">
+                    <div class="stat-card">
                         <div class="stat-label">Available</div>
-                        <div class="stat-value">NRs. {{ available_capital|floatformat:0 }}</div>
-                        {% if total_capital > 0 %}
-                        <div class="stat-pct">{% widthratio available_capital total_capital 100 %}% liquid</div>
-                        {% endif %}
+                        <div class="stat-value" style="color:#2563eb;">NRs. {{ available_capital|floatformat:0 }}</div>
+                        {% if total_capital > 0 %}<div class="stat-pct">{% widthratio available_capital total_capital 100 %}% liquid</div>{% endif %}
                     </div>
                 </div>
             </div>
 
             <!-- Legend -->
             <div class="d-flex flex-wrap gap-2 mb-3">
-                <span class="legend-pill"><span class="legend-dot" style="background:#f0b429;"></span>Total Capital</span>
-                <span class="legend-pill"><span class="legend-dot" style="background:#60a5fa;"></span>Available</span>
-                <span class="legend-pill"><span class="legend-dot" style="background:#34d399;"></span>Invested</span>
+                <span class="legend-pill"><span class="legend-dot" style="background:#c0a062;"></span>Total Capital</span>
+                <span class="legend-pill"><span class="legend-dot" style="background:#2563eb;"></span>Available</span>
+                <span class="legend-pill"><span class="legend-dot" style="background:#10b981;"></span>Invested</span>
                 <span class="legend-pill"><span class="legend-dot" style="background:#a78bfa;"></span>Category</span>
                 <span class="legend-pill"><span class="legend-dot" style="background:#f472b6;"></span>Investment</span>
             </div>
 
-            <!-- Rotate hint (portrait phones only) -->
-            <div class="rotate-hint mb-2">
-                <i class="bi bi-phone-landscape me-1"></i>Scroll right or rotate for the full diagram
-            </div>
+            <div class="rotate-hint mb-2"><i class="bi bi-phone-landscape me-1"></i>Scroll right or rotate for the full diagram</div>
 
-            <!-- Sankey -->
             <div class="sankey-card">
                 <div id="sankeyChart"></div>
             </div>
-
             {% endif %}
         </main>
     </div>
@@ -267,17 +162,19 @@
     var data     = {{ sankey_data|safe }};
     var isMobile = window.innerWidth < 768;
 
-    // Always render on a dark canvas to make the gradient links pop
-    var BG = '#0d1117';
+    // Match chart background to the current CSS theme (light or dark)
+    var styles   = getComputedStyle(document.body);
+    var bgColor  = styles.getPropertyValue('--bg-secondary').trim() || '#ffffff';
+    var txtColor = styles.getPropertyValue('--text-primary').trim()  || '#1e293b';
 
     var trace = {
         type: 'sankey',
         orientation: 'h',
         arrangement: 'snap',
         node: {
-            pad:       isMobile ? 14 : 20,
-            thickness: isMobile ? 18 : 26,
-            line: { color: 'rgba(255,255,255,0.08)', width: 0.5 },
+            pad:       isMobile ? 14 : 22,
+            thickness: isMobile ? 18 : 28,
+            line: { color: 'rgba(0,0,0,0.1)', width: 0.5 },
             label: data.nodes.label,
             color: data.nodes.color,
             hovertemplate: '<b>%{label}</b><br>NRs. %{value:,.0f}<extra></extra>',
@@ -292,15 +189,11 @@
     };
 
     var layout = {
-        font: {
-            size:   isMobile ? 11 : 13,
-            color:  '#d1d5db',
-            family: 'Inter, system-ui, sans-serif',
-        },
-        paper_bgcolor: BG,
-        plot_bgcolor:  BG,
-        margin: { l: 8, r: 8, t: 16, b: 8 },
-        height: isMobile ? 400 : 580,
+        font: { size: isMobile ? 11 : 13, color: txtColor, family: 'Inter, system-ui, sans-serif' },
+        paper_bgcolor: bgColor,
+        plot_bgcolor:  bgColor,
+        margin: { l: 10, r: 10, t: 24, b: 10 },
+        height: isMobile ? 400 : 560,
     };
 
     Plotly.newPlot('sankeyChart', [trace], layout, {

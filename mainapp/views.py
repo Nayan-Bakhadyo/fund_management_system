@@ -2044,7 +2044,13 @@ def stock_performance_dashboard(request):
     overall_profit_loss = total_current_value - total_invested
     overall_profit_loss_percentage = (overall_profit_loss / total_invested * 100) if total_invested > 0 else Decimal('0')
     
+    try:
+        authorized_user = AuthorizedUser.objects.get(email=request.user.email)
+    except AuthorizedUser.DoesNotExist:
+        authorized_user = None
+
     context = {
+        'authorized_user': authorized_user,
         'investment_performance': investment_performance,
         'total_invested': total_invested,
         'total_current_value': total_current_value,
@@ -2054,7 +2060,7 @@ def stock_performance_dashboard(request):
         'total_capital': total_capital,
         'share_market_count': len(investment_performance),
     }
-    
+
     return render(request, 'mainapp/stock_performance_dashboard.html', context)
 
 
@@ -2210,8 +2216,14 @@ def portfolio_sankey(request):
         },
     }
 
+    try:
+        authorized_user = AuthorizedUser.objects.get(email=request.user.email)
+    except AuthorizedUser.DoesNotExist:
+        authorized_user = None
+
     return render(request, 'mainapp/portfolio_sankey.html', {
-        'sankey_data': json.dumps(sankey_data, cls=DjangoJSONEncoder),
+        'authorized_user':   authorized_user,
+        'sankey_data':       json.dumps(sankey_data, cls=DjangoJSONEncoder),
         'total_capital':     total_capital,
         'available_capital': available_capital,
         'invested_capital':  invested_capital,
