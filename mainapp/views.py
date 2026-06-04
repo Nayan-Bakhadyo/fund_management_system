@@ -2095,14 +2095,31 @@ def user_uploads_status(request):
 @login_required
 def portfolio_sankey(request):
     """Sankey diagram: capital flow from total capital → categories → investments."""
+    def _rgba(hex_color, alpha):
+        h = hex_color.lstrip('#')
+        r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+        return f'rgba({r},{g},{b},{alpha})'
+
+    # Vibrant palette cycling per category
+    CATEGORY_PALETTE = [
+        '#f472b6',  # pink
+        '#fb923c',  # orange
+        '#a78bfa',  # violet
+        '#2dd4bf',  # teal
+        '#facc15',  # amber
+        '#4ade80',  # lime
+        '#f87171',  # coral red
+        '#38bdf8',  # sky blue
+    ]
+
     try:
         latest_capital = TotalCapitalRecord.objects.latest('id')
     except TotalCapitalRecord.DoesNotExist:
         return render(request, 'mainapp/portfolio_sankey.html', {'error': 'No capital records found.'})
 
     available_capital = float(latest_capital.available_capital)
-    invested_capital = float(latest_capital.invested_capital)
-    total_capital = float(latest_capital.total_capital)
+    invested_capital  = float(latest_capital.invested_capital)
+    total_capital     = float(latest_capital.total_capital)
 
     open_investments = (
         FirmInvestment.objects
@@ -2111,20 +2128,15 @@ def portfolio_sankey(request):
         .prefetch_related('transactions')
     )
 
-    # Build nodes and links
-    # Node indices:
-    #   0 = Total Capital
-    #   1 = Available Capital
-    #   2 = Invested Capital
-    #   3..N = categories
-    #   N+1.. = individual investments
-
+    # Node 0 = Total Capital  (#f0b429 bright gold)
+    # Node 1 = Available Capital
+    # Node 2 = Invested Capital
     nodes_labels = ['Total Capital', 'Available Capital', 'Invested Capital']
-    nodes_colors = ['#c0a062', '#2563eb', '#10b981']
+    nodes_colors = ['#f0b429', '#60a5fa', '#34d399']
 
-    # category_name → node index
-    category_index = {}
-    category_totals = {}   # name → net invested value
+    category_index  = {}   # name → node index
+    category_color  = {}   # name → hex color
+    category_totals = {}   # name → net invested float
 
     for inv in open_investments:
         cat = inv.investment_category.category_name
@@ -2135,15 +2147,16 @@ def portfolio_sankey(request):
         if net <= 0:
             continue
         if cat not in category_index:
-            category_index[cat] = len(nodes_labels)
+            col = CATEGORY_PALETTE[len(category_index) % len(CATEGORY_PALETTE)]
+            category_index[cat]  = len(nodes_labels)
+            category_color[cat]  = col
             nodes_labels.append(cat)
-            nodes_colors.append('#6366f1')
+            nodes_colors.append(col)
             category_totals[cat] = 0.0
         category_totals[cat] += net
 
-    # investment node index starts here
     inv_start = len(nodes_labels)
-    inv_nodes = []   # (label, category_name, value)
+    inv_nodes = []  # (label, cat, value)
     for inv in open_investments:
         cat = inv.investment_category.category_name
         if cat not in category_index:
@@ -2158,36 +2171,33 @@ def portfolio_sankey(request):
         if inv.share_symbol:
             label += f' ({inv.share_symbol})'
         inv_nodes.append((label, cat, net))
+        # Investment node: same hue as category, slightly brighter via opacity trick
         nodes_labels.append(label)
-        nodes_colors.append('#0ea5e9')
+        nodes_colors.append(category_color[cat])
 
-    # Build links
-    links_source = []
-    links_target = []
-    links_value  = []
-    links_color  = []
+    links_source, links_target, links_value, links_color = [], [], [], []
 
-    # Total Capital → Available Capital
+    # Total → Available  (blue stream)
     if available_capital > 0:
         links_source.append(0); links_target.append(1); links_value.append(available_capital)
-        links_color.append('rgba(37,99,235,0.35)')
+        links_color.append(_rgba('#60a5fa', 0.50))
 
-    # Total Capital → Invested Capital
+    # Total → Invested  (green stream)
     if invested_capital > 0:
         links_source.append(0); links_target.append(2); links_value.append(invested_capital)
-        links_color.append('rgba(16,185,129,0.35)')
+        links_color.append(_rgba('#34d399', 0.50))
 
-    # Invested Capital → Categories
+    # Invested → Categories  (category colour stream)
     for cat, val in category_totals.items():
         links_source.append(2); links_target.append(category_index[cat]); links_value.append(val)
-        links_color.append('rgba(99,102,241,0.35)')
+        links_color.append(_rgba(category_color[cat], 0.45))
 
-    # Categories → Investments
+    # Categories → Investments  (same hue, lighter)
     for idx, (label, cat, val) in enumerate(inv_nodes):
         links_source.append(category_index[cat])
         links_target.append(inv_start + idx)
         links_value.append(val)
-        links_color.append('rgba(14,165,233,0.3)')
+        links_color.append(_rgba(category_color[cat], 0.30))
 
     sankey_data = {
         'nodes': {'label': nodes_labels, 'color': nodes_colors},
@@ -2201,8 +2211,8 @@ def portfolio_sankey(request):
 
     return render(request, 'mainapp/portfolio_sankey.html', {
         'sankey_data': json.dumps(sankey_data, cls=DjangoJSONEncoder),
-        'total_capital': total_capital,
+        'total_capital':     total_capital,
         'available_capital': available_capital,
-        'invested_capital': invested_capital,
+        'invested_capital':  invested_capital,
     })
 
