@@ -248,7 +248,7 @@
                                             <table class="table table-hover mb-0" style="font-size: 0.88rem;">
                                                 <thead style="background: rgba(26,26,46,0.05);">
                                                     <tr>
-                                                        <th class="ps-4 py-2 text-muted fw-semibold border-0">Borrower / Investment</th>
+                                                        <th class="ps-4 py-2 text-muted fw-semibold border-0">{% if user.is_superuser %}Borrower / {% endif %}Investment</th>
                                                         <th class="py-2 text-muted fw-semibold border-0">Principal Lent</th>
                                                         <th class="py-2 text-muted fw-semibold border-0">Principal Repaid</th>
                                                         <th class="py-2 text-muted fw-semibold border-0">Outstanding</th>
@@ -264,7 +264,7 @@
                                                     <tr>
                                                         <td class="ps-4 py-3 fw-medium border-0">
                                                             <i class="bi bi-cash-coin me-2" style="color: #c0a062; font-size: 0.8rem;"></i>
-                                                            {% if inv_data.investment.borrower_name %}
+                                                            {% if user.is_superuser and inv_data.investment.borrower_name %}
                                                                 {{ inv_data.investment.borrower_name }}
                                                                 <div class="text-muted" style="font-size:0.78rem;">{{ inv_data.investment.investment_name }}</div>
                                                             {% else %}
@@ -278,7 +278,7 @@
                                                             {% else %}<span class="text-muted">—</span>{% endif %}
                                                         </td>
                                                         <td class="py-3 border-0">
-                                                            <span class="fw-semibold {% if inv_data.outstanding > 0 %}text-warning{% else %}text-success{% endif %}"
+                                                            <span class="fw-semibold" style="color: #1e3a5f;"
                                                                   title="Principal: NRs. {{ inv_data.net_invested|floatformat:0 }}{% if inv_data.accrued_interest > 0 %} + Accrued: NRs. {{ inv_data.accrued_interest|floatformat:0 }}{% endif %}">
                                                                 NRs. {{ inv_data.outstanding|floatformat:0 }}
                                                             </span>
@@ -302,7 +302,7 @@
                                                         </td>
                                                         <td class="py-3 border-0">
                                                             {% if inv_data.accrued_interest > 0 %}
-                                                            <span class="text-warning fw-semibold" title="Unpaid interest since last payment">NRs. {{ inv_data.accrued_interest|floatformat:0 }}</span>
+                                                            <span class="fw-semibold" style="color: #1e3a5f;" title="Unpaid interest since last payment">NRs. {{ inv_data.accrued_interest|floatformat:0 }}</span>
                                                             {% else %}<span class="text-muted">—</span>{% endif %}
                                                         </td>
                                                         <td class="py-3 border-0">

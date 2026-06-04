@@ -247,7 +247,7 @@
                             <div class="card-body">
                                 {% if inv.is_loan %}
                                 <!-- Loan card layout -->
-                                {% if inv.investment.borrower_name %}
+                                {% if user.is_superuser and inv.investment.borrower_name %}
                                 <div class="mb-3 text-center">
                                     <div class="stat-label">Borrower</div>
                                     <div class="fw-semibold">{{ inv.investment.borrower_name }}</div>
