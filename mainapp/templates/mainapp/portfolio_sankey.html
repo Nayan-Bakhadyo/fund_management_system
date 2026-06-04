@@ -30,7 +30,12 @@
         .stat-value {
             font-size: clamp(.9rem, 3.5vw, 1.25rem);
             font-weight: 700;
-            word-break: break-word;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        @media (max-width: 400px) {
+            .stat-value { font-size: .88rem; }
         }
         .stat-pct { font-size:.75rem; color:var(--text-secondary); margin-top:2px; }
 
@@ -110,20 +115,20 @@
                 <div class="col-12 col-sm-4">
                     <div class="stat-card">
                         <div class="stat-label">Total Capital</div>
-                        <div class="stat-value" style="color:var(--primary-color);">NRs. {{ total_capital|indian_format }}</div>
+                        <div class="stat-value" style="color:var(--primary-color);">NRs. {{ total_capital|floatformat:0|indian_format }}</div>
                     </div>
                 </div>
-                <div class="col-6 col-sm-4">
+                <div class="col-12 col-sm-4">
                     <div class="stat-card">
                         <div class="stat-label">Invested</div>
-                        <div class="stat-value" style="color:#10b981;">NRs. {{ invested_capital|indian_format }}</div>
+                        <div class="stat-value" style="color:#10b981;">NRs. {{ invested_capital|floatformat:0|indian_format }}</div>
                         {% if total_capital > 0 %}<div class="stat-pct">{% widthratio invested_capital total_capital 100 %}% deployed</div>{% endif %}
                     </div>
                 </div>
-                <div class="col-6 col-sm-4">
+                <div class="col-12 col-sm-4">
                     <div class="stat-card">
                         <div class="stat-label">Available</div>
-                        <div class="stat-value" style="color:#2563eb;">NRs. {{ available_capital|indian_format }}</div>
+                        <div class="stat-value" style="color:#2563eb;">NRs. {{ available_capital|floatformat:0|indian_format }}</div>
                         {% if total_capital > 0 %}<div class="stat-pct">{% widthratio available_capital total_capital 100 %}% liquid</div>{% endif %}
                     </div>
                 </div>
