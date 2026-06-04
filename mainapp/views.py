@@ -21,6 +21,89 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 import sys
 
+def _build_email_html(title, body_html):
+    """Wrap email body in a full HTML document with dark-mode support."""
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<style>
+  body {{ margin:0;padding:0; }}
+  @media (prefers-color-scheme: dark) {{
+    .em-outer   {{ background-color:#0f172a !important; }}
+    .em-card    {{ background-color:#1e293b !important; border-color:rgba(255,255,255,0.08) !important; }}
+    .em-title   {{ color:#93c5fd !important; }}
+    .em-body    {{ color:#cbd5e1 !important; }}
+    .em-bold    {{ color:#f1f5f9 !important; }}
+    .em-detail  {{ background-color:#0f172a !important; border-color:rgba(255,255,255,0.06) !important; }}
+    .em-dl      {{ color:#94a3b8 !important; }}
+    .em-dv      {{ color:#f1f5f9 !important; }}
+    .em-dv-blue {{ color:#93c5fd !important; }}
+    .em-dv-green{{ color:#6ee7b7 !important; }}
+    .em-notice  {{ background-color:rgba(245,158,11,0.12) !important; border-color:#f59e0b !important; }}
+    .em-nt      {{ color:#fde68a !important; }}
+    .em-codebox {{ background-color:#0f172a !important; border-color:rgba(255,255,255,0.1) !important; }}
+    .em-code    {{ color:#93c5fd !important; }}
+    .em-codelbl {{ color:#94a3b8 !important; }}
+    .em-ft      {{ color:#64748b !important; }}
+    .em-fa      {{ color:#60a5fa !important; }}
+    .em-divider {{ border-color:rgba(255,255,255,0.06) !important; }}
+  }}
+</style>
+</head>
+<body class="em-outer" style="margin:0;padding:0;background-color:#f1f5f9;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f1f5f9;" class="em-outer">
+<tr><td align="center" style="padding:40px 16px;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
+<tr><td>
+<!-- Card -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" class="em-card"
+  style="background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid rgba(37,99,235,0.1);
+         box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+  <!-- Header band -->
+  <tr>
+    <td style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);
+               padding:28px 24px 22px;text-align:center;
+               border-bottom:3px solid rgba(192,160,98,0.4);">
+      <div style="width:56px;height:56px;margin:0 auto 14px;background:rgba(255,255,255,0.08);
+                  border-radius:12px;line-height:56px;text-align:center;">
+        <div style="width:32px;height:32px;background:#2563eb;border-radius:7px;display:inline-block;vertical-align:middle;"></div>
+      </div>
+      <div style="color:#c0a062;font-size:0.75rem;font-weight:600;letter-spacing:2.5px;
+                  text-transform:uppercase;margin-bottom:6px;">BE Investment Firm</div>
+      <div class="em-title" style="color:#ffffff;font-size:1.45rem;font-weight:700;
+                  letter-spacing:-0.3px;margin:0;">{title}</div>
+    </td>
+  </tr>
+  <!-- Body -->
+  <tr><td style="padding:28px 28px 8px;">{body_html}</td></tr>
+  <!-- Footer -->
+  <tr>
+    <td class="em-divider" style="border-top:1px solid rgba(37,99,235,0.08);
+               padding:16px 28px 24px;text-align:center;">
+      <p class="em-ft" style="color:#94a3b8;font-size:0.82rem;margin:0 0 4px;">
+        Need help?&nbsp;
+        <a href="mailto:beinvestmentfirm@gmail.com" class="em-fa"
+           style="color:#2563eb;text-decoration:none;font-weight:500;">beinvestmentfirm@gmail.com</a>
+      </p>
+      <p class="em-ft" style="color:#94a3b8;font-size:0.78rem;margin:0;">
+        &copy; BE Investment Firm. All rights reserved.
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- /Card -->
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>"""
+
+
 def mask_email(email):
     try:
         local, domain = email.split('@')
@@ -57,39 +140,35 @@ def send_verification_code(request):
     to_email = [request.user.email]
 
     # HTML content
-    html_content = f"""
-    <div style="max-width:520px;margin:0 auto;padding:32px 24px;background:#ffffff;border-radius:16px;
-        box-shadow:0 10px 25px rgba(37,99,235,0.08), 0 4px 12px rgba(37,99,235,0.05);
-        border:1px solid rgba(37,99,235,0.1);font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
-        <div style="text-align:center;margin-bottom:24px;">
-            <div style="width:80px;height:80px;margin:0 auto;background:linear-gradient(135deg,#f8fafc,#f1f5f9);
-                border-radius:16px;display:flex;align-items:center;justify-content:center;
-                box-shadow:0 4px 12px rgba(37,99,235,0.15);">
-                <div style="width:48px;height:48px;background:#2563eb;border-radius:12px;"></div>
-            </div>
-        </div>
-        <h2 style="color:#2563eb;text-align:center;margin-bottom:12px;font-weight:700;font-size:1.75rem;">Email Verification</h2>
-        <p style="color:#64748b;text-align:center;font-size:1.1rem;margin-bottom:24px;line-height:1.5;">
-            Welcome to <b style="color:#1e293b;">BE Investment Firm</b>!<br>
-            Please use the verification code below to complete your registration.
-        </p>
-        <div style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-radius:12px;padding:24px;
-            margin:24px 0;text-align:center;border:2px solid rgba(37,99,235,0.1);">
-            <span style="font-size:2.2rem;letter-spacing:8px;color:#2563eb;font-weight:700;font-family:monospace;">{code}</span>
-        </div>
-        <div style="background:#fef3c7;border-radius:8px;padding:16px;margin:20px 0;border-left:4px solid #f59e0b;">
-            <ul style="color:#1e293b;font-size:0.95rem;margin:0;padding-left:20px;">
-                <li>This code is valid for 10 minutes only</li>
-                <li>Do not share your code with anyone</li>
-                <li>If you did not request this, please ignore this email</li>
-            </ul>
-        </div>
-        <div style="text-align:center;color:#64748b;font-size:0.95rem;margin-top:24px;">
-            Need help? Contact <a href="mailto:beinvestmentfirm@gmail.com" 
-                style="color:#2563eb;text-decoration:none;font-weight:500;">beinvestmentfirm@gmail.com</a>
-        </div>
-    </div>
-    """
+    _vbody = f"""
+<p class="em-body" style="color:#475569;text-align:center;font-size:1rem;margin:0 0 24px;line-height:1.65;">
+  Welcome to <strong class="em-bold" style="color:#1e293b;">BE Investment Firm</strong>!<br>
+  Use the code below to complete your registration.
+</p>
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td class="em-codebox" style="background:#f1f5f9;border-radius:12px;padding:24px;
+     text-align:center;border:2px solid rgba(37,99,235,0.12);">
+  <div class="em-codelbl" style="color:#64748b;font-size:0.75rem;letter-spacing:1.5px;
+       text-transform:uppercase;margin-bottom:10px;">Verification Code</div>
+  <div class="em-code" style="font-size:2.4rem;letter-spacing:10px;color:#2563eb;
+       font-weight:700;font-family:'Courier New',Courier,monospace;">{code}</div>
+  <div class="em-codelbl" style="color:#94a3b8;font-size:0.8rem;margin-top:10px;">
+    Valid for 10&nbsp;minutes
+  </div>
+</td></tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
+<tr><td class="em-notice" style="background:#fffbeb;border-radius:8px;padding:14px 18px;
+     border-left:4px solid #f59e0b;">
+  <ul class="em-nt" style="color:#78350f;font-size:0.88rem;margin:0;padding-left:18px;line-height:1.9;">
+    <li>Do not share this code with anyone</li>
+    <li>If you did not request this, please ignore this email</li>
+  </ul>
+</td></tr>
+</table>
+<div style="height:20px;"></div>
+"""
+    html_content = _build_email_html("Email Verification", _vbody)
 
     text_content = f"""Your BE Investment Firm verification code is: {code}
 This code is valid for 10 minutes. Do not share your code with anyone.
@@ -116,39 +195,35 @@ def verify_email(request):
         from_email = settings.DEFAULT_FROM_EMAIL
         to_email = [request.user.email]
 
-        html_content = f"""
-        <div style="max-width:520px;margin:0 auto;padding:32px 24px;background:#ffffff;border-radius:16px;
-            box-shadow:0 10px 25px rgba(37,99,235,0.08), 0 4px 12px rgba(37,99,235,0.05);
-            border:1px solid rgba(37,99,235,0.1);font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
-            <div style="text-align:center;margin-bottom:24px;">
-                <div style="width:80px;height:80px;margin:0 auto;background:linear-gradient(135deg,#f8fafc,#f1f5f9);
-                    border-radius:16px;display:flex;align-items:center;justify-content:center;
-                    box-shadow:0 4px 12px rgba(37,99,235,0.15);">
-                    <div style="width:48px;height:48px;background:#2563eb;border-radius:12px;"></div>
-                </div>
-            </div>
-            <h2 style="color:#2563eb;text-align:center;margin-bottom:12px;font-weight:700;font-size:1.75rem;">Email Verification</h2>
-            <p style="color:#64748b;text-align:center;font-size:1.1rem;margin-bottom:24px;line-height:1.5;">
-                Welcome to <b style="color:#1e293b;">BE Investment Firm</b>!<br>
-                Please use the verification code below to complete your registration.
-            </p>
-            <div style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-radius:12px;padding:24px;
-                margin:24px 0;text-align:center;border:2px solid rgba(37,99,235,0.1);">
-                <span style="font-size:2.2rem;letter-spacing:8px;color:#2563eb;font-weight:700;font-family:monospace;">{code}</span>
-            </div>
-            <div style="background:#fef3c7;border-radius:8px;padding:16px;margin:20px 0;border-left:4px solid #f59e0b;">
-                <ul style="color:#1e293b;font-size:0.95rem;margin:0;padding-left:20px;">
-                    <li>This code is valid for 10 minutes only</li>
-                    <li>Do not share your code with anyone</li>
-                    <li>If you did not request this, please ignore this email</li>
-                </ul>
-            </div>
-            <div style="text-align:center;color:#64748b;font-size:0.95rem;margin-top:24px;">
-                Need help? Contact <a href="mailto:beinvestmentfirm@gmail.com" 
-                    style="color:#2563eb;text-decoration:none;font-weight:500;">beinvestmentfirm@gmail.com</a>
-            </div>
-        </div>
-        """
+        _vbody2 = f"""
+<p class="em-body" style="color:#475569;text-align:center;font-size:1rem;margin:0 0 24px;line-height:1.65;">
+  Welcome to <strong class="em-bold" style="color:#1e293b;">BE Investment Firm</strong>!<br>
+  Use the code below to complete your registration.
+</p>
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td class="em-codebox" style="background:#f1f5f9;border-radius:12px;padding:24px;
+     text-align:center;border:2px solid rgba(37,99,235,0.12);">
+  <div class="em-codelbl" style="color:#64748b;font-size:0.75rem;letter-spacing:1.5px;
+       text-transform:uppercase;margin-bottom:10px;">Verification Code</div>
+  <div class="em-code" style="font-size:2.4rem;letter-spacing:10px;color:#2563eb;
+       font-weight:700;font-family:'Courier New',Courier,monospace;">{code}</div>
+  <div class="em-codelbl" style="color:#94a3b8;font-size:0.8rem;margin-top:10px;">
+    Valid for 10&nbsp;minutes
+  </div>
+</td></tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
+<tr><td class="em-notice" style="background:#fffbeb;border-radius:8px;padding:14px 18px;
+     border-left:4px solid #f59e0b;">
+  <ul class="em-nt" style="color:#78350f;font-size:0.88rem;margin:0;padding-left:18px;line-height:1.9;">
+    <li>Do not share this code with anyone</li>
+    <li>If you did not request this, please ignore this email</li>
+  </ul>
+</td></tr>
+</table>
+<div style="height:20px;"></div>
+"""
+        html_content = _build_email_html("Email Verification", _vbody2)
 
         text_content = f"""Your BE Investment Firm verification code is: {code}
     This code is valid for 10 minutes. Do not share your code with anyone.
@@ -757,60 +832,45 @@ def send_transaction_email(user_email, transaction_type, amount, date, balance, 
     from_email = "no-reply@beinvestmentfirm.com"
     to_email = [user_email]
 
-    html_content = f"""
-    <div style="max-width:560px;margin:0 auto;padding:32px 24px;background:#ffffff;border-radius:16px;
-        box-shadow:0 10px 25px rgba(37,99,235,0.08), 0 4px 12px rgba(37,99,235,0.05);
-        border:1px solid rgba(37,99,235,0.1);font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
-        <div style="text-align:center;margin-bottom:24px;">
-            <div style="width:80px;height:80px;margin:0 auto;background:linear-gradient(135deg,#f8fafc,#f1f5f9);
-                border-radius:16px;display:flex;align-items:center;justify-content:center;
-                box-shadow:0 4px 12px rgba(37,99,235,0.15);">
-                <div style="width:48px;height:48px;background:#2563eb;border-radius:12px;"></div>
-            </div>
-        </div>
-        <h2 style="color:#2563eb;text-align:center;margin-bottom:12px;font-weight:700;font-size:1.75rem;">Transaction Confirmation</h2>
-        <p style="color:#64748b;text-align:center;font-size:1.1rem;margin-bottom:24px;line-height:1.5;">
-            Dear Investor,<br>
-            Your <b style="color:#1e293b;">{transaction_type}</b> transaction has been processed successfully.
-        </p>
-        <div style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-radius:12px;padding:24px;
-            margin:24px 0;border:2px solid rgba(37,99,235,0.1);">
-            <table style="margin:0 auto;font-size:1.05rem;color:#1e293b;width:100%;border-spacing:0;">
-                <tr>
-                    <td style="padding:8px 16px;font-weight:500;">Transaction ID:</td>
-                    <td style="padding:8px 0;font-weight:700;color:#2563eb;">{transaction_id}</td>
-                </tr>
-                <tr>
-                    <td style="padding:8px 16px;font-weight:500;">Type:</td>
-                    <td style="padding:8px 0;font-weight:700;">{transaction_type.capitalize()}</td>
-                </tr>
-                <tr>
-                    <td style="padding:8px 16px;font-weight:500;">Amount:</td>
-                    <td style="padding:8px 0;font-weight:700;color:#10b981;">NRs. {amount:,.2f}</td>
-                </tr>
-                <tr>
-                    <td style="padding:8px 16px;font-weight:500;">Date:</td>
-                    <td style="padding:8px 0;font-weight:700;">{date}</td>
-                </tr>
-                <tr>
-                    <td style="padding:8px 16px;font-weight:500;">New Balance:</td>
-                    <td style="padding:8px 0;font-weight:700;color:#2563eb;">NRs. {balance:,.2f}</td>
-                </tr>
-            </table>
-        </div>
-        <div style="background:#fef3c7;border-radius:8px;padding:16px;margin:20px 0;border-left:4px solid #f59e0b;">
-            <ul style="color:#1e293b;font-size:0.95rem;margin:0;padding-left:20px;">
-                <li>If you did not authorize this transaction, please contact us immediately</li>
-                <li>Keep this email for your records</li>
-                <li>Your account balance reflects this transaction</li>
-            </ul>
-        </div>
-        <div style="text-align:center;color:#64748b;font-size:0.95rem;margin-top:24px;">
-            Need help? Contact <a href="mailto:beinvestmentfirm@gmail.com" 
-                style="color:#2563eb;text-decoration:none;font-weight:500;">beinvestmentfirm@gmail.com</a>
-        </div>
-    </div>
-    """
+    _rows = [
+        ("Transaction ID", f'<span class="em-dv-blue" style="color:#2563eb;font-weight:700;">{transaction_id}</span>'),
+        ("Type",           f'<span class="em-dv" style="color:#1e293b;font-weight:700;">{transaction_type.capitalize()}</span>'),
+        ("Amount",         f'<span class="em-dv-green" style="color:#059669;font-weight:700;">NRs.&nbsp;{amount:,.2f}</span>'),
+        ("Date",           f'<span class="em-dv" style="color:#1e293b;font-weight:700;">{date}</span>'),
+        ("New Balance",    f'<span class="em-dv-blue" style="color:#2563eb;font-weight:700;">NRs.&nbsp;{balance:,.2f}</span>'),
+    ]
+    _detail_rows = "".join(
+        f"""<tr>
+          <td class="em-dl" style="padding:13px 20px;color:#64748b;font-size:0.88rem;
+              font-weight:500;border-bottom:1px solid rgba(37,99,235,0.06);
+              white-space:nowrap;width:40%;">{label}</td>
+          <td style="padding:13px 20px;text-align:right;font-size:0.95rem;
+              border-bottom:1px solid rgba(37,99,235,0.06);">{value}</td>
+        </tr>"""
+        for label, value in _rows
+    )
+    _tbody = f"""
+<p class="em-body" style="color:#475569;text-align:center;font-size:1rem;margin:0 0 24px;line-height:1.65;">
+  Dear Investor, your&nbsp;<strong class="em-bold" style="color:#1e293b;">{transaction_type}</strong>&nbsp;transaction
+  has been processed successfully.
+</p>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" class="em-detail"
+  style="background:#f8fafc;border-radius:12px;border:1px solid rgba(37,99,235,0.1);
+         overflow:hidden;margin-bottom:20px;">
+  {_detail_rows}
+</table>
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td class="em-notice" style="background:#fffbeb;border-radius:8px;padding:14px 18px;
+     border-left:4px solid #f59e0b;">
+  <ul class="em-nt" style="color:#78350f;font-size:0.88rem;margin:0;padding-left:18px;line-height:1.9;">
+    <li>If you did not authorise this transaction, contact us immediately</li>
+    <li>Keep this email for your records</li>
+  </ul>
+</td></tr>
+</table>
+<div style="height:20px;"></div>
+"""
+    html_content = _build_email_html("Transaction Confirmation", _tbody)
 
     text_content = f"""BE Investment Firm Transaction Alert
 
