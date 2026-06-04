@@ -17,56 +17,59 @@
             color: var(--text-primary);
             margin-bottom: 0.25rem;
         }
-        .page-subtitle {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
+        .page-subtitle { color: var(--text-secondary); font-size: 0.9rem; }
+
+        /* Stat cards — stack to full-width on mobile, side-by-side on sm+ */
         .stat-card {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: 14px;
-            padding: 20px 24px;
+            padding: 16px 20px;
         }
         .stat-label {
             color: var(--text-secondary);
-            font-size: 0.78rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 4px;
+            white-space: nowrap;
         }
         .stat-value {
-            font-size: 1.4rem;
+            font-size: clamp(1.1rem, 4vw, 1.4rem);
             font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
+
+        /* Sankey container: always scrollable horizontally */
         .sankey-card {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: 14px;
             padding: 8px;
-            overflow-x: auto;   /* horizontal scroll on very small screens */
+            overflow-x: auto;
             -webkit-overflow-scrolling: touch;
         }
         #sankeyChart {
+            /* wide enough that labels never clip; container scrolls */
+            min-width: 700px;
             width: 100%;
-            min-height: 420px;
         }
-        @media (max-width: 576px) {
-            #sankeyChart { min-height: 320px; min-width: 520px; }
-            .sankey-card { padding: 4px; }
-        }
+
         .legend-dot {
-            width: 12px;
-            height: 12px;
+            width: 11px; height: 11px;
             border-radius: 50%;
             display: inline-block;
-            margin-right: 6px;
+            margin-right: 5px;
+            flex-shrink: 0;
         }
         .rotate-hint {
             display: none;
             font-size: 0.8rem;
             color: var(--text-secondary);
             text-align: center;
-            padding: 6px 0 2px;
+            padding: 4px 0 6px;
         }
         @media (max-width: 576px) and (orientation: portrait) {
             .rotate-hint { display: block; }
@@ -98,6 +101,11 @@
             </li>
             <li><hr class="sidebar-gold-divider"></li>
             <li class="nav-item">
+                <a href="{% url 'portfolio_sankey' %}" class="nav-link active">
+                    <i class="bi bi-diagram-3"></i> Capital Flow
+                </a>
+            </li>
+            <li class="nav-item">
                 <a href="{% url 'stock_performance_dashboard' %}" class="nav-link">
                     <i class="bi bi-graph-up"></i> Stock Performance
                 </a>
@@ -105,11 +113,6 @@
             <li class="nav-item">
                 <a href="{% url 'investment_history' %}" class="nav-link">
                     <i class="bi bi-clock-history"></i> Investment History
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{% url 'portfolio_sankey' %}" class="nav-link active">
-                    <i class="bi bi-diagram-3"></i> Capital Flow
                 </a>
             </li>
         </ul>
@@ -153,9 +156,9 @@
             <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>{{ error }}</div>
             {% else %}
 
-            <!-- Summary stats -->
+            <!-- Summary stats: full-width on mobile, 3-col on md+ -->
             <div class="row g-3 mb-4">
-                <div class="col-6 col-md-4">
+                <div class="col-12 col-sm-4">
                     <div class="stat-card">
                         <div class="stat-label">Total Capital</div>
                         <div class="stat-value" style="color: var(--primary-color);">
@@ -163,49 +166,49 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-6 col-md-4">
+                <div class="col-6 col-sm-4">
                     <div class="stat-card">
                         <div class="stat-label">Invested</div>
                         <div class="stat-value" style="color: #10b981;">
                             NRs. {{ invested_capital|floatformat:0 }}
                         </div>
-                        <div class="text-muted" style="font-size:0.8rem;">
-                            {% if total_capital > 0 %}
-                            {{ invested_capital|floatformat:0 }} /
-                            {{ total_capital|floatformat:0 }} =
-                            {% widthratio invested_capital total_capital 100 %}%
-                            {% endif %}
+                        {% if total_capital > 0 %}
+                        <div class="text-muted" style="font-size:0.78rem;">
+                            {% widthratio invested_capital total_capital 100 %}% deployed
                         </div>
+                        {% endif %}
                     </div>
                 </div>
-                <div class="col-6 col-md-4">
+                <div class="col-6 col-sm-4">
                     <div class="stat-card">
                         <div class="stat-label">Available</div>
                         <div class="stat-value" style="color: #2563eb;">
                             NRs. {{ available_capital|floatformat:0 }}
                         </div>
-                        <div class="text-muted" style="font-size:0.8rem;">
-                            {% if total_capital > 0 %}
+                        {% if total_capital > 0 %}
+                        <div class="text-muted" style="font-size:0.78rem;">
                             {% widthratio available_capital total_capital 100 %}% liquid
-                            {% endif %}
                         </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
 
             <!-- Legend -->
-            <div class="d-flex flex-wrap gap-3 mb-3" style="font-size:0.82rem; color: var(--text-secondary);">
-                <span><span class="legend-dot" style="background:#c0a062;"></span>Total Capital</span>
-                <span><span class="legend-dot" style="background:#2563eb;"></span>Available Capital</span>
-                <span><span class="legend-dot" style="background:#10b981;"></span>Invested Capital</span>
-                <span><span class="legend-dot" style="background:#6366f1;"></span>Investment Category</span>
-                <span><span class="legend-dot" style="background:#0ea5e9;"></span>Individual Investment</span>
+            <div class="d-flex flex-wrap gap-2 mb-3 align-items-center" style="font-size:0.8rem; color: var(--text-secondary);">
+                <span class="d-flex align-items-center"><span class="legend-dot" style="background:#c0a062;"></span>Total Capital</span>
+                <span class="d-flex align-items-center"><span class="legend-dot" style="background:#2563eb;"></span>Available</span>
+                <span class="d-flex align-items-center"><span class="legend-dot" style="background:#10b981;"></span>Invested</span>
+                <span class="d-flex align-items-center"><span class="legend-dot" style="background:#6366f1;"></span>Category</span>
+                <span class="d-flex align-items-center"><span class="legend-dot" style="background:#0ea5e9;"></span>Investment</span>
             </div>
 
-            <!-- Sankey chart -->
-            <div class="rotate-hint">
-                <i class="bi bi-phone-landscape me-1"></i>Rotate your phone for a better view
+            <!-- Rotate hint (portrait mobile only) -->
+            <div class="rotate-hint mb-1">
+                <i class="bi bi-phone-landscape me-1"></i>Scroll right or rotate for full diagram
             </div>
+
+            <!-- Sankey chart — always scrollable -->
             <div class="sankey-card">
                 <div id="sankeyChart"></div>
             </div>
@@ -219,10 +222,9 @@
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <script>
 (function () {
-    // Sidebar toggle
-    var sidebar  = document.getElementById('sidebar');
-    var toggle   = document.getElementById('sidebarToggle');
-    var overlay  = document.getElementById('sidebar-overlay');
+    var sidebar = document.getElementById('sidebar');
+    var toggle  = document.getElementById('sidebarToggle');
+    var overlay = document.getElementById('sidebar-overlay');
     if (toggle) toggle.addEventListener('click', function () {
         var open = sidebar.classList.toggle('open');
         document.body.classList.toggle('sidebar-open', open);
@@ -237,26 +239,19 @@
     {% if not error %}
     var data = {{ sankey_data|safe }};
 
-    // Detect dark / light mode
-    var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var bgColor     = isDark ? '#0f172a' : '#f8fafc';
-    var fontColor   = isDark ? '#e2e8f0' : '#1e293b';
-    var paperBg     = isDark ? '#1e293b' : '#ffffff';
-
-    var isMobile = window.innerWidth < 576;
-    var fontSize = isMobile ? 10 : 13;
-    var nodePad  = isMobile ? 10 : 18;
-    var nodeThick = isMobile ? 14 : 22;
-    var chartH   = isMobile ? 340 : 560;
+    var isDark    = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var fontColor = isDark ? '#e2e8f0' : '#1e293b';
+    var paperBg   = isDark ? '#1e293b' : '#ffffff';
+    var isMobile  = window.innerWidth < 768;
 
     var trace = {
         type: 'sankey',
         orientation: 'h',
         arrangement: 'snap',
         node: {
-            pad: nodePad,
-            thickness: nodeThick,
-            line: { color: 'rgba(0,0,0,0.15)', width: 1 },
+            pad: isMobile ? 12 : 18,
+            thickness: isMobile ? 16 : 22,
+            line: { color: 'rgba(0,0,0,0.12)', width: 1 },
             label: data.nodes.label,
             color: data.nodes.color,
             hovertemplate: '<b>%{label}</b><br>NRs. %{value:,.0f}<extra></extra>',
@@ -271,21 +266,23 @@
     };
 
     var layout = {
-        font: { size: fontSize, color: fontColor, family: 'Inter, system-ui, sans-serif' },
+        font: {
+            size: isMobile ? 11 : 13,
+            color: fontColor,
+            family: 'Inter, system-ui, sans-serif'
+        },
         paper_bgcolor: paperBg,
         plot_bgcolor:  paperBg,
-        margin: { l: 5, r: 5, t: 20, b: 5 },
-        height: chartH,
+        margin: { l: 8, r: 8, t: 20, b: 8 },
+        height: isMobile ? 380 : 560,
     };
 
-    var config = {
+    Plotly.newPlot('sankeyChart', [trace], layout, {
         responsive: true,
         displayModeBar: !isMobile,
         modeBarButtonsToRemove: ['lasso2d', 'select2d'],
         toImageButtonOptions: { format: 'png', filename: 'portfolio_sankey', scale: 2 },
-    };
-
-    Plotly.newPlot('sankeyChart', [trace], layout, config);
+    });
     {% endif %}
 })();
 </script>
