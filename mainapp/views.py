@@ -2156,16 +2156,16 @@ def portfolio_sankey(request):
         r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
         return f'rgba({r},{g},{b},{alpha})'
 
-    # Vibrant palette cycling per category
+    # Dashboard-consistent category palette (matches pie chart in user_dashboard.html)
     CATEGORY_PALETTE = [
-        '#f472b6',  # pink
-        '#fb923c',  # orange
-        '#a78bfa',  # violet
-        '#2dd4bf',  # teal
-        '#facc15',  # amber
-        '#4ade80',  # lime
-        '#f87171',  # coral red
-        '#38bdf8',  # sky blue
+        '#2563eb',  # primary blue
+        '#bfa14a',  # dashboard gold
+        '#22c55e',  # green
+        '#f59e0b',  # amber
+        '#8b5cf6',  # purple
+        '#ec4899',  # pink
+        '#14b8a6',  # teal
+        '#f97316',  # orange
     ]
 
     try:
@@ -2184,11 +2184,8 @@ def portfolio_sankey(request):
         .prefetch_related('transactions')
     )
 
-    # Node 0 = Total Capital  (#f0b429 bright gold)
-    # Node 1 = Available Capital
-    # Node 2 = Invested Capital
     nodes_labels = ['Total Capital', 'Available Capital', 'Invested Capital']
-    nodes_colors = ['#f0b429', '#60a5fa', '#34d399']
+    nodes_colors = ['#c0a062', '#2563eb', '#10b981']
 
     category_index  = {}   # name → node index
     category_color  = {}   # name → hex color
