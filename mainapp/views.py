@@ -2263,6 +2263,12 @@ def portfolio_sankey(request):
             'value':  links_value,
             'color':  links_color,
         },
+        'meta': {
+            'num_fixed': 3,
+            'inv_start': inv_start,
+            'categories': list(category_index.keys()),
+            'category_colors': [category_color[c] for c in category_index.keys()],
+        },
     }
 
     try:

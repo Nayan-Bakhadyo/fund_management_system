@@ -129,8 +129,8 @@
             <div class="row">
                 {% for upload in uploads %}
                 <div class="col-lg-6 col-xl-4 mb-4">
-                    <div class="upload-card h-100">
-                        <div class="card-header d-flex justify-content-between align-items-center" style="border-radius:15px 15px 0 0;">
+                    <div class="card upload-card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center" style="background:var(--bg-tertiary);border-bottom:1px solid var(--border-color);border-radius:15px 15px 0 0;">
                             <h6 class="mb-0">Upload #{{ forloop.counter }}</h6>
                             <span class="status-badge status-{{ upload.status_class }}">
                                 {% if upload.status_display == 'Complete' %}
@@ -181,7 +181,7 @@
                             </div>
                         </div>
                         {% if upload.transaction_file %}
-                        <div class="card-footer" style="border-radius:0 0 15px 15px;">
+                        <div class="card-footer" style="background:transparent;border-top:1px solid var(--border-color);border-radius:0 0 15px 15px;">
                             <a href="{{ upload.transaction_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
                                 <i class="bi bi-file-earmark-text me-1"></i> View File
                             </a>
