@@ -10,37 +10,48 @@
         </div>
         <div class="modal-body">
           <div id="investmentTransactionAlert"></div>
+
           <div class="mb-3">
             <label for="investment" class="form-label">Investment</label>
             <select class="form-control" id="investment" name="investment" required>
               <option value="">Select Investment</option>
               {% for inv in investments %}
-                <option value="{{ inv.investment_id }}" 
-                        data-category="{{ inv.investment_category.category_name|lower }}" 
-                        data-share-symbol="{{ inv.share_symbol|default:'' }}">
+                <option value="{{ inv.investment_id }}"
+                        data-category="{{ inv.investment_category.category_name|lower }}"
+                        data-share-symbol="{{ inv.share_symbol|default:'' }}"
+                        data-is-loan="{% if inv.is_loan %}true{% else %}false{% endif %}">
                   {{ inv.investment_name }}
                   {% if inv.share_symbol %} ({{ inv.share_symbol }}){% endif %}
+                  {% if inv.is_loan and inv.interest_rate %} — {{ inv.interest_rate }}% {{ inv.get_interest_rate_period_display }}{% endif %}
                 </option>
               {% endfor %}
             </select>
           </div>
+
           <div class="mb-3">
-            <label for="amount" class="form-label">Amount</label>
+            <label for="amount" class="form-label">Amount (NRs.)</label>
             <input type="number" step="0.01" class="form-control" id="amount" name="amount" required>
           </div>
+
           <div class="mb-3">
-            <label for="amount_type" class="form-label">Amount Type</label>
+            <label for="amount_type" class="form-label">Transaction Type</label>
             <select class="form-control" id="amount_type" name="amount_type" required>
               <option value="">Select Type</option>
-              <option value="investment">Investment</option>
-              <option value="return">Return</option>
+              <option value="investment">Investment / Loan Disbursement</option>
+              <option value="return">Return / Principal Repayment</option>
+              <option value="interest" class="loan-only" style="display:none;">Interest Income</option>
             </select>
           </div>
-          <div class="mb-3" id="stockUnitsField" style="display: none;">
-            <label for="stock_units_purchased" class="form-label">Stock Units Purchased</label>
-            <input type="number" step="0.01" class="form-control" id="stock_units_purchased" name="stock_units_purchased" placeholder="Number of stock units">
+
+          <!-- Stock units — share market only -->
+          <div class="mb-3" id="stockUnitsField" style="display:none;">
+            <label for="stock_units_purchased" class="form-label">Stock Units</label>
+            <input type="number" step="0.01" class="form-control" id="stock_units_purchased" name="stock_units_purchased" placeholder="Number of units">
             <div class="form-text">Enter the number of stock units for share market investments</div>
           </div>
+
+          <!-- Loan info panel (read-only reminder) -->
+          <div id="loanInfoPanel" style="display:none;" class="alert alert-info py-2 px-3 small mb-0"></div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -50,3 +61,46 @@
     </div>
   </div>
 </div>
+
+<script>
+(function () {
+  var invSelect      = document.getElementById('investment');
+  var amtTypeSelect  = document.getElementById('amount_type');
+  var stockField     = document.getElementById('stockUnitsField');
+  var loanPanel      = document.getElementById('loanInfoPanel');
+  var interestOption = amtTypeSelect ? amtTypeSelect.querySelector('option[value="interest"]') : null;
+
+  function updateForm() {
+    if (!invSelect) return;
+    var opt = invSelect.options[invSelect.selectedIndex];
+    if (!opt) return;
+
+    var isShare = opt.getAttribute('data-category') === 'share market';
+    var isLoan  = opt.getAttribute('data-is-loan') === 'true';
+
+    // Stock units field
+    stockField.style.display = isShare ? '' : 'none';
+
+    // Interest Income option
+    if (interestOption) {
+      interestOption.style.display = isLoan ? '' : 'none';
+      // If a non-loan investment is selected and interest was chosen, reset
+      if (!isLoan && amtTypeSelect.value === 'interest') {
+        amtTypeSelect.value = '';
+      }
+    }
+
+    // Loan info panel
+    if (isLoan) {
+      var text = opt.textContent.trim();
+      loanPanel.textContent = 'Loan: ' + text + '. Use "Interest Income" for monthly interest payments and "Return / Principal Repayment" for principal repayments.';
+      loanPanel.style.display = '';
+    } else {
+      loanPanel.style.display = 'none';
+    }
+  }
+
+  if (invSelect) invSelect.addEventListener('change', updateForm);
+  updateForm();
+})();
+</script>

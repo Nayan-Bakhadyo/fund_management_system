@@ -218,13 +218,57 @@
                             <div class="investment-header">
                                 <div class="investment-name">{{ inv.investment.investment_name }}</div>
                                 <div class="investment-category">
-                                    <i class="bi bi-tag me-1"></i>{{ inv.investment.investment_category.category_name }}
-                                    {% if inv.investment.share_symbol %}
-                                    <span class="ms-2"><i class="bi bi-bar-chart-line me-1"></i>{{ inv.investment.share_symbol }}</span>
+                                    {% if inv.is_loan %}
+                                        <i class="bi bi-cash-coin me-1"></i>Loan
+                                        {% if inv.investment.interest_rate %}
+                                        <span class="ms-2">
+                                            <i class="bi bi-percent me-1"></i>{{ inv.investment.interest_rate }}%
+                                            {{ inv.investment.get_interest_rate_period_display }}
+                                        </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <i class="bi bi-tag me-1"></i>{{ inv.investment.investment_category.category_name }}
+                                        {% if inv.investment.share_symbol %}
+                                        <span class="ms-2"><i class="bi bi-bar-chart-line me-1"></i>{{ inv.investment.share_symbol }}</span>
+                                        {% endif %}
                                     {% endif %}
                                 </div>
                             </div>
                             <div class="card-body">
+                                {% if inv.is_loan %}
+                                <!-- Loan card layout -->
+                                {% if inv.investment.borrower_name %}
+                                <div class="mb-3 text-center">
+                                    <div class="stat-label">Borrower</div>
+                                    <div class="fw-semibold">{{ inv.investment.borrower_name }}</div>
+                                </div>
+                                {% endif %}
+                                <div class="row mb-3">
+                                    <div class="col-6 stat-box border-end">
+                                        <div class="stat-label">Principal Lent</div>
+                                        <div class="stat-value" style="color: var(--primary-color);">
+                                            NRs. {{ inv.total_invested|indian_format }}
+                                        </div>
+                                    </div>
+                                    <div class="col-6 stat-box">
+                                        <div class="stat-label">Principal Repaid</div>
+                                        <div class="stat-value" style="color: var(--success-color);">
+                                            NRs. {{ inv.total_returned|indian_format }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-center py-3">
+                                    <div class="stat-label mb-2">Total Interest Earned</div>
+                                    <div class="profit-badge {% if inv.interest_earned > 0 %}profit-positive{% else %}profit-neutral{% endif %}">
+                                        <i class="bi bi-cash-stack me-1"></i>
+                                        NRs. {{ inv.interest_earned|indian_format }}
+                                    </div>
+                                    <div class="mt-2" style="font-size: 0.9rem; color: var(--text-secondary);">
+                                        {{ inv.profit_loss_percentage|floatformat:2 }}% return on principal
+                                    </div>
+                                </div>
+                                {% else %}
+                                <!-- Equity / other investment layout -->
                                 <div class="row mb-3">
                                     <div class="col-6 stat-box border-end">
                                         <div class="stat-label">Total Invested</div>
@@ -239,23 +283,19 @@
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="text-center py-3">
                                     <div class="stat-label mb-2">Profit / Loss</div>
                                     <div class="profit-badge {% if inv.profit_loss > 0 %}profit-positive{% elif inv.profit_loss < 0 %}profit-negative{% else %}profit-neutral{% endif %}">
-                                        {% if inv.profit_loss > 0 %}
-                                            <i class="bi bi-arrow-up me-1"></i>+
-                                        {% elif inv.profit_loss < 0 %}
-                                            <i class="bi bi-arrow-down me-1"></i>
-                                        {% else %}
-                                            <i class="bi bi-dash me-1"></i>
-                                        {% endif %}
+                                        {% if inv.profit_loss > 0 %}<i class="bi bi-arrow-up me-1"></i>+
+                                        {% elif inv.profit_loss < 0 %}<i class="bi bi-arrow-down me-1"></i>
+                                        {% else %}<i class="bi bi-dash me-1"></i>{% endif %}
                                         {{ inv.profit_loss_percentage|floatformat:2 }}%
                                     </div>
                                     <div class="mt-2" style="font-size: 1rem; font-weight: 600; color: {% if inv.profit_loss > 0 %}#10b981{% elif inv.profit_loss < 0 %}#ef4444{% else %}#6b7280{% endif %};">
                                         {% if inv.profit_loss > 0 %}+{% endif %}NRs. {{ inv.profit_loss|indian_format }}
                                     </div>
                                 </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

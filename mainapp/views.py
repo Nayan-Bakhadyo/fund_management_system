@@ -525,6 +525,17 @@ def user_dashboard(request):
         total_returned = inv.transactions.filter(amount_type='return').aggregate(total=Sum('amount'))['total'] or Decimal('0')
         net_invested = total_invested - total_returned
         is_share = bool(inv.share_symbol)
+        is_loan = cat.category_name.lower() == 'loan'
+
+        interest_earned = Decimal('0')
+        expected_monthly_interest = Decimal('0')
+        if is_loan:
+            interest_earned = inv.transactions.filter(amount_type='interest').aggregate(total=Sum('amount'))['total'] or Decimal('0')
+            if inv.interest_rate and inv.interest_rate_period and net_invested > 0:
+                if inv.interest_rate_period == 'monthly':
+                    expected_monthly_interest = net_invested * inv.interest_rate / 100
+                else:
+                    expected_monthly_interest = net_invested * inv.interest_rate / 100 / 12
 
         entry = {
             'investment': inv,
@@ -532,6 +543,9 @@ def user_dashboard(request):
             'total_returned': total_returned,
             'net_invested': net_invested,
             'is_share': is_share,
+            'is_loan': is_loan,
+            'interest_earned': interest_earned,
+            'expected_monthly_interest': expected_monthly_interest,
         }
 
         cat_key = cat.category_name
@@ -703,28 +717,30 @@ def investment_history(request):
     loss_count = 0
     
     for investment in closed_investments:
-        # Calculate total invested and total returned
         total_invested = investment.transactions.filter(amount_type='investment').aggregate(
             total=Sum('amount'))['total'] or Decimal('0')
         total_returned = investment.transactions.filter(amount_type='return').aggregate(
             total=Sum('amount'))['total'] or Decimal('0')
-        
-        # Calculate profit/loss
-        profit_loss = total_returned - total_invested
-        
-        # Calculate profit/loss percentage
-        if total_invested > 0:
-            profit_loss_percentage = (profit_loss / total_invested) * 100
+        is_loan = investment.investment_category.category_name.lower() == 'loan'
+
+        if is_loan:
+            interest_earned = investment.transactions.filter(amount_type='interest').aggregate(
+                total=Sum('amount'))['total'] or Decimal('0')
+            # P&L for a loan is the interest earned; returned principal is not profit
+            profit_loss = interest_earned
+            profit_loss_percentage = (interest_earned / total_invested * 100) if total_invested > 0 else Decimal('0')
         else:
-            profit_loss_percentage = Decimal('0')
-        
+            profit_loss = total_returned - total_invested
+            profit_loss_percentage = (profit_loss / total_invested * 100) if total_invested > 0 else Decimal('0')
+            interest_earned = Decimal('0')
+
         is_profit = profit_loss > 0
-        
+
         if is_profit:
             profitable_count += 1
         elif profit_loss < 0:
             loss_count += 1
-        
+
         investment_data.append({
             'investment': investment,
             'total_invested': total_invested,
@@ -732,6 +748,8 @@ def investment_history(request):
             'profit_loss': profit_loss,
             'profit_loss_percentage': profit_loss_percentage,
             'is_profit': is_profit,
+            'is_loan': is_loan,
+            'interest_earned': interest_earned,
         })
     
     # Sort by profit/loss percentage (descending)
@@ -1022,9 +1040,43 @@ def add_investment_transaction(request):
                             new_invested_capital = invested_capital - (amount - profit) if profit > 0 else invested_capital - amount
                         
                         total_circulating_unit += purchase_unit
+                    elif amount_type == 'interest':
+                        # Interest income is pure profit from the first payment.
+                        # Apply 20% fee immediately; principal (invested_capital) stays unchanged.
+                        profit_20 = amount * Decimal('0.20')
+
+                        latest_nav = NAVRecord.objects.latest('id')
+                        unit_cost = latest_nav.unit_cost
+
+                        be_user = AuthorizedUser.objects.get(email='beinvestmentfirm@gmail.com')
+                        be_user_nav = UserNAV.objects.get(authorized_user=be_user)
+
+                        profit_20 = profit_20 + be_user_nav.available_credit_amount
+                        purchase_unit = profit_20 // unit_cost
+                        remaining_credit = profit_20 - (purchase_unit * unit_cost)
+
+                        UserTransaction.objects.create(
+                            authorized_user=be_user,
+                            transaction_type='deposit',
+                            unit_cost=unit_cost,
+                            purchase_initiated_amount=profit_20,
+                            purchase_unit=purchase_unit,
+                            remaining_credit=remaining_credit,
+                            description=f"{investment.investment_name} - interest income credited"
+                        )
+
+                        user_nav = UserNAV.objects.get(authorized_user=be_user)
+                        user_nav.available_unit += purchase_unit
+                        user_nav.available_credit_amount = remaining_credit
+                        user_nav.save()
+
+                        new_available_capital = available_capital + amount
+                        new_invested_capital = invested_capital  # principal unchanged
+                        total_circulating_unit += purchase_unit
+
                     else:
                         return JsonResponse({"success": False, "error": "Invalid amount type."})
-                    
+
                     transaction_obj = InvestmentTransaction.objects.create(
                         investment=investment,
                         amount=amount,
@@ -1069,23 +1121,43 @@ def add_investment_modal(request):
         investment_category_id = request.POST.get('investment_category')
         status = request.POST.get('status')
         share_symbol = request.POST.get('share_symbol', '').strip()
-        
+        borrower_name = request.POST.get('borrower_name', '').strip()
+        interest_rate_str = request.POST.get('interest_rate', '').strip()
+        interest_rate_period = request.POST.get('interest_rate_period', '').strip()
+        loan_maturity_date_str = request.POST.get('loan_maturity_date', '').strip()
+
         if investment_name and investment_category_id and status:
-            # Check for duplicate investment name
             if FirmInvestment.objects.filter(investment_name=investment_name).exists():
                 return JsonResponse({"success": False, "error": "The Investment name already exists - Choose another name"})
             try:
                 category = InvestmentCategory.objects.get(pk=investment_category_id)
-                
-                # If share market category is selected, share_symbol should be provided
-                if category.category_name.lower() == 'share market' and not share_symbol:
+                is_share = category.category_name.lower() == 'share market'
+                is_loan = category.category_name.lower() == 'loan'
+
+                if is_share and not share_symbol:
                     return JsonResponse({"success": False, "error": "Share symbol is required for share market investments."})
-                
+                if is_loan and not borrower_name:
+                    return JsonResponse({"success": False, "error": "Borrower name is required for loan investments."})
+                if is_loan and not interest_rate_str:
+                    return JsonResponse({"success": False, "error": "Interest rate is required for loan investments."})
+                if is_loan and not interest_rate_period:
+                    return JsonResponse({"success": False, "error": "Interest rate period is required for loan investments."})
+
+                from datetime import date as date_type
+                loan_maturity_date = None
+                if is_loan and loan_maturity_date_str:
+                    from datetime import datetime
+                    loan_maturity_date = datetime.strptime(loan_maturity_date_str, '%Y-%m-%d').date()
+
                 investment = FirmInvestment.objects.create(
                     investment_name=investment_name,
                     investment_category=category,
                     status=status,
-                    share_symbol=share_symbol if share_symbol else None
+                    share_symbol=share_symbol if is_share and share_symbol else None,
+                    borrower_name=borrower_name if is_loan else None,
+                    interest_rate=Decimal(interest_rate_str) if is_loan and interest_rate_str else None,
+                    interest_rate_period=interest_rate_period if is_loan else None,
+                    loan_maturity_date=loan_maturity_date,
                 )
                 return JsonResponse({"success": True})
             except InvestmentCategory.DoesNotExist:
@@ -1139,6 +1211,26 @@ def close_investment_modal(request):
                                         f"There are {remaining_units} units remaining. Please sell all shares before closing the investment."
                             })
 
+                    # Loan: require all principal to be repaid before closing
+                    if (investment.investment_category and
+                            investment.investment_category.category_name.lower() == 'loan'):
+                        total_principal = InvestmentTransaction.objects.filter(
+                            investment=investment, amount_type='investment'
+                        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+                        total_repaid = InvestmentTransaction.objects.filter(
+                            investment=investment, amount_type='return'
+                        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+                        outstanding = total_principal - total_repaid
+                        if outstanding > 0:
+                            return JsonResponse({
+                                "success": False,
+                                "error": (
+                                    f"Cannot close loan '{investment.investment_name}'. "
+                                    f"NRs. {outstanding:,.2f} principal is still outstanding. "
+                                    "Record the final repayment before closing."
+                                )
+                            })
+
                     transactions = InvestmentTransaction.objects.filter(investment=investment)
                     latest_record = TotalCapitalRecord.objects.latest('id')
                     total_capital = latest_record.total_capital
@@ -1146,7 +1238,6 @@ def close_investment_modal(request):
                     available_capital = latest_record.available_capital
                     total_circulating_unit = latest_record.total_circulating_unit
 
-                    # Calculate profit/loss for the investment
                     invested_amount = transactions.filter(amount_type='investment').aggregate(total=Sum('amount'))['total'] or Decimal('0')
                     return_amount = transactions.filter(amount_type='return').aggregate(total=Sum('amount'))['total'] or Decimal('0')
                     profit_loss = return_amount - invested_amount

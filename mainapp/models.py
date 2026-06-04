@@ -134,14 +134,27 @@ class FirmInvestment(models.Model):
         ('open', 'Open'),
         ('closed', 'Closed'),
     ]
+    INTEREST_PERIOD_CHOICES = [
+        ('monthly', 'Per Month'),
+        ('yearly', 'Per Year'),
+    ]
 
     status = models.CharField(max_length=6, choices=STATUS_CHOICES, default='open')
     share_symbol = models.CharField(
-        max_length=20, 
-        blank=True, 
-        null=True, 
+        max_length=20,
+        blank=True,
+        null=True,
         help_text="Stock symbol for share market investments (e.g., NABIL, NICA, etc.)"
     )
+    # Loan-specific fields (only populated when investment category is 'Loan')
+    borrower_name = models.CharField(max_length=200, blank=True, null=True, help_text="Name of the loan borrower")
+    interest_rate = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, help_text="Interest rate percentage")
+    interest_rate_period = models.CharField(max_length=10, choices=INTEREST_PERIOD_CHOICES, blank=True, null=True)
+    loan_maturity_date = models.DateField(blank=True, null=True, help_text="Date when the loan is due")
+
+    @property
+    def is_loan(self):
+        return self.investment_category.category_name.lower() == 'loan'
 
     def __str__(self):
         return f"{self.investment_name}"
@@ -150,6 +163,7 @@ class InvestmentTransaction(models.Model):
     AMOUNT_TYPE_CHOICES = [
         ('investment', 'Investment'),
         ('return', 'Return'),
+        ('interest', 'Interest Income'),
     ]
     investment = models.ForeignKey(
         FirmInvestment,
