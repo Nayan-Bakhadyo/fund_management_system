@@ -213,3 +213,10 @@ staticfiles/
 # Mac system files
 .DS_Store
 db.sqlite3
+
+# Runtime-generated files (updated by cron on server)
+mainapp/utilities/share_price.csv
+
+# User-uploaded files (server-side data, not source code)
+transaction_images/
+user_transaction_uploads/
