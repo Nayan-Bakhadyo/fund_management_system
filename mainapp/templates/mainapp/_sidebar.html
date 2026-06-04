@@ -20,11 +20,6 @@
             </a>
         </li>
         <li class="nav-item">
-            <a href="{% url 'bank_detail' %}" class="nav-link {% if active_page == 'bank' %}active{% endif %}" id="bank-detail-link">
-                <i class="bi bi-bank2"></i> My Bank Detail
-            </a>
-        </li>
-        <li class="nav-item">
             <a href="{% url 'upload_transaction' %}" class="nav-link {% if active_page == 'upload' %}active{% endif %}" id="uploadTransactionMenu">
                 <i class="bi bi-upload"></i> Upload Transaction
             </a>
@@ -40,8 +35,8 @@
             </a>
         </li>
         <li class="nav-item">
-            <a href="{% url 'bank_detail' %}" class="nav-link" id="viewBankDetailMenu">
-                <i class="bi bi-bank"></i> View Bank Detail
+            <a href="{% url 'bank_detail' %}" class="nav-link {% if active_page == 'bank' %}active{% endif %}" id="bank-detail-link">
+                <i class="bi bi-bank2"></i> My Bank Detail
             </a>
         </li>
         <li class="nav-item">

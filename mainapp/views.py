@@ -680,8 +680,8 @@ def transaction_history(request):
         return HttpResponse(html)
     return render(
         request,
-        'mainapp/user_transaction_history.html',
-        {'transactions': transactions}
+        'mainapp/transaction_history_page.html',
+        {'transactions': transactions, 'authorized_user': authorized_user}
     )
 
 @login_required
@@ -1367,6 +1367,7 @@ def close_investment_modal(request):
     return HttpResponse(html)
 
 
+@login_required
 def upload_transaction(request):
     print("Inside upload_transaction view")
     if request.method == 'POST':
@@ -1391,7 +1392,26 @@ def upload_transaction(request):
             return JsonResponse({'success': True})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
-    return JsonResponse({'success': False, 'error': 'Invalid request.'})
+
+    # GET handler
+    authorized_user = AuthorizedUser.objects.get(email=request.user.email)
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+    if authorized_user.role != 'fund_manager':
+        if not is_ajax:
+            # Regular user: show standalone upload page
+            return render(request, 'mainapp/upload_transaction_page.html', {'authorized_user': authorized_user})
+        # Regular user AJAX: not authorised for pending uploads
+        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
+
+    # Fund manager
+    if not is_ajax:
+        return redirect('user_dashboard')
+
+    # Fund manager AJAX: return pending uploads HTML
+    uploads = UserTransactionUpload.objects.filter(is_credited=False, is_valid=True).order_by('date_time')
+    html = render_to_string('mainapp/pending_user_uploads.html', {'uploads': uploads}, request=request)
+    return JsonResponse({'html': html})
 
 
 @login_required
@@ -1441,8 +1461,7 @@ def payment_detail(request):
     )
     if request.method == 'GET':
         if request.headers.get('X-Requested-With') != 'XMLHttpRequest':
-            from django.shortcuts import redirect
-            return redirect('user_dashboard')
+            return render(request, 'mainapp/payment_detail_page.html', {'payment_obj': obj})
         return JsonResponse({
             'recurring_payment_amount': str(obj.recurring_payment_amount) if obj.recurring_payment_amount else '',
             'payment_date': obj.payment_date.isoformat() if obj.payment_date else ''
@@ -2086,9 +2105,14 @@ def stock_performance_dashboard(request):
 def user_uploads_status(request):
     """View for users to see their transaction uploads and status"""
     try:
+        authorized_user = AuthorizedUser.objects.get(email=request.user.email)
+    except AuthorizedUser.DoesNotExist:
+        authorized_user = None
+
+    try:
         user_email = request.user.email
         uploads = UserTransactionUpload.objects.filter(email=user_email).order_by('-date_time')
-        
+
         # Add status display logic to each upload
         for upload in uploads:
             if upload.is_valid and upload.is_credited:
@@ -2100,19 +2124,21 @@ def user_uploads_status(request):
             else:
                 upload.status_display = 'Invalid'
                 upload.status_class = 'danger'
-        
+
         context = {
             'uploads': uploads,
             'user_email': user_email,
+            'authorized_user': authorized_user,
         }
-        
+
         return render(request, 'mainapp/user_uploads_status.html', context)
-        
+
     except Exception as e:
         context = {
             'error': f'Error retrieving uploads: {str(e)}',
             'uploads': [],
             'user_email': request.user.email,
+            'authorized_user': authorized_user,
         }
         return render(request, 'mainapp/user_uploads_status.html', context)
 
