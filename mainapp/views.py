@@ -714,8 +714,10 @@ def bank_detail(request):
         )
         return JsonResponse({'success': True, 'message': 'Bank details saved successfully.'})
 
-    html = render_to_string('mainapp/bank_detail_form.html', {'bank': bank}, request=request)
-    return JsonResponse({'html': html})
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        html = render_to_string('mainapp/bank_detail_form.html', {'bank': bank}, request=request)
+        return JsonResponse({'html': html})
+    return render(request, 'mainapp/bank_detail_page.html', {'bank': bank})
 
 @login_required
 def investment_history(request):
@@ -1399,6 +1401,9 @@ def pending_user_uploads(request):
     if authorized_user.role != 'fund_manager':
         return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
 
+    if request.headers.get('X-Requested-With') != 'XMLHttpRequest':
+        from django.shortcuts import redirect
+        return redirect('user_dashboard')
     uploads = UserTransactionUpload.objects.filter(is_credited=False, is_valid=True).order_by('date_time')
     html = render_to_string('mainapp/pending_user_uploads.html', {'uploads': uploads}, request=request)
     return JsonResponse({'html': html})
@@ -1435,6 +1440,9 @@ def payment_detail(request):
         }
     )
     if request.method == 'GET':
+        if request.headers.get('X-Requested-With') != 'XMLHttpRequest':
+            from django.shortcuts import redirect
+            return redirect('user_dashboard')
         return JsonResponse({
             'recurring_payment_amount': str(obj.recurring_payment_amount) if obj.recurring_payment_amount else '',
             'payment_date': obj.payment_date.isoformat() if obj.payment_date else ''
@@ -1451,7 +1459,6 @@ def payment_detail(request):
             return JsonResponse({'success': False, 'error': str(e)})
         
 @login_required
-@require_GET
 def firm_status_dashboard(request):
     latest_record = TotalCapitalRecord.objects.order_by('-id').first()
     history = TotalCapitalRecord.objects.order_by('date_time').values('date_time', 'total_capital')
@@ -1529,7 +1536,7 @@ def firm_status_dashboard(request):
     book_total = latest_record.total_capital if latest_record else Decimal('0')
     unrealized_pl = share_market_value - (latest_record.invested_capital - non_share_book_value) if latest_record else Decimal('0')
 
-    html = render_to_string('mainapp/firm_status_dashboard.html', {
+    context = {
         'latest_record': latest_record,
         'history': list(history),
         'category_labels': category_labels,
@@ -1539,8 +1546,11 @@ def firm_status_dashboard(request):
         'share_market_value': share_market_value,
         'non_share_book_value': non_share_book_value,
         'investment_breakdown': investment_breakdown,
-    })
-    return JsonResponse({'html': html})
+    }
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        html = render_to_string('mainapp/firm_status_dashboard.html', context)
+        return JsonResponse({'html': html})
+    return render(request, 'mainapp/firm_portfolio_page.html', context)
 
 
 @login_required
@@ -1633,8 +1643,13 @@ def withdraw_request(request):
             print("DEBUG - No bank details found")
             bank_detail = None
         
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         if not bank_detail:
             # User needs to fill bank details first
+            if not is_ajax:
+                return render(request, 'mainapp/withdraw_request_page.html', {
+                    'bank_detail': None, 'authorized_user': authorized_user,
+                })
             html = render_to_string('mainapp/withdraw_request_no_bank.html', {
                 'authorized_user': authorized_user,
             })
@@ -1668,9 +1683,7 @@ def withdraw_request(request):
         current_nav = latest_nav.unit_cost if latest_nav else Decimal('0.00')
         portfolio_value = available_units * current_nav
         
-        # Add CSRF token to context
-        from django.middleware.csrf import get_token
-        html = render_to_string('mainapp/withdraw_request_form.html', {
+        page_context = {
             'authorized_user': authorized_user,
             'bank_detail': bank_detail,
             'total_available': total_available,
@@ -1678,7 +1691,12 @@ def withdraw_request(request):
             'available_credit': available_credit,
             'current_nav': current_nav,
             'portfolio_value': portfolio_value,
-            'csrf_token': get_token(request),
+        }
+        if not is_ajax:
+            return render(request, 'mainapp/withdraw_request_page.html', page_context)
+        from django.middleware.csrf import get_token
+        html = render_to_string('mainapp/withdraw_request_form.html', {
+            **page_context, 'csrf_token': get_token(request),
         }, request=request)
         return JsonResponse({'html': html})
     

@@ -1,0 +1,159 @@
+{% load static %}
+{% load indian_format %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Firm's Portfolio - BE Investment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{% static 'mainapp/assets/BE_logo.png' %}">
+    <link rel="stylesheet" href="{% static 'mainapp/user_dashboard_modern.css' %}">
+    <style>
+        .page-title  { font-size:1.5rem; font-weight:700; color:var(--text-primary); margin-bottom:.2rem; }
+        .page-subtitle { color:var(--text-secondary); font-size:.9rem; }
+        /* Override fsd cards for dark theme compatibility */
+        .fsd-stat { background: var(--bg-secondary) !important; }
+        .fsd-stat-label { color: var(--text-secondary) !important; }
+        .fsd-chart-card { background: var(--bg-secondary) !important; box-shadow: none !important; border: 1px solid var(--border-color); }
+        .fsd-chart-title { color: var(--text-primary) !important; }
+        .fsd-stat-value { color: var(--text-primary) !important; }
+        .fsd-stat.capital  .fsd-stat-value { color: #16a34a !important; }
+        .fsd-stat.invested .fsd-stat-value { color: #2563eb !important; }
+        .fsd-stat.reserve  .fsd-stat-value { color: #d97706 !important; }
+        .fsd-stat.units    .fsd-stat-value { color: #7c3aed !important; }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+
+    {% include 'mainapp/_sidebar.html' with active_page='firm' %}
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+    <div class="main-content" id="mainContent">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="sidebar-toggle d-md-none" id="sidebarToggle">&#9776;</button>
+                <div class="brand-name d-none d-lg-block"><h2>Firm's Portfolio</h2></div>
+            </div>
+            <div class="topbar-right">
+                <div class="user-profile">
+                    <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}" alt="User DP" class="user-dp">
+                    <div class="user-info">
+                        <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+                        <div class="user-email" title="{{ user.email }}">{{ user.email }}</div>
+                    </div>
+                    <a href="{% url 'logout' %}" class="logout-link">Log out</a>
+                </div>
+            </div>
+        </header>
+
+        <main class="dashboard-main">
+            <div class="mb-4">
+                <div class="page-title"><i class="bi bi-bar-chart me-2" style="color:#c0a062;"></i>Firm's Portfolio</div>
+                <div class="page-subtitle">Live capital overview and investment breakdown</div>
+            </div>
+
+            {% include 'mainapp/firm_status_dashboard.html' %}
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    var sidebar = document.getElementById('sidebar');
+    var toggle  = document.getElementById('sidebarToggle');
+    var overlay = document.getElementById('sidebar-overlay');
+    if (toggle) toggle.addEventListener('click', function () {
+        var open = sidebar.classList.toggle('open');
+        document.body.classList.toggle('sidebar-open', open);
+        if (overlay) overlay.style.display = open ? 'block' : 'none';
+    });
+    if (overlay) overlay.addEventListener('click', function () {
+        sidebar.classList.remove('open');
+        document.body.classList.remove('sidebar-open');
+        overlay.style.display = 'none';
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var pieCanvas  = document.getElementById('capitalPieChart');
+        var lineCanvas = document.getElementById('capitalLineChart');
+        var catCanvas  = document.getElementById('categoryPieChart');
+
+        if (pieCanvas && lineCanvas) {
+            var invested = parseFloat(pieCanvas.getAttribute('data-invested')) || 0;
+            var reserve  = parseFloat(pieCanvas.getAttribute('data-reserve'))  || 0;
+            new Chart(pieCanvas.getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: ['Invested Capital', 'Reserve Cash'],
+                    datasets: [{ data: [invested, reserve], backgroundColor: ['#0d6efd', '#ffc107'] }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            var lineLabels = JSON.parse(lineCanvas.getAttribute('data-labels') || '[]');
+            var lineData   = JSON.parse(lineCanvas.getAttribute('data-data')   || '[]');
+            new Chart(lineCanvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: lineLabels,
+                    datasets: [{ label: 'Total Capital', data: lineData, borderColor: '#198754',
+                        backgroundColor: 'rgba(25,135,84,0.1)', fill: true, tension: 0.3,
+                        pointRadius: 3, pointBackgroundColor: '#198754' }]
+                },
+                options: {
+                    responsive: true, plugins: { legend: { display: false } },
+                    scales: {
+                        x: { title: { display: true, text: 'Date' } },
+                        y: { title: { display: true, text: 'Total Capital' }, beginAtZero: false }
+                    }
+                }
+            });
+        }
+
+        if (catCanvas) {
+            var catLabels = JSON.parse(catCanvas.getAttribute('data-labels') || '[]');
+            var catData   = JSON.parse(catCanvas.getAttribute('data-data')   || '[]');
+            var catColors = ['#2563eb','#bfa14a','#22c55e','#f59e0b','#8b5cf6','#ec4899','#14b8a6','#f97316'];
+            new Chart(catCanvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: catLabels,
+                    datasets: [{ data: catData,
+                        backgroundColor: catColors.slice(0, catLabels.length),
+                        borderColor: '#fff', borderWidth: 3, hoverOffset: 10 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '55%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: function(ctx) {
+                            var total = ctx.dataset.data.reduce(function(a,b){ return a+b; }, 0);
+                            var pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                            return ' NRs. ' + ctx.parsed.toLocaleString() + ' (' + pct + '%)';
+                        }}}
+                    }
+                }
+            });
+            var legendEl = document.getElementById('categoryLegend');
+            if (legendEl) {
+                var total = catData.reduce(function(a,b){ return a+b; }, 0);
+                legendEl.innerHTML = catLabels.map(function(label, i) {
+                    var pct = total > 0 ? ((catData[i] / total) * 100).toFixed(1) : 0;
+                    return '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.55rem;">'
+                        + '<span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:' + catColors[i] + ';flex-shrink:0;"></span>'
+                        + '<span style="flex:1;color:var(--text-primary);font-weight:500;">' + label + '</span>'
+                        + '<span style="color:var(--text-secondary);">' + pct + '%</span>'
+                        + '</div>';
+                }).join('');
+            }
+        }
+    });
+})();
+</script>
+</body>
+</html>
