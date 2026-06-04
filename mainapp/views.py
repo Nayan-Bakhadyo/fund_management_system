@@ -1249,10 +1249,10 @@ def firm_status_dashboard(request):
             ltp = share_prices.get(symbol)
             if ltp:
                 gross_value = stock_units * ltp
-                # Apply 7.5% capital gains tax provision on unrealized profits
+                # Apply 10% capital gains tax provision on unrealized profits
                 capital_gain = gross_value - net_invested
                 if capital_gain > 0:
-                    current_value = gross_value - (capital_gain * Decimal('0.075'))
+                    current_value = gross_value - (capital_gain * Decimal('0.10'))
                 else:
                     current_value = gross_value
             else:

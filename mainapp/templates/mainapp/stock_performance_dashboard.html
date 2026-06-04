@@ -4,32 +4,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token }}">
-    <title>Stock Performance Dashboard - BE Investment</title>
+    <title>Stock Performance - BE Investment</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="{% static 'mainapp/user_dashboard_modern.css' %}" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{% static 'mainapp/assets/BE_logo.png' %}">
+    <link rel="stylesheet" href="{% static 'mainapp/user_dashboard_modern.css' %}">
     <style>
-        /* Use consistent color scheme with user dashboard */
-        :root {
-            --primary-color: #2563eb;
-            --secondary-color: #f59e0b;
-            --success-color: #10b981;
-            --error-color: #ef4444;
-            --info-color: #3b82f6;
-            --bg-secondary: #f8fafc;
-            --text-primary: #1e293b;
-            --border-color: #e2e8f0;
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-
-        body {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        }
-
         .performance-card {
             border-radius: 15px;
             box-shadow: var(--shadow-md);
@@ -37,447 +19,264 @@
             border: 1px solid var(--border-color);
         }
         .performance-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
         }
         .profit-positive { color: #10b981; }
         .profit-negative { color: #ef4444; }
+
         .stock-symbol {
             background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
             color: white;
-            padding: 8px 16px;
+            padding: 5px 14px;
             border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.9rem;
+            font-weight: 700;
+            font-size: 0.85rem;
         }
         .metric-value {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 600;
             color: var(--text-primary);
         }
         .overview-card {
-            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 1px solid rgba(192, 160, 98, 0.3);
             color: white;
             border-radius: 15px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: var(--shadow-md);
         }
-        .table-responsive {
-            border-radius: 10px;
-            overflow: hidden;
-        }
+        .overview-card .card-title { font-size: 0.9rem; opacity: 0.85; }
+        .overview-card .metric-value { color: #fff; font-size: 1.15rem; }
+        .overview-card i { color: #c0a062; }
+
+        .table-responsive { border-radius: 10px; overflow: hidden; }
         .table th {
-            background-color: #f1f5f9;
+            background-color: var(--bg-tertiary);
             border: none;
             font-weight: 600;
-            color: #1e293b;
+            color: var(--text-primary);
+            font-size: 0.85rem;
         }
-        .badge-investment { background-color: #3b82f6; }
-        .badge-return { background-color: #10b981; }
-        
-        /* Mobile-specific styles */
-        @media (max-width: 768px) {
-            .container-fluid {
-                padding: 0;
-                margin: 0;
-                width: 100%;
-            }
-            .main-content {
-                padding: 10px;
-                margin: 0;
-                width: 100%;
-            }
-            .row {
-                margin: 0;
-            }
-            .col-md-9 {
-                padding: 0;
-                width: 100%;
-            }
-            .performance-card {
-                margin-bottom: 15px;
-            }
-            .table-responsive {
-                font-size: 0.875rem;
-            }
-            .metric-value {
-                font-size: 1rem;
-            }
-            .overview-card .card-body {
-                padding: 1rem 0.75rem;
-            }
-            .stock-symbol {
-                font-size: 0.8rem;
-                padding: 6px 12px;
-            }
-            /* Ensure mobile navbar is above content */
-            .navbar {
-                z-index: 1050;
-            }
-            /* Make cards more compact on mobile */
-            .col-lg-6.col-xl-4 {
-                padding-left: 0.5rem;
-                padding-right: 0.5rem;
-            }
-            .performance-card .card-body {
-                padding: 1rem 0.75rem;
-            }
-            /* Adjust spacing for mobile */
-            .row.mb-4 {
-                margin-bottom: 1.5rem !important;
-            }
-            /* Better mobile back button */
-            .d-md-none .btn {
-                font-size: 0.875rem;
-            }
-        }
-        
-        /* Desktop spacing improvements */
-        @media (min-width: 768px) {
-            .sidebar {
-                padding-right: 20px;
-                border-right: 1px solid rgba(255,255,255,0.1);
-            }
-            .main-content {
-                padding-left: 30px;
-                padding-right: 30px;
-            }
-        }
-        
-        /* Extra small screens */
-        @media (max-width: 576px) {
-            .performance-card .card-body .row {
-                margin-bottom: 0.75rem;
-            }
-            .metric-value {
-                font-size: 0.9rem;
-            }
-            .overview-card .card-body i {
-                font-size: 1.5rem !important;
-            }
-        }
-        
-        /* Ensure sidebar is hidden on mobile when using d-md-block */
-        @media (max-width: 767.98px) {
-            .sidebar {
-                display: none !important;
-            }
-            body {
-                overflow-x: hidden;
-            }
-            .container-fluid {
-                max-width: 100vw;
-                overflow-x: hidden;
-            }
-        }
-        
-        /* Sidebar styling to match user dashboard */
-        .sidebar {
-            min-height: 100vh;
-            background: linear-gradient(135deg, 
-                #0f172a 0%, 
-                #1e293b 20%, 
-                #1f2937 40%, 
-                #111827 60%, 
-                #0f1419 80%, 
-                #020617 100%);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .sidebar .nav-link {
-            color: #f8fafc;
-            padding: 0.75rem 1.5rem;
-            margin: 0.25rem 1rem;
-            border-radius: 0.5rem;
-            transition: all 0.2s ease;
-            font-weight: 500;
-        }
-        
-        .sidebar .nav-link:hover {
-            background: rgba(245, 158, 11, 0.1);
-            color: #f59e0b;
-            transform: translateX(5px);
-        }
-        
-        .sidebar .nav-link.active {
-            background: linear-gradient(90deg, 
-                rgba(245, 158, 11, 0.2) 0%, 
-                rgba(245, 158, 11, 0.1) 50%, 
-                transparent 100%);
-            color: #f59e0b;
-            border-left: 3px solid #f59e0b;
-        }
+        .badge-investment { background-color: var(--primary-color) !important; }
+        .badge-return { background-color: var(--success-color) !important; }
 
-        /* Mobile navbar styling to match */
-        .navbar {
-            background: linear-gradient(135deg, 
-                #0f172a 0%, 
-                #1e293b 50%, 
-                #1f2937 100%) !important;
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
         }
-        
-        /* Logo container */
-        .logo-container {
-            padding: 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
         }
-        
-        /* Main content improvements */
-        .main-content {
-            min-height: 100vh;
-            background-color: #f8f9fa;
+        .card-header {
+            background: rgba(26, 26, 46, 0.04);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .performance-card .card-footer {
+            background: transparent;
+            border-top: 1px solid var(--border-color);
         }
     </style>
 </head>
 <body>
-    <div class="container-fluid p-0">
-        <div class="row g-0">
-            <!-- Mobile Header with Hamburger Menu -->
-            <div class="d-md-none w-100">
-                <nav class="navbar navbar-expand-md navbar-dark" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                    <div class="container-fluid">
-                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileNavbar" aria-controls="mobileNavbar" aria-expanded="false" aria-label="Toggle navigation">
-                            <span class="navbar-toggler-icon"></span>
-                        </button>
-                        <span class="navbar-brand mb-0 h1">
-                            <i class="fas fa-chart-bar me-2"></i>Stock Performance
-                        </span>
-                        <div class="collapse navbar-collapse" id="mobileNavbar">
-                            <ul class="navbar-nav me-auto">
-                                {% if user.is_superuser %}
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{% url 'fundmanager_dashboard' %}">
-                                        <i class="fas fa-chart-line me-2"></i> Fund Manager Dashboard
-                                    </a>
-                                </li>
-                                {% else %}
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{% url 'user_dashboard' %}">
-                                        <i class="fas fa-home me-2"></i> User Dashboard
-                                    </a>
-                                </li>
-                                {% endif %}
-                                <li class="nav-item">
-                                    <a class="nav-link active" href="{% url 'stock_performance_dashboard' %}">
-                                        <i class="fas fa-chart-bar me-2"></i> Stock Performance
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{% url 'logout' %}">
-                                        <i class="fas fa-sign-out-alt me-2"></i> Logout
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </nav>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-logo w-100 d-flex justify-content-center align-items-center" style="position:sticky;top:0;z-index:2;background:inherit;">
+                <a href="{% if user.is_superuser %}{% url 'fundmanager_dashboard' %}{% else %}{% url 'user_dashboard' %}{% endif %}">
+                    <img src="{% static 'mainapp/assets/BE_logo_final2.png' %}" alt="BE Logo" class="be-logo" style="width:90px;max-width:90px;display:block;margin:1.5rem auto 1rem auto;">
+                </a>
             </div>
+            <ul class="sidebar-menu">
+                <li><hr class="sidebar-gold-divider"></li>
+                {% if user.is_superuser %}
+                <li class="nav-item">
+                    <a href="{% url 'fundmanager_dashboard' %}" class="nav-link">
+                        <i class="bi bi-speedometer2"></i> Fund Manager Dashboard
+                    </a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a href="{% url 'user_dashboard' %}" class="nav-link">
+                        <i class="bi bi-briefcase"></i> My Portfolio
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'user_uploads_status' %}" class="nav-link">
+                        <i class="bi bi-file-check"></i> Upload Status
+                    </a>
+                </li>
+                {% endif %}
+                <li><hr class="sidebar-gold-divider"></li>
+                <li class="nav-item">
+                    <a href="{% url 'stock_performance_dashboard' %}" class="nav-link active">
+                        <i class="bi bi-graph-up"></i> Stock Performance
+                    </a>
+                </li>
+                {% if not user.is_superuser %}
+                <li class="nav-item">
+                    <a href="{% url 'investment_history' %}" class="nav-link">
+                        <i class="bi bi-clock-history"></i> Investment History
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
 
-            <!-- Desktop Sidebar -->
-            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
-                <div class="position-sticky pt-3">
-                    <div class="logo-container text-center mb-4">
-                        <img src="{% static 'mainapp/assets/BE_logo_final.png' %}" 
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                             alt="BE Investment" class="img-fluid" style="max-height: 60px;">
-                        <div style="display: none; width: 60px; height: 60px; margin: 0 auto; background: white; border-radius: 50%; align-items: center; justify-content: center; font-weight: bold; color: #667eea;">BE</div>
-                        <h6 class="mt-2 text-white">Stock Performance</h6>
-                    </div>
-                    
-                    <ul class="nav flex-column">
-                        {% if user.is_superuser %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'fundmanager_dashboard' %}">
-                                <i class="fas fa-chart-line me-2"></i> Fund Manager Dashboard
-                            </a>
-                        </li>
-                        {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'user_dashboard' %}">
-                                <i class="fas fa-home me-2"></i> User Dashboard
-                            </a>
-                        </li>
-                        {% endif %}
-                        <li class="nav-item">
-                            <a class="nav-link active" href="{% url 'stock_performance_dashboard' %}">
-                                <i class="fas fa-chart-bar me-2"></i> Stock Performance
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'logout' %}">
-                                <i class="fas fa-sign-out-alt me-2"></i> Logout
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+        <!-- Overlay for mobile -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
-            <!-- Main content -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 main-content">
-                <!-- Mobile Back Button -->
-                <div class="d-md-none mb-3 pt-3 px-3">
-                    <div class="d-flex align-items-center">
-                        {% if user.is_superuser %}
-                        <a href="{% url 'fundmanager_dashboard' %}" class="btn btn-outline-primary btn-sm me-3">
-                            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-                        </a>
-                        {% else %}
-                        <a href="{% url 'user_dashboard' %}" class="btn btn-outline-primary btn-sm me-3">
-                            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-                        </a>
-                        {% endif %}
-                        <h5 class="mb-0 text-muted">Stock Performance</h5>
+        <!-- Main Content Area -->
+        <div class="main-content" id="mainContent">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="sidebar-toggle d-md-none" id="sidebarToggle">&#9776;</button>
+                    <div class="brand-name d-none d-lg-block">
+                        <h2>Stock Performance</h2>
                     </div>
                 </div>
-                
-                <!-- Desktop Header -->
-                <div class="d-none d-md-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2"><i class="fas fa-chart-bar me-3"></i>Stock Performance Dashboard</h1>
-                    <div class="btn-toolbar mb-2 mb-md-0">
-                        <div class="btn-group me-2">
-                            {% if user.is_superuser %}
-                            <a href="{% url 'fundmanager_dashboard' %}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-                            </a>
-                            {% else %}
-                            <a href="{% url 'user_dashboard' %}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-                            </a>
-                            {% endif %}
+                <div class="topbar-right">
+                    <div class="user-profile">
+                        <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}" alt="User DP" class="user-dp">
+                        <div class="user-info">
+                            <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+                            <div class="user-email" title="{{ user.email }}">{{ user.email }}</div>
                         </div>
-                        <div class="btn-group me-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.location.reload()">
-                                <i class="fas fa-sync-alt me-1"></i> Refresh
-                            </button>
-                        </div>
+                        <a href="{% url 'logout' %}" class="logout-link">Log out</a>
                     </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <main class="dashboard-main">
+
+                <div class="mb-4">
+                    <div class="page-title"><i class="bi bi-graph-up me-2" style="color:#c0a062;"></i>Stock Performance Dashboard</div>
+                    <div class="page-subtitle">Live share market performance across your portfolio</div>
                 </div>
 
                 {% if error %}
                 <div class="alert alert-danger" role="alert">
-                    <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+                    <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
                 </div>
                 {% else %}
 
                 <!-- Overview Cards -->
-                <div class="row mb-4">
-                    <div class="col-lg-3 col-md-6 mb-3">
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6 col-xl-3">
                         <div class="card overview-card">
-                            <div class="card-body text-center">
-                                <i class="fas fa-coins fa-2x mb-3"></i>
-                                <h5 class="card-title">Total Invested</h5>
-                                <p class="card-text metric-value">Nrs. {{ total_invested|indian_format }}</p>
+                            <div class="card-body text-center py-4">
+                                <i class="bi bi-coin fs-2 mb-3 d-block"></i>
+                                <h6 class="card-title">Total Invested</h6>
+                                <div class="metric-value">NRs. {{ total_invested|indian_format }}</div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="col-sm-6 col-xl-3">
                         <div class="card overview-card">
-                            <div class="card-body text-center">
-                                <i class="fas fa-chart-line fa-2x mb-3"></i>
-                                <h5 class="card-title">Current Value</h5>
-                                <p class="card-text metric-value">Nrs. {{ total_current_value|indian_format }}</p>
+                            <div class="card-body text-center py-4">
+                                <i class="bi bi-graph-up-arrow fs-2 mb-3 d-block"></i>
+                                <h6 class="card-title">Current Value</h6>
+                                <div class="metric-value">NRs. {{ total_current_value|indian_format }}</div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="col-sm-6 col-xl-3">
                         <div class="card overview-card">
-                            <div class="card-body text-center">
-                                <i class="fas fa-money-bill-wave fa-2x mb-3"></i>
-                                <h5 class="card-title">Total Returns</h5>
-                                <p class="card-text metric-value">Nrs. {{ total_returns|indian_format }}</p>
+                            <div class="card-body text-center py-4">
+                                <i class="bi bi-cash-stack fs-2 mb-3 d-block"></i>
+                                <h6 class="card-title">Total Returns</h6>
+                                <div class="metric-value">NRs. {{ total_returns|indian_format }}</div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card" style="background: {% if overall_profit_loss >= 0 %}linear-gradient(135deg, #28a745 0%, #20c997 100%){% else %}linear-gradient(135deg, #dc3545 0%, #fd7e14 100%){% endif %}; color: white;">
-                            <div class="card-body text-center">
-                                <i class="fas fa-{% if overall_profit_loss >= 0 %}arrow-up{% else %}arrow-down{% endif %} fa-2x mb-3"></i>
-                                <h5 class="card-title">Overall P&L</h5>
-                                <p class="card-text metric-value">Nrs. {{ overall_profit_loss|indian_format }}</p>
-                                <small>({{ overall_profit_loss_percentage|floatformat:2 }}%)</small>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card" style="background: {% if overall_profit_loss >= 0 %}linear-gradient(135deg, #10b981 0%, #059669 100%){% else %}linear-gradient(135deg, #ef4444 0%, #dc2626 100%){% endif %}; color: white; border-radius: 15px; box-shadow: var(--shadow-md); border: none;">
+                            <div class="card-body text-center py-4">
+                                <i class="bi bi-{% if overall_profit_loss >= 0 %}arrow-up-circle{% else %}arrow-down-circle{% endif %} fs-2 mb-3 d-block"></i>
+                                <h6 class="card-title" style="opacity:0.9; font-size:0.9rem;">Overall P&L</h6>
+                                <div class="metric-value" style="color:#fff;">NRs. {{ overall_profit_loss|indian_format }}</div>
+                                <small style="opacity:0.85;">({{ overall_profit_loss_percentage|floatformat:2 }}%)</small>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Tax Disclaimer -->
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <div class="alert alert-info d-flex align-items-center" role="alert">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <div>
-                                <strong>Note:</strong> All profit and loss calculations shown above are before taxes. 
-                                
-                            </div>
-                        </div>
+                <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+                    <i class="bi bi-info-circle me-2 flex-shrink-0"></i>
+                    <div>
+                        <strong>Note:</strong> All profit and loss calculations shown above are before taxes.
                     </div>
                 </div>
 
                 <!-- Stock Performance Cards -->
                 {% if investment_performance %}
-                <div class="row">
+                <div class="row g-3">
                     {% for stock in investment_performance %}
-                    <div class="col-lg-6 col-xl-4 mb-4">
+                    <div class="col-lg-6 col-xl-4">
                         <div class="card performance-card h-100">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0">{{ stock.investment.investment_name }}</h6>
+                            <div class="card-header d-flex justify-content-between align-items-center py-3">
+                                <h6 class="mb-0 fw-semibold">{{ stock.investment.investment_name }}</h6>
                                 <span class="stock-symbol">{{ stock.symbol }}</span>
                             </div>
                             <div class="card-body">
                                 <div class="row text-center mb-3">
                                     <div class="col-6">
-                                        <small class="text-muted">Units Held</small>
+                                        <small class="text-muted d-block">Units Held</small>
                                         <div class="metric-value">{{ stock.total_units|floatformat:2 }}</div>
                                     </div>
                                     <div class="col-6">
-                                        <small class="text-muted">Current LTP</small>
-                                        <div class="metric-value">Nrs. {{ stock.current_ltp|indian_format }}</div>
+                                        <small class="text-muted d-block">Current LTP</small>
+                                        <div class="metric-value">NRs. {{ stock.current_ltp|indian_format }}</div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="row text-center mb-3">
                                     <div class="col-6">
-                                        <small class="text-muted">Avg Buy Price</small>
-                                        <div class="metric-value">Nrs. {{ stock.avg_buy_price|floatformat:2 }}</div>
+                                        <small class="text-muted d-block">Avg Buy Price</small>
+                                        <div class="metric-value">NRs. {{ stock.avg_buy_price|floatformat:2 }}</div>
                                     </div>
                                     <div class="col-6">
-                                        <small class="text-muted">Net Invested</small>
-                                        <div class="metric-value">Nrs. {{ stock.net_invested|indian_format }}</div>
+                                        <small class="text-muted d-block">Net Invested</small>
+                                        <div class="metric-value">NRs. {{ stock.net_invested|indian_format }}</div>
                                     </div>
                                 </div>
 
-                                <div class="text-center mb-3">
-                                    <small class="text-muted">Current Market Value</small>
-                                    <div class="metric-value">Nrs. {{ stock.current_market_value|indian_format }}</div>
+                                <div class="text-center mb-3 p-2" style="background: var(--bg-tertiary); border-radius: 8px;">
+                                    <small class="text-muted d-block">Current Market Value</small>
+                                    <div class="metric-value">NRs. {{ stock.current_market_value|indian_format }}</div>
                                 </div>
 
                                 <div class="text-center mb-3">
-                                    <small class="text-muted">% of Total Capital</small>
+                                    <small class="text-muted d-block">% of Total Capital</small>
                                     <div class="metric-value text-primary">
-                                        <i class="fas fa-chart-pie me-1"></i>
-                                        {{ stock.capital_percentage|floatformat:2 }}%
+                                        <i class="bi bi-pie-chart me-1"></i>{{ stock.capital_percentage|floatformat:2 }}%
                                     </div>
-                                    <small class="text-muted">(of Nrs. {{ total_capital|indian_format }})</small>
+                                    <small class="text-muted">(of NRs. {{ total_capital|indian_format }})</small>
                                 </div>
 
-                                <div class="text-center">
-                                    <small class="text-muted">Profit/Loss</small>
-                                    <div class="metric-value {% if stock.profit_loss >= 0 %}profit-positive{% else %}profit-negative{% endif %}">
-                                        <i class="fas fa-{% if stock.profit_loss >= 0 %}arrow-up{% else %}arrow-down{% endif %} me-1"></i>
-                                        Nrs. {{ stock.profit_loss|indian_format }}
+                                <div class="text-center p-3 rounded" style="background: {% if stock.profit_loss >= 0 %}rgba(16,185,129,0.08){% else %}rgba(239,68,68,0.08){% endif %};">
+                                    <small class="text-muted d-block mb-1">Profit / Loss</small>
+                                    <div class="metric-value {% if stock.profit_loss >= 0 %}profit-positive{% else %}profit-negative{% endif %} fs-5">
+                                        <i class="bi bi-{% if stock.profit_loss >= 0 %}arrow-up{% else %}arrow-down{% endif %} me-1"></i>
+                                        NRs. {{ stock.profit_loss|indian_format }}
                                     </div>
-                                    <small class="{% if stock.profit_loss >= 0 %}profit-positive{% else %}profit-negative{% endif %}">
+                                    <small class="{% if stock.profit_loss >= 0 %}profit-positive{% else %}profit-negative{% endif %} fw-semibold">
                                         ({{ stock.profit_loss_percentage|floatformat:2 }}%)
                                     </small>
                                 </div>
                             </div>
                             <div class="card-footer">
                                 <button class="btn btn-sm btn-outline-primary w-100" data-bs-toggle="collapse" data-bs-target="#transactions-{{ stock.investment.investment_id }}">
-                                    <i class="fas fa-history me-1"></i> View Transactions
+                                    <i class="bi bi-clock-history me-1"></i> View Transactions
                                 </button>
                                 <div class="collapse mt-3" id="transactions-{{ stock.investment.investment_id }}">
                                     <div class="table-responsive">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm mb-0">
                                             <thead>
                                                 <tr>
                                                     <th>Type</th>
@@ -493,7 +292,7 @@
                                                             {{ transaction.get_amount_type_display }}
                                                         </span>
                                                     </td>
-                                                    <td>Nrs. {{ transaction.amount|indian_format }}</td>
+                                                    <td>NRs. {{ transaction.amount|indian_format }}</td>
                                                     <td>{{ transaction.stock_units_purchased|default:"-"|floatformat:2 }}</td>
                                                 </tr>
                                                 {% endfor %}
@@ -508,8 +307,8 @@
                 </div>
                 {% else %}
                 <div class="text-center py-5">
-                    <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
-                    <h4 class="text-muted">No Share Market Investments Found</h4>
+                    <i class="bi bi-bar-chart" style="font-size:4rem; opacity:0.35; color: var(--text-secondary);"></i>
+                    <h4 class="fw-semibold mt-3 mb-2">No Share Market Investments Found</h4>
                     <p class="text-muted">There are currently no open share market investments with stock symbols to display.</p>
                 </div>
                 {% endif %}
@@ -520,5 +319,28 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const overlay = document.getElementById('sidebar-overlay');
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    const isOpen = sidebar.classList.toggle('open');
+                    document.body.classList.toggle('sidebar-open', isOpen);
+                    if (overlay) overlay.style.display = isOpen ? 'block' : 'none';
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', function() {
+                    sidebar.classList.remove('open');
+                    document.body.classList.remove('sidebar-open');
+                    overlay.style.display = 'none';
+                });
+            }
+        });
+    </script>
 </body>
 </html>

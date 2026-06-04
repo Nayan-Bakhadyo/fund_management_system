@@ -161,11 +161,11 @@ class Command(BaseCommand):
         current_ltp = share_prices[symbol]
         gross_market_value = total_units * current_ltp
         
-        # Apply 7.5% capital gains tax provision on unrealized profits
+        # Apply 10% capital gains tax provision on unrealized profits
         capital_gain = gross_market_value - net_invested
         capital_gains_tax = Decimal('0')
         if capital_gain > 0:
-            capital_gains_tax = capital_gain * Decimal('0.075')
+            capital_gains_tax = capital_gain * Decimal('0.10')
         
         market_value = gross_market_value - capital_gains_tax
         
@@ -177,7 +177,7 @@ class Command(BaseCommand):
             self.log(f"    Gross Market Value: {gross_market_value}")
             self.log(f"    Net Invested: {net_invested}")
             self.log(f"    Capital Gain: {capital_gain}")
-            self.log(f"    Capital Gains Tax (7.5%): {capital_gains_tax}")
+            self.log(f"    Capital Gains Tax (10%): {capital_gains_tax}")
             self.log(f"    Net Market Value: {market_value}")
         
         return market_value
