@@ -14,30 +14,32 @@
         .page-title   { font-size:1.5rem; font-weight:700; color:var(--text-primary); margin-bottom:.2rem; }
         .page-subtitle{ color:var(--text-secondary); font-size:.9rem; }
 
+        /* Override global flex-row stat-card with column layout for this page */
         .stat-card {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: 14px;
             padding: 16px 20px;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: .3rem !important;
+            min-height: unset !important;
         }
         .stat-label {
             color: var(--text-secondary);
             font-size: .72rem;
             text-transform: uppercase;
             letter-spacing: .6px;
-            margin-bottom: 4px;
         }
         .stat-value {
-            font-size: clamp(.9rem, 3.5vw, 1.25rem);
-            font-weight: 700;
+            font-size: clamp(1rem, 2.5vw, 1.3rem) !important;
+            font-weight: 700 !important;
             white-space: nowrap;
+            max-width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        @media (max-width: 400px) {
-            .stat-value { font-size: .88rem; }
-        }
-        .stat-pct { font-size:.75rem; color:var(--text-secondary); margin-top:2px; }
+        .stat-pct { font-size:.75rem; color:var(--text-secondary); }
 
         .sankey-card {
             background: var(--bg-secondary);
