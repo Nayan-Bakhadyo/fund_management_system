@@ -278,9 +278,15 @@
                                                             {% else %}<span class="text-muted">—</span>{% endif %}
                                                         </td>
                                                         <td class="py-3 border-0">
-                                                            <span class="fw-semibold {% if inv_data.net_invested > 0 %}text-warning{% else %}text-success{% endif %}">
-                                                                NRs. {{ inv_data.net_invested|floatformat:0 }}
+                                                            <span class="fw-semibold {% if inv_data.outstanding > 0 %}text-warning{% else %}text-success{% endif %}"
+                                                                  title="Principal: NRs. {{ inv_data.net_invested|floatformat:0 }}{% if inv_data.accrued_interest > 0 %} + Accrued: NRs. {{ inv_data.accrued_interest|floatformat:0 }}{% endif %}">
+                                                                NRs. {{ inv_data.outstanding|floatformat:0 }}
                                                             </span>
+                                                            {% if inv_data.accrued_interest > 0 %}
+                                                            <div style="font-size:0.72rem; color: var(--text-secondary);">
+                                                                principal + interest
+                                                            </div>
+                                                            {% endif %}
                                                         </td>
                                                         <td class="py-3 border-0">
                                                             {% if inv_data.investment.interest_rate %}

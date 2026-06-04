@@ -556,6 +556,7 @@ def user_dashboard(request):
             'total_invested': total_invested,
             'total_returned': total_returned,
             'net_invested': net_invested,
+            'outstanding': net_invested + accrued_interest,  # principal + unpaid interest
             'is_share': is_share,
             'is_loan': is_loan,
             'interest_earned': interest_earned,
