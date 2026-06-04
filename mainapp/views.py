@@ -717,7 +717,7 @@ def bank_detail(request):
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         html = render_to_string('mainapp/bank_detail_form.html', {'bank': bank}, request=request)
         return JsonResponse({'html': html})
-    return render(request, 'mainapp/bank_detail_page.html', {'bank': bank})
+    return render(request, 'mainapp/bank_detail_page.html', {'bank': bank, 'authorized_user': authorized_user})
 
 @login_required
 def investment_history(request):
@@ -1461,7 +1461,7 @@ def payment_detail(request):
     )
     if request.method == 'GET':
         if request.headers.get('X-Requested-With') != 'XMLHttpRequest':
-            return render(request, 'mainapp/payment_detail_page.html', {'payment_obj': obj})
+            return render(request, 'mainapp/payment_detail_page.html', {'payment_obj': obj, 'authorized_user': user})
         return JsonResponse({
             'recurring_payment_amount': str(obj.recurring_payment_amount) if obj.recurring_payment_amount else '',
             'payment_date': obj.payment_date.isoformat() if obj.payment_date else ''
@@ -1479,6 +1479,10 @@ def payment_detail(request):
         
 @login_required
 def firm_status_dashboard(request):
+    try:
+        authorized_user = AuthorizedUser.objects.get(email=request.user.email)
+    except AuthorizedUser.DoesNotExist:
+        authorized_user = None
     latest_record = TotalCapitalRecord.objects.order_by('-id').first()
     history = TotalCapitalRecord.objects.order_by('date_time').values('date_time', 'total_capital')
 
@@ -1565,6 +1569,7 @@ def firm_status_dashboard(request):
         'share_market_value': share_market_value,
         'non_share_book_value': non_share_book_value,
         'investment_breakdown': investment_breakdown,
+        'authorized_user': authorized_user,
     }
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         html = render_to_string('mainapp/firm_status_dashboard.html', context)
