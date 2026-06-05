@@ -164,7 +164,7 @@
             <div class="fsd-bar-label">
                 <span>Share Investments (market value)</span>
                 <span>NRs. {{ share_market_value|floatformat:0|indian_format }}
-                {% if unrealized_pl < 0 %}<small style="color:#dc2626;margin-left:0.4rem;">({{ unrealized_pl|floatformat:0 }} unrealized loss)</small>{% elif unrealized_pl > 0 %}<small style="color:#16a34a;margin-left:0.4rem;">(+{{ unrealized_pl|floatformat:0 }} unrealized gain)</small>{% endif %}
+                {% if share_unrealized_pl < 0 %}<small style="color:#dc2626;margin-left:0.4rem;">({{ share_unrealized_pl|floatformat:0 }} unrealized loss)</small>{% elif share_unrealized_pl > 0 %}<small style="color:#16a34a;margin-left:0.4rem;">(+{{ share_unrealized_pl|floatformat:0 }} unrealized gain)</small>{% endif %}
                 </span>
             </div>
             <div class="fsd-bar-track">

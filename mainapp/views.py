@@ -1503,6 +1503,8 @@ def firm_status_dashboard(request):
     open_investments = FirmInvestment.objects.filter(status='open').select_related('investment_category').prefetch_related('transactions')
     share_market_value = Decimal('0')
     non_share_book_value = Decimal('0')
+    total_share_cost = Decimal('0')
+    total_loan_accrued = Decimal('0')
     category_data = {}
     investment_breakdown = []  # for template detail rows
 
@@ -1530,6 +1532,7 @@ def firm_status_dashboard(request):
             else:
                 current_value = net_invested  # fallback to book if price missing
             share_market_value += current_value
+            total_share_cost += net_invested
         else:
             current_value = net_invested
             # For open loans, add accrued interest (same logic as calculate_nav command)
@@ -1545,7 +1548,9 @@ def firm_status_dashboard(request):
                             daily_rate = inv.interest_rate / Decimal('100') / Decimal('30')
                         else:
                             daily_rate = inv.interest_rate / Decimal('100') / Decimal('365')
-                        current_value += (net_invested * daily_rate * days).quantize(Decimal('0.01'))
+                        accrued = (net_invested * daily_rate * days).quantize(Decimal('0.01'))
+                        current_value += accrued
+                        total_loan_accrued += accrued
             non_share_book_value += current_value
 
         investment_breakdown.append({
@@ -1570,7 +1575,8 @@ def firm_status_dashboard(request):
     available_capital = latest_record.available_capital if latest_record else Decimal('0')
     current_portfolio_value = available_capital + share_market_value + non_share_book_value
     book_total = latest_record.total_capital if latest_record else Decimal('0')
-    unrealized_pl = share_market_value - (latest_record.invested_capital - non_share_book_value) if latest_record else Decimal('0')
+    share_unrealized_pl = share_market_value - total_share_cost
+    unrealized_pl = share_unrealized_pl + total_loan_accrued
 
     context = {
         'latest_record': latest_record,
@@ -1579,6 +1585,7 @@ def firm_status_dashboard(request):
         'category_values': category_values,
         'current_portfolio_value': current_portfolio_value,
         'unrealized_pl': unrealized_pl,
+        'share_unrealized_pl': share_unrealized_pl,
         'share_market_value': share_market_value,
         'non_share_book_value': non_share_book_value,
         'investment_breakdown': investment_breakdown,
