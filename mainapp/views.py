@@ -1532,6 +1532,20 @@ def firm_status_dashboard(request):
             share_market_value += current_value
         else:
             current_value = net_invested
+            # For open loans, add accrued interest (same logic as calculate_nav command)
+            if inv.is_loan and inv.interest_rate and inv.interest_rate_period and net_invested > 0:
+                from datetime import date as _date
+                last_txn = inv.transactions.filter(
+                    amount_type__in=('interest', 'investment')
+                ).order_by('-date').first()
+                if last_txn and last_txn.date:
+                    days = (_date.today() - last_txn.date).days
+                    if days > 0:
+                        if inv.interest_rate_period == 'monthly':
+                            daily_rate = inv.interest_rate / Decimal('100') / Decimal('30')
+                        else:
+                            daily_rate = inv.interest_rate / Decimal('100') / Decimal('365')
+                        current_value += (net_invested * daily_rate * days).quantize(Decimal('0.01'))
             non_share_book_value += current_value
 
         investment_breakdown.append({
