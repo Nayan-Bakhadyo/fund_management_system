@@ -852,14 +852,13 @@ def fundmanager_user_portfolio(request):
     return render(request, 'mainapp/fundmanager_user_portfolio.html', context)
 
 def indian_number_format(amount):
-    # Format number as per Indian system (e.g., 10,00,000.00)
     is_negative = float(amount) < 0
     s = f"{abs(float(amount)):,.2f}"
     x = s.split('.')
     if len(x[0]) > 3:
         x[0] = x[0][:-3].replace(',', '')[::-1]
         x[0] = ','.join([x[0][i:i+2] for i in range(0, len(x[0]), 2)])[::-1] + ',' + s[-6:-3]
-    result = x[0] + '.' + x[1]
+    result = x[0] if x[1] == '00' else x[0] + '.' + x[1]
     return ('-' + result) if is_negative else result
 
 
