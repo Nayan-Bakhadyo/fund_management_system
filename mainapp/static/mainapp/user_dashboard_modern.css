@@ -1797,6 +1797,11 @@ body {
 /* Prevent body scroll when sidebar is open on mobile */
 body.sidebar-open {
     overflow: hidden;
+    /* touch-action: none removed — iOS Safari doesn't restore scroll reliably when this is removed dynamically */
+}
+
+/* Block pass-through touches on the overlay itself instead */
+.sidebar-overlay {
     touch-action: none;
 }
 
