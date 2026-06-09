@@ -1232,35 +1232,33 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    background: var(--primary-color);
     border: none;
-    position: relative;
-    overflow: hidden;
 }
 
-.btn-primary::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: var(--transition-all);
-}
-
-.btn-primary:hover::before {
-    left: 100%;
+.btn-primary:hover {
+    background: #1d4ed8;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
 .btn-success {
-    background: linear-gradient(135deg, var(--success-color), #34d399);
+    background: var(--success-color);
     border: none;
 }
 
+.btn-success:hover {
+    background: #059669;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
 .btn-warning {
-    background: linear-gradient(135deg, var(--warning-color), #fbbf24);
+    background: var(--warning-color);
     border: none;
+}
+
+.btn-warning:hover {
+    background: #d97706;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
 }
 
 /* Enhanced Navigation Links */
@@ -1320,17 +1318,14 @@ body {
     border-radius: 1px;
 }
 
-/* Enhanced Gradient Animations */
-@keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+.gradient-animation {
+    background: #bfa14a;
+    border: none;
 }
 
-.gradient-animation {
-    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color), var(--success-color), var(--info-color));
-    background-size: 400% 400%;
-    animation: gradientShift 8s ease infinite;
+.gradient-animation:hover {
+    background: #a8893a;
+    box-shadow: 0 4px 12px rgba(191, 161, 74, 0.3);
 }
 
 /* Loading Spinner */
