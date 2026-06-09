@@ -590,14 +590,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // View bank detail modal
+    // View bank detail page
     if (viewBankDetailMenu) {
         viewBankDetailMenu.addEventListener('click', function(e) {
             e.preventDefault();
-            console.log('View bank detail menu clicked');
-            const bankModal = new bootstrap.Modal(document.getElementById('bankDetailModal'));
-            bankModal.show();
-            if (window.innerWidth <= 767) closeSidebar();
+            window.location.href = '/user/firm_bank_detail/';
         });
     }
 
@@ -896,9 +893,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 break;
             case 'bank-details':
-                if (viewBankDetailMenu) {
-                    viewBankDetailMenu.click();
-                }
+                window.location.href = '/user/firm_bank_detail/';
                 break;
             case 'payment-settings':
                 if (modifyPaymentDetailMenu) {
