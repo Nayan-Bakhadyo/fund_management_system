@@ -233,8 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 uploadModal.show();
                 break;
             case 'bank-details':
-                const bankModal = new bootstrap.Modal(document.getElementById('bankDetailModal'));
-                bankModal.show();
+                window.location.href = '/user/firm_bank_detail/';
                 break;
             case 'payment-settings':
                 const paymentModal = new bootstrap.Modal(document.getElementById('modifyPaymentDetailModal'));
@@ -285,9 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (viewBankDetailMenu) {
         viewBankDetailMenu.addEventListener('click', function(e) {
             e.preventDefault();
-            const bankModal = new bootstrap.Modal(document.getElementById('bankDetailModal'));
-            bankModal.show();
-            if (window.innerWidth <= 767) closeSidebar();
+            window.location.href = '/user/firm_bank_detail/';
         });
     }
 
@@ -533,8 +530,7 @@ function handleActionCardClick(action) {
             uploadModal.show();
             break;
         case 'bank-details':
-            const bankModal = new bootstrap.Modal(document.getElementById('bankDetailModal'));
-            bankModal.show();
+            window.location.href = '/user/firm_bank_detail/';
             break;
         case 'payment-settings':
             const paymentModal = new bootstrap.Modal(document.getElementById('modifyPaymentDetailModal'));
