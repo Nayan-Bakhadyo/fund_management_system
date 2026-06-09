@@ -72,15 +72,15 @@
                     <td style="color:#94a3b8;font-size:0.82rem;">{{ forloop.counter }}</td>
                     <td><span class="aup-badge-user"><i class="bi bi-person"></i>{{ u.email }}</span></td>
                     <td class="right"><span class="aup-units-badge">{{ u.units|floatformat:2 }}</span></td>
-                    <td class="right aup-credit">NRs. {{ u.credit|floatformat:2 }}</td>
-                    <td class="right"><span class="aup-value">NRs. {{ u.total_value|floatformat:0 }}</span></td>
-                    <td class="right">NRs. {{ u.total_invested|floatformat:0 }}</td>
+                    <td class="right aup-credit">NRs. {{ u.credit|indian_format }}</td>
+                    <td class="right"><span class="aup-value">NRs. {{ u.total_value|indian_format }}</span></td>
+                    <td class="right">NRs. {{ u.total_invested|indian_format }}</td>
                     <td class="right">
                         {% if u.pl_amount > 0 %}
-                            <span class="aup-pl-positive">+NRs. {{ u.pl_amount|floatformat:0 }}</span>
+                            <span class="aup-pl-positive">+NRs. {{ u.pl_amount|indian_format }}</span>
                             <span class="aup-pl-pct aup-pl-positive">(+{{ u.pl_percentage|floatformat:1 }}%)</span>
                         {% elif u.pl_amount < 0 %}
-                            <span class="aup-pl-negative">-NRs. {{ u.pl_amount|floatformat:0|slice:"1:" }}</span>
+                            <span class="aup-pl-negative">-NRs. {{ u.pl_amount|indian_format|slice:"1:" }}</span>
                             <span class="aup-pl-pct aup-pl-negative">({{ u.pl_percentage|floatformat:1 }}%)</span>
                         {% else %}
                             <span class="aup-pl-neutral">NRs. 0</span>
@@ -94,7 +94,7 @@
                     <td colspan="2">Totals ({{ user_list|length }} users)</td>
                     <td class="right"><span class="aup-units-badge">{{ total_units|floatformat:2 }}</span></td>
                     <td class="right">—</td>
-                    <td class="right">NRs. {{ grand_total|floatformat:0 }}</td>
+                    <td class="right">NRs. {{ grand_total|indian_format }}</td>
                     <td class="right">—</td>
                     <td class="right">—</td>
                 </tr>
