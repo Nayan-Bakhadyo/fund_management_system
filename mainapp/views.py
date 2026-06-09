@@ -516,6 +516,20 @@ def user_dashboard(request):
     nav_dates = [nav_rec.date_time.strftime('%Y-%m-%d') for nav_rec in unique_nav_records]
     nav_unit_costs = [float(nav_rec.unit_cost) for nav_rec in unique_nav_records]
 
+    # Load share prices from CSV for current value calculation
+    share_prices = {}
+    try:
+        import csv as _csv
+        _csv_path = os.path.join('mainapp', 'utilities', 'share_price.csv')
+        with open(_csv_path, 'r') as _f:
+            for _row in _csv.DictReader(_f):
+                try:
+                    share_prices[_row['Symbol'].strip().upper()] = Decimal(_row['LTP'].replace(',', ''))
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
     # Fetch all open investments grouped by category
     open_investments = FirmInvestment.objects.filter(status='open').select_related('investment_category').prefetch_related('transactions')
     investments_by_category = {}
@@ -551,6 +565,22 @@ def user_dashboard(request):
                             daily_rate = inv.interest_rate / Decimal('100') / Decimal('365')
                         accrued_interest = (net_invested * daily_rate * days).quantize(Decimal('0.01'))
 
+        # Share market: current value and P&L from LTP
+        share_current_value = None
+        share_ltp = None
+        share_units = None
+        share_pl = None
+        if is_share and inv.share_symbol:
+            symbol = inv.share_symbol.strip().upper()
+            units_bought = inv.transactions.filter(amount_type='investment', stock_units_purchased__isnull=False).aggregate(t=Sum('stock_units_purchased'))['t'] or Decimal('0')
+            units_sold = inv.transactions.filter(amount_type='return', stock_units_purchased__isnull=False).aggregate(t=Sum('stock_units_purchased'))['t'] or Decimal('0')
+            share_units = units_bought - units_sold
+            ltp = share_prices.get(symbol)
+            if ltp and share_units > 0:
+                share_ltp = ltp
+                share_current_value = share_units * ltp
+                share_pl = share_current_value - net_invested
+
         entry = {
             'investment': inv,
             'total_invested': total_invested,
@@ -562,6 +592,10 @@ def user_dashboard(request):
             'interest_earned': interest_earned,
             'expected_monthly_interest': expected_monthly_interest,
             'accrued_interest': accrued_interest,
+            'share_current_value': share_current_value,
+            'share_ltp': share_ltp,
+            'share_units': share_units,
+            'share_pl': share_pl,
         }
 
         cat_key = cat.category_name

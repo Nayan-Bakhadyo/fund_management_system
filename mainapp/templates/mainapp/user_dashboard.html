@@ -252,6 +252,10 @@
                                                         <th class="py-2 text-muted fw-semibold border-0">Net Invested</th>
                                                         {% if cat_data.category.category_name|lower|slice:":5" == "share" %}
                                                         <th class="py-2 text-muted fw-semibold border-0">Symbol</th>
+                                                        <th class="py-2 text-muted fw-semibold border-0">Units</th>
+                                                        <th class="py-2 text-muted fw-semibold border-0">LTP</th>
+                                                        <th class="py-2 text-muted fw-semibold border-0">Current Value</th>
+                                                        <th class="py-2 text-muted fw-semibold border-0">P&amp;L</th>
                                                         {% endif %}
                                                     </tr>
                                                 </thead>
@@ -277,9 +281,29 @@
                                                         <td class="py-3 border-0">
                                                             {% if inv_data.investment.share_symbol %}
                                                             <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2">{{ inv_data.investment.share_symbol }}</span>
-                                                            {% else %}
-                                                            <span class="text-muted">—</span>
-                                                            {% endif %}
+                                                            {% else %}<span class="text-muted">—</span>{% endif %}
+                                                        </td>
+                                                        <td class="py-3 border-0">
+                                                            {% if inv_data.share_units %}{{ inv_data.share_units|floatformat:2 }}{% else %}<span class="text-muted">—</span>{% endif %}
+                                                        </td>
+                                                        <td class="py-3 border-0">
+                                                            {% if inv_data.share_ltp %}NRs. {{ inv_data.share_ltp|floatformat:2 }}{% else %}<span class="text-muted">—</span>{% endif %}
+                                                        </td>
+                                                        <td class="py-3 border-0">
+                                                            {% if inv_data.share_current_value %}
+                                                            <span class="fw-semibold">NRs. {{ inv_data.share_current_value|indian_format }}</span>
+                                                            {% else %}<span class="text-muted">—</span>{% endif %}
+                                                        </td>
+                                                        <td class="py-3 border-0">
+                                                            {% if inv_data.share_pl is not None and inv_data.share_current_value %}
+                                                                {% if inv_data.share_pl > 0 %}
+                                                                <span class="text-success fw-semibold">+NRs. {{ inv_data.share_pl|indian_format }}</span>
+                                                                {% elif inv_data.share_pl < 0 %}
+                                                                <span class="text-danger fw-semibold">-NRs. {{ inv_data.share_pl|indian_format|slice:"1:" }}</span>
+                                                                {% else %}
+                                                                <span class="text-muted">NRs. 0</span>
+                                                                {% endif %}
+                                                            {% else %}<span class="text-muted">—</span>{% endif %}
                                                         </td>
                                                         {% endif %}
                                                     </tr>
