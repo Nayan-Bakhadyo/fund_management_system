@@ -1,4 +1,4 @@
-{% load static %}
+{% load static %}{% load indian_format %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -151,7 +151,7 @@
                                             </span>
                                             <div class="active-inv-amount text-end" style="flex-shrink: 0;">
                                                 <small class="text-muted d-block" style="font-size: 0.72rem;">Net Invested</small>
-                                                <span class="fw-bold" style="color: #c0a062;">NRs. {{ cat_data.category_net_invested|floatformat:0 }}</span>
+                                                <span class="fw-bold" style="color: #c0a062;">NRs. {{ cat_data.category_net_invested|indian_format }}</span>
                                             </div>
                                         </div>
                                         <div class="active-inv-badges d-flex align-items-center gap-2 mt-2">
@@ -193,16 +193,16 @@
                                                                 {{ inv_data.investment.investment_name }}
                                                             {% endif %}
                                                         </td>
-                                                        <td class="py-3 border-0">NRs. {{ inv_data.total_invested|floatformat:0 }}</td>
+                                                        <td class="py-3 border-0">NRs. {{ inv_data.total_invested|indian_format }}</td>
                                                         <td class="py-3 border-0">
                                                             {% if inv_data.total_returned > 0 %}
-                                                            <span class="text-success">NRs. {{ inv_data.total_returned|floatformat:0 }}</span>
+                                                            <span class="text-success">NRs. {{ inv_data.total_returned|indian_format }}</span>
                                                             {% else %}<span class="text-muted">—</span>{% endif %}
                                                         </td>
                                                         <td class="py-3 border-0">
                                                             <span class="fw-semibold" style="color: #1e3a5f;"
-                                                                  title="Principal: NRs. {{ inv_data.net_invested|floatformat:0 }}{% if inv_data.accrued_interest > 0 %} + Accrued: NRs. {{ inv_data.accrued_interest|floatformat:0 }}{% endif %}">
-                                                                NRs. {{ inv_data.outstanding|floatformat:0 }}
+                                                                  title="Principal: NRs. {{ inv_data.net_invested|indian_format }}{% if inv_data.accrued_interest > 0 %} + Accrued: NRs. {{ inv_data.accrued_interest|indian_format }}{% endif %}">
+                                                                NRs. {{ inv_data.outstanding|indian_format }}
                                                             </span>
                                                             {% if inv_data.accrued_interest > 0 %}
                                                             <div style="font-size:0.72rem; color: var(--text-secondary);">
@@ -219,17 +219,17 @@
                                                         </td>
                                                         <td class="py-3 border-0">
                                                             {% if inv_data.interest_earned > 0 %}
-                                                            <span class="text-success fw-semibold">NRs. {{ inv_data.interest_earned|floatformat:0 }}</span>
+                                                            <span class="text-success fw-semibold">NRs. {{ inv_data.interest_earned|indian_format }}</span>
                                                             {% else %}<span class="text-muted">—</span>{% endif %}
                                                         </td>
                                                         <td class="py-3 border-0">
                                                             {% if inv_data.accrued_interest > 0 %}
-                                                            <span class="fw-semibold" style="color: #1e3a5f;" title="Unpaid interest since last payment">NRs. {{ inv_data.accrued_interest|floatformat:0 }}</span>
+                                                            <span class="fw-semibold" style="color: #1e3a5f;" title="Unpaid interest since last payment">NRs. {{ inv_data.accrued_interest|indian_format }}</span>
                                                             {% else %}<span class="text-muted">—</span>{% endif %}
                                                         </td>
                                                         <td class="py-3 border-0">
                                                             {% if inv_data.expected_monthly_interest > 0 %}
-                                                            <span class="text-primary">NRs. {{ inv_data.expected_monthly_interest|floatformat:0 }}</span>
+                                                            <span class="text-primary">NRs. {{ inv_data.expected_monthly_interest|indian_format }}</span>
                                                             {% else %}<span class="text-muted">—</span>{% endif %}
                                                         </td>
                                                         <td class="py-3 border-0">
@@ -262,16 +262,16 @@
                                                             <i class="bi bi-bar-chart-line me-2" style="color: #c0a062; font-size: 0.8rem;"></i>
                                                             {{ inv_data.investment.investment_name }}
                                                         </td>
-                                                        <td class="py-3 border-0">NRs. {{ inv_data.total_invested|floatformat:0 }}</td>
+                                                        <td class="py-3 border-0">NRs. {{ inv_data.total_invested|indian_format }}</td>
                                                         <td class="py-3 border-0">
                                                             {% if inv_data.total_returned > 0 %}
-                                                            <span class="text-success">NRs. {{ inv_data.total_returned|floatformat:0 }}</span>
+                                                            <span class="text-success">NRs. {{ inv_data.total_returned|indian_format }}</span>
                                                             {% else %}
                                                             <span class="text-muted">—</span>
                                                             {% endif %}
                                                         </td>
                                                         <td class="py-3 border-0">
-                                                            <span class="fw-semibold">NRs. {{ inv_data.net_invested|floatformat:0 }}</span>
+                                                            <span class="fw-semibold">NRs. {{ inv_data.net_invested|indian_format }}</span>
                                                         </td>
                                                         {% if cat_data.category.category_name|lower|slice:":5" == "share" %}
                                                         <td class="py-3 border-0">
