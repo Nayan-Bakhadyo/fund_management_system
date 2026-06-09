@@ -685,6 +685,10 @@ def transaction_history(request):
     )
 
 @login_required
+def firm_bank_detail(request):
+    return render(request, 'mainapp/firm_bank_detail.html')
+
+@login_required
 def bank_detail(request):
     user = request.user
     authorized_user = AuthorizedUser.objects.get(email=user.email)

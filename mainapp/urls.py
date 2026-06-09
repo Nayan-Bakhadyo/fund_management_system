@@ -21,6 +21,7 @@ urlpatterns = [
     path('user/transactions/', views.transaction_history, name='transaction_history'),
     path('user/investment_history/', views.investment_history, name='investment_history'),
     path('user/bank_detail/', views.bank_detail, name='bank_detail'),
+    path('user/firm_bank_detail/', views.firm_bank_detail, name='firm_bank_detail'),
     path('fundmanager/user_portfolio/', views.fundmanager_user_portfolio, name='fundmanager_user_portfolio'),
     path('fundmanager/add_investment_modal/', views.add_investment_modal, name='add_investment_modal'),
     path('fundmanager/add_investment_transaction/', views.add_investment_transaction, name='add_investment_transaction'),
