@@ -298,10 +298,12 @@
                                                             {% if inv_data.share_pl is not None and inv_data.share_current_value %}
                                                                 {% if inv_data.share_pl > 0 %}
                                                                 <span class="text-success fw-semibold">+NRs. {{ inv_data.share_pl|indian_format }}</span>
+                                                                <div style="font-size:0.78rem;" class="text-success">(+{{ inv_data.share_pl_pct|floatformat:2 }}%)</div>
                                                                 {% elif inv_data.share_pl < 0 %}
                                                                 <span class="text-danger fw-semibold">-NRs. {{ inv_data.share_pl|indian_format|slice:"1:" }}</span>
+                                                                <div style="font-size:0.78rem;" class="text-danger">({{ inv_data.share_pl_pct|floatformat:2 }}%)</div>
                                                                 {% else %}
-                                                                <span class="text-muted">NRs. 0</span>
+                                                                <span class="text-muted">NRs. 0 (0.00%)</span>
                                                                 {% endif %}
                                                             {% else %}<span class="text-muted">—</span>{% endif %}
                                                         </td>

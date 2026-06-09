@@ -570,6 +570,7 @@ def user_dashboard(request):
         share_ltp = None
         share_units = None
         share_pl = None
+        share_pl_pct = None
         if is_share and inv.share_symbol:
             symbol = inv.share_symbol.strip().upper()
             units_bought = inv.transactions.filter(amount_type='investment', stock_units_purchased__isnull=False).aggregate(t=Sum('stock_units_purchased'))['t'] or Decimal('0')
@@ -580,6 +581,7 @@ def user_dashboard(request):
                 share_ltp = ltp
                 share_current_value = share_units * ltp
                 share_pl = share_current_value - net_invested
+                share_pl_pct = (share_pl / net_invested * 100) if net_invested else Decimal('0')
 
         entry = {
             'investment': inv,
@@ -596,6 +598,7 @@ def user_dashboard(request):
             'share_ltp': share_ltp,
             'share_units': share_units,
             'share_pl': share_pl,
+            'share_pl_pct': share_pl_pct,
         }
 
         cat_key = cat.category_name
