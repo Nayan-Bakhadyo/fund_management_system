@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AuthorizedUser, UserTransaction, UserNAV, NAVRecord, UserBankDetail, InvestmentCategory, FirmInvestment, UserContract, TotalCapitalRecord, InvestmentTransaction 
+from .models import AuthorizedUser, UserTransaction, UserNAV, NAVRecord, UserBankDetail, InvestmentCategory, FirmInvestment, UserContract, TotalCapitalRecord, InvestmentTransaction, UserTransactionUpload, UserRecurringPayment,AuditLog, WithdrawalRequest
 
 admin.site.register(AuthorizedUser)
 admin.site.register(UserTransaction)
@@ -10,4 +10,16 @@ admin.site.register(InvestmentCategory)
 admin.site.register(FirmInvestment)
 admin.site.register(UserContract)
 admin.site.register(TotalCapitalRecord)
-admin.site.register(InvestmentTransaction)
+@admin.register(InvestmentTransaction)
+class InvestmentTransactionAdmin(admin.ModelAdmin):
+    list_display        = ('id', 'investment', 'amount_type', 'amount', 'date')
+    list_editable       = ('date',)
+    list_filter         = ('amount_type', 'investment__investment_category')
+    search_fields       = ('investment__investment_name',)
+    ordering            = ('investment', 'date')
+    # Explicit field order in the change form so date is never hidden
+    fields              = ('investment', 'date', 'amount_type', 'amount', 'stock_units_purchased')
+admin.site.register(UserTransactionUpload)
+admin.site.register(UserRecurringPayment)
+admin.site.register(AuditLog)
+admin.site.register(WithdrawalRequest)

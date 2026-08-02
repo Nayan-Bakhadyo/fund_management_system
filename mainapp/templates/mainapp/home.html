@@ -4,23 +4,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-T65P8YCC0J"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-T65P8YCC0J');
+    </script>
+
     <meta charset="UTF-8">
     <title>B.E Investment Firm</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="{% static 'mainapp/style.css' %}">
     <script src="{% static 'mainapp/script.js' %}" defer></script>
+    <link rel="icon" type="image/png" href="{% static 'mainapp/assets/BE_logo.png' %}">
 
 </head>
 <body>
     <div class="container">
-        <img src="{% static 'mainapp/assets/BE_logo.png' %}" alt="B.E Investment Firm Logo"
-             style="height: 90px; margin-bottom: 18px; border-radius: 50%; object-fit: cover;">
+        <img src="{% static 'mainapp/assets/BE_logo_final2.png' %}" alt="B.E Investment Firm Logo"
+             style="height: 90px; margin-bottom: 18px; border-radius: 10%; object-fit: cover;">
         <div class="logo">B.E Investment Firm</div>
         <hr class="brand-hr">
         <div class="subtitle">Your Partner in Strategic Investment Growth</div>
         <div class="desc">
             B.E Investments provides comprehensive investment management services focused on maximizing returns while minimizing risk.<br>
             We are dedicated to providing tailored investment solutions to individuals and businesses.<br>
+            <br>
             Our experienced team prioritizes transparency, security, and long-term growth for our clients.<br>
             <span style="font-size:0.95em;color:#666;"></span>
         </div>

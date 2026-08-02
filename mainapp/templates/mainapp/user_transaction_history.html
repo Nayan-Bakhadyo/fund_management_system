@@ -1,9 +1,13 @@
 <!-- filepath: /Users/Nayan/Documents/Business/BE_Investment_Firm/BE-app/mainapp/templates/mainapp/user_transaction_history.html -->
-<div class="dashboard-title">Transaction History</div>
-<div class="table-responsive">
-    <table class="table table-striped table-bordered align-middle">
-        <thead class="table-dark">
-            <tr>
+<div class="transaction-history-container">
+    <div class="dashboard-title">Transaction History</div>
+
+    <div class="alert alert-info mb-3" role="alert" style="max-width:600px;">
+        <strong>Note:</strong> It may take up to 24 hours to reflect the transaction in your portfolio.
+    </div>    <div class="table-responsive">
+        <table class="table table-striped table-bordered align-middle">
+            <thead class="table-dark">
+                <tr>
                 <th>Date</th>
                 <th>Type</th>
                 <th>Units</th>
@@ -16,13 +20,13 @@
         <tbody>
             {% for tx in transactions %}
             <tr>
-                <td>{{ tx.date_time|date:"Y-m-d H:i" }}</td>
-                <td>{{ tx.get_transaction_type_display }}</td>
-                <td>{{ tx.purchase_unit|floatformat:0 }}</td>
-                <td>Rs. {{ tx.purchase_initiated_amount|floatformat:2 }}</td>
-                <td>Rs. {{ tx.unit_cost|floatformat:2 }}</td>
-                <td>{{ tx.remaining_credit|floatformat:2 }}</td>
-                <td>
+                <td data-label="Date">{{ tx.date_time|date:"Y-m-d H:i" }}</td>
+                <td data-label="Type">{{ tx.get_transaction_type_display }}</td>
+                <td data-label="Units">{{ tx.purchase_unit|floatformat:0 }}</td>
+                <td data-label="Amount">NRs. {{ tx.purchase_initiated_amount|floatformat:2 }}</td>
+                <td data-label="NAV">NRs. {{ tx.unit_cost|floatformat:2 }}</td>
+                <td data-label="Credit">{{ tx.remaining_credit|floatformat:2 }}</td>
+                <td data-label="Image">
                     {% if tx.transaction_image %}
                         <a href="{{ tx.transaction_image.url }}" target="_blank">View</a>
                     {% else %}
@@ -37,4 +41,5 @@
             {% endfor %}
         </tbody>
     </table>
+</div>
 </div>

@@ -1,0 +1,486 @@
+{% load static %}
+{% load authorized_tags %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B.E Investment Firm - Your Partner in Strategic Growth</title>
+    <link rel="icon" type="image/png" href="{% static 'mainapp/assets/BE_logo.png' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Consistent with User Dashboard Colors */
+            --primary-color: #2c5aa0;
+            --secondary-color: #f8f9fa;
+            --accent-color: #bfa14a;
+            --dark-blue: #1e3a5f;
+            --light-blue: #4a69bd;
+            --text-primary: #2c3e50;
+            --text-secondary: #6c757d;
+            --text-light: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --shadow-light: 0 4px 20px rgba(44, 90, 160, 0.1);
+            --shadow-medium: 0 8px 30px rgba(44, 90, 160, 0.15);
+            --shadow-heavy: 0 15px 40px rgba(44, 90, 160, 0.2);
+            --gradient-primary: linear-gradient(135deg, #2c5aa0 0%, #4a69bd 100%);
+            --gradient-accent: linear-gradient(135deg, #bfa14a 0%, #d4af37 100%);
+            --gradient-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--gradient-bg);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--light-blue) 50%, #6366f1 100%);
+            opacity: 0.95;
+            z-index: 0;
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: var(--shadow-heavy);
+            transition: all 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 50px rgba(44, 90, 160, 0.25);
+        }
+
+        .logo-section {
+            margin-bottom: 30px;
+        }
+
+        .logo-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 16px;
+            object-fit: contain;
+            background: white;
+            padding: 10px;
+            box-shadow: var(--shadow-medium);
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .logo-image:hover {
+            transform: scale(1.02);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .brand-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .brand-subtitle {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            opacity: 0.8;
+        }
+
+        .brand-divider {
+            width: 60px;
+            height: 3px;
+            background: var(--gradient-accent);
+            border: none;
+            border-radius: 2px;
+            margin: 20px auto;
+        }
+
+        .description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .auth-section {
+            margin-top: 30px;
+        }
+
+        .google-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            color: #444;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 16px 24px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+            width: 100%;
+            box-shadow: var(--shadow-light);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .google-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(66, 133, 244, 0.1), transparent);
+            transition: left 0.6s;
+        }
+
+        .google-btn:hover::before {
+            left: 100%;
+        }
+
+        .google-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(66, 133, 244, 0.2);
+            border-color: #4285f4;
+        }
+
+        .google-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+        }
+
+        .fund-manager-link {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            text-decoration: none;
+            opacity: 0.9;
+            transition: all 0.3s ease;
+            position: relative;
+            font-weight: 500;
+        }
+
+        .fund-manager-link:hover {
+            opacity: 1;
+            color: var(--accent-color);
+        }
+
+        .fund-manager-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--accent-color);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .fund-manager-link:hover::after {
+            width: 100%;
+        }
+
+        .welcome-section {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .welcome-title {
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .welcome-email {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .status-card {
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .authorized-card {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .unauthorized-card {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .authorized-card .status-title {
+            color: #22c55e;
+        }
+
+        .unauthorized-card .status-title {
+            color: #ef4444;
+        }
+
+        .status-description {
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .action-btn {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-light);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 16px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 1);
+            transform: translateY(-1px);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .container {
+                padding: 30px 25px;
+            }
+
+            .brand-title {
+                font-size: 1.8rem;
+            }
+
+            .brand-subtitle {
+                font-size: 1rem;
+            }
+
+            .logo-image {
+                width: 100px;
+                height: 100px;
+            }
+
+            .google-btn {
+                padding: 14px 20px;
+                font-size: 0.95rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 25px 20px;
+            }
+
+            .brand-title {
+                font-size: 1.6rem;
+            }
+
+            .description {
+                font-size: 0.9rem;
+            }
+
+            .google-btn {
+                padding: 12px 16px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Loading Animation */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="container fade-in">
+            <div class="logo-section">
+                <img src="{% static 'mainapp/assets/BE_logo_final2.png' %}" alt="B.E Investment Firm Logo" class="logo-image">
+                <h1 class="brand-title">B.E Investment Firm</h1>
+                <p class="brand-subtitle">Your Partner in Strategic Investment Growth</p>
+                <hr class="brand-divider">
+            </div>
+            
+            <div class="description">
+                B.E Investments provides comprehensive investment management services focused on maximizing returns while minimizing risk. We are dedicated to providing tailored investment solutions with transparency, security, and long-term growth as our priorities.
+            </div>
+
+            {% if user.is_authenticated %}
+                <div class="welcome-section">
+                    <div class="welcome-title">
+                        <i class="fas fa-user-circle"></i> Welcome, {{ user.get_full_name|default:user.username }}
+                    </div>
+                    <div class="welcome-email">{{ user.email }}</div>
+                    
+                    {% if user.email|is_authorized %}
+                        <div class="status-card authorized-card">
+                            <div class="status-title">
+                                <i class="fas fa-check-circle"></i> Account Authorized
+                            </div>
+                            <div class="status-description">
+                                Access your personalized investment dashboard, performance reports, and exclusive resources.
+                            </div>
+                            <a href="{% url 'user_dashboard' %}" class="action-btn">
+                                <i class="fas fa-chart-line"></i> Go to Dashboard
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="status-card unauthorized-card">
+                            <div class="status-title">
+                                <i class="fas fa-exclamation-circle"></i> Email Verification Required
+                            </div>
+                            <div class="status-description">
+                                To access our investment services, please verify your email address to complete your registration.
+                            </div>
+                            <form action="{% url 'send_verification_code' %}" method="post" style="margin-top: 16px;">
+                                {% csrf_token %}
+                                <button type="submit" class="action-btn">
+                                    <i class="fas fa-envelope-check"></i> Verify Email
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+                    
+                    <a href="{% url 'logout' %}">
+                        <button class="logout-btn">
+                            <i class="fas fa-sign-out-alt"></i> Sign Out
+                        </button>
+                    </a>
+                </div>
+            {% else %}
+                <div class="auth-section">
+                    <a class="google-btn" href="{% url 'social:begin' 'google-oauth2' %}?next={{ request.path }}" aria-label="Sign in with Google">
+                        <img class="google-icon" src="https://developers.google.com/identity/images/g-logo.png" alt="">
+                        <span>Sign In with Google</span>
+                    </a>
+                    
+                    <div>
+                        <a href="{% url 'social:begin' 'google-oauth2' %}?next=/fundmanager/dashboard/" class="fund-manager-link">
+                            <i class="fas fa-user-tie"></i> Sign In as Fund Manager
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Simple loading animation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Enhanced button interactions
+            const buttons = document.querySelectorAll('.google-btn, .action-btn');
+            buttons.forEach(button => {
+                button.addEventListener('mousedown', function() {
+                    this.style.transform = 'translateY(0) scale(0.98)';
+                });
+                
+                button.addEventListener('mouseup', function() {
+                    this.style.transform = 'translateY(-2px) scale(1)';
+                });
+                
+                button.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

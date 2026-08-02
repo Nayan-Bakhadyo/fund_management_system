@@ -1,0 +1,314 @@
+{% load static %}
+{% load indian_format %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>Investment History - BE Investment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{% static 'mainapp/assets/BE_logo.png' %}">
+    <link rel="stylesheet" href="{% static 'mainapp/user_dashboard_modern.css' %}">
+    <style>
+        .investment-card {
+            border-radius: 15px;
+            box-shadow: var(--shadow-md);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        .investment-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+        .investment-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-bottom: 2px solid rgba(192, 160, 98, 0.4);
+            color: white;
+            padding: 20px;
+        }
+        .investment-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        .investment-category {
+            font-size: 0.85rem;
+            opacity: 0.85;
+            color: #c0a062;
+        }
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+        }
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        .profit-badge {
+            font-size: 1.3rem;
+            font-weight: 800;
+            padding: 12px 18px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+        .profit-positive {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        .profit-negative {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+        .profit-neutral {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            color: white;
+        }
+        .no-investments {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-secondary);
+        }
+        .summary-stats {
+            background: var(--bg-tertiary);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+        .summary-item {
+            text-align: center;
+        }
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        .summary-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        {% include 'mainapp/_sidebar.html' with active_page='history' %}
+
+        <!-- Overlay for mobile -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+        <!-- Main Content Area -->
+        <div class="main-content" id="mainContent">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="sidebar-toggle d-md-none" id="sidebarToggle">&#9776;</button>
+                    <div class="brand-name d-none d-lg-block">
+                        <h2>Investment History</h2>
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="user-profile">
+                        <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}" alt="User DP" class="user-dp">
+                        <div class="user-info">
+                            <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+                            <div class="user-email" title="{{ user.email }}">{{ user.email }}</div>
+                        </div>
+                        <a href="{% url 'logout' %}" class="logout-link">Log out</a>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <main class="dashboard-main">
+
+                <div class="mb-4">
+                    <div class="page-title"><i class="bi bi-clock-history me-2" style="color:#c0a062;"></i>Investment History</div>
+                    <div class="page-subtitle">Closed investments and their returns</div>
+                </div>
+
+                {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+                </div>
+                {% endif %}
+
+                <!-- Summary Statistics -->
+                {% if investments %}
+                <div class="summary-stats">
+                    <div class="row">
+                        <div class="col-6 col-md-3 summary-item mb-3 mb-md-0">
+                            <div class="summary-value">{{ total_investments }}</div>
+                            <div class="summary-label">Closed</div>
+                        </div>
+                        <div class="col-6 col-md-3 summary-item mb-3 mb-md-0">
+                            <div class="summary-value" style="color: #10b981;">{{ profitable_count }}</div>
+                            <div class="summary-label">Profitable</div>
+                        </div>
+                        <div class="col-6 col-md-3 summary-item">
+                            <div class="summary-value" style="color: #ef4444;">{{ loss_count }}</div>
+                            <div class="summary-label">Loss</div>
+                        </div>
+                        <div class="col-6 col-md-3 summary-item">
+                            <div class="summary-value" style="color: {% if average_return > 0 %}#10b981{% elif average_return < 0 %}#ef4444{% else %}#6b7280{% endif %};">
+                                {% if average_return > 0 %}+{% endif %}{{ average_return|floatformat:1 }}%
+                            </div>
+                            <div class="summary-label">Avg Return</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Investment Cards -->
+                {% if investments %}
+                <div class="row g-3">
+                    {% for inv in investments %}
+                    <div class="col-lg-6">
+                        <div class="card investment-card h-100">
+                            <div class="investment-header">
+                                <div class="investment-name">{{ inv.investment.investment_name }}</div>
+                                <div class="investment-category">
+                                    {% if inv.is_loan %}
+                                        <i class="bi bi-cash-coin me-1"></i>Loan
+                                        {% if inv.investment.interest_rate %}
+                                        <span class="ms-2">
+                                            <i class="bi bi-percent me-1"></i>{{ inv.investment.interest_rate }}%
+                                            {{ inv.investment.get_interest_rate_period_display }}
+                                        </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <i class="bi bi-tag me-1"></i>{{ inv.investment.investment_category.category_name }}
+                                        {% if inv.investment.share_symbol %}
+                                        <span class="ms-2"><i class="bi bi-bar-chart-line me-1"></i>{{ inv.investment.share_symbol }}</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                {% if inv.is_loan %}
+                                <!-- Loan card layout -->
+                                {% if user.is_superuser and inv.investment.borrower_name %}
+                                <div class="mb-3 text-center">
+                                    <div class="stat-label">Borrower</div>
+                                    <div class="fw-semibold">{{ inv.investment.borrower_name }}</div>
+                                </div>
+                                {% endif %}
+                                <div class="row mb-3">
+                                    <div class="col-6 stat-box border-end">
+                                        <div class="stat-label">Principal Lent</div>
+                                        <div class="stat-value" style="color: var(--primary-color);">
+                                            NRs. {{ inv.total_invested|indian_format }}
+                                        </div>
+                                    </div>
+                                    <div class="col-6 stat-box">
+                                        <div class="stat-label">Principal Repaid</div>
+                                        <div class="stat-value" style="color: var(--success-color);">
+                                            NRs. {{ inv.total_returned|indian_format }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-center py-3">
+                                    <div class="stat-label mb-2">Total Interest Earned</div>
+                                    <div class="profit-badge {% if inv.interest_earned > 0 %}profit-positive{% else %}profit-neutral{% endif %}">
+                                        <i class="bi bi-cash-stack me-1"></i>
+                                        NRs. {{ inv.interest_earned|indian_format }}
+                                    </div>
+                                    <div class="mt-2" style="font-size: 0.9rem; color: var(--text-secondary);">
+                                        {{ inv.profit_loss_percentage|floatformat:2 }}% return on principal
+                                    </div>
+                                </div>
+                                {% else %}
+                                <!-- Equity / other investment layout -->
+                                <div class="row mb-3">
+                                    <div class="col-6 stat-box border-end">
+                                        <div class="stat-label">Total Invested</div>
+                                        <div class="stat-value" style="color: var(--primary-color);">
+                                            NRs. {{ inv.total_invested|indian_format }}
+                                        </div>
+                                    </div>
+                                    <div class="col-6 stat-box">
+                                        <div class="stat-label">Total Returned</div>
+                                        <div class="stat-value" style="color: var(--success-color);">
+                                            NRs. {{ inv.total_returned|indian_format }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-center py-3">
+                                    <div class="stat-label mb-2">Profit / Loss</div>
+                                    <div class="profit-badge {% if inv.profit_loss > 0 %}profit-positive{% elif inv.profit_loss < 0 %}profit-negative{% else %}profit-neutral{% endif %}">
+                                        {% if inv.profit_loss > 0 %}<i class="bi bi-arrow-up me-1"></i>+
+                                        {% elif inv.profit_loss < 0 %}<i class="bi bi-arrow-down me-1"></i>
+                                        {% else %}<i class="bi bi-dash me-1"></i>{% endif %}
+                                        {{ inv.profit_loss_percentage|floatformat:2 }}%
+                                    </div>
+                                    <div class="mt-2" style="font-size: 1rem; font-weight: 600; color: {% if inv.profit_loss > 0 %}#10b981{% elif inv.profit_loss < 0 %}#ef4444{% else %}#6b7280{% endif %};">
+                                        {% if inv.profit_loss > 0 %}+{% endif %}NRs. {{ inv.profit_loss|indian_format }}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="no-investments">
+                    <i class="bi bi-clock-history" style="font-size: 4rem; display: block; margin-bottom: 1.5rem; opacity: 0.35; color: var(--text-secondary);"></i>
+                    <h4 class="fw-semibold mb-2">No Investment History</h4>
+                    <p class="text-muted mb-4">There are no closed investments to display yet.</p>
+                    <a href="{% url 'user_dashboard' %}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+                {% endif %}
+
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const overlay = document.getElementById('sidebar-overlay');
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    const isOpen = sidebar.classList.toggle('open');
+                    document.body.classList.toggle('sidebar-open', isOpen);
+                    if (overlay) overlay.style.display = isOpen ? 'block' : 'none';
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', function() {
+                    sidebar.classList.remove('open');
+                    document.body.classList.remove('sidebar-open');
+                    overlay.style.display = 'none';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -3,72 +3,180 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Fund Manager Dashboard</title>
-    <link rel="stylesheet" href="{% static 'mainapp/style.css' %}">
-    <link rel="stylesheet" href="{% static 'mainapp/fundmanager_dashboard.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>Fund Manager — BE Investment</title>
     <link rel="icon" type="image/png" href="{% static 'mainapp/assets/BE_logo.png' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'mainapp/fundmanager_dashboard.css' %}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{% static 'mainapp/fundmanager_dashboard.js' %}" defer></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="dashboard-container">
-        <nav class="sidebar" id="sidebar">
-            <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
-            <h3>Fund Manager</h3>
-            <ul class="sidebar-menu">
-                <li>
-                    <a href="#" id="addTransactionLink">
-                        Add Transaction
-                    </a>
-                </li>
-                <li>
-                    <a href="#" id="viewTransactionsLink">
-                        View Transactions
-                    </a>
-                </li>
-                <li>
-                    <a href="#" id="viewUserDashboardLink">
-                        User Dashboard
-                    </a>
-                </li>
-                <li>
-                    <a href="#" id="addInvestmentLink">Add Investment</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#" id="addInvestmentTransactionLink">Add Investment Transaction</a>
-                </li>
-                <li>
-                    <a href="#" id="closeInvestmentLink">Close Investment</a>
-                </li>
-            </ul>
-            <!-- Add more sidebar options here -->
-        </nav>
-        <header class="topbar">
-            <div class="user-profile">
-                <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}" alt="User DP" class="user-dp">
-                <div class="user-info">
-                    <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
-                    <div class="user-email">{{ user.email }}</div>
-                </div>
-                <a href="{% url 'logout' %}" class="logout-link">Log out</a>
-            </div>
-        </header>
-        <main class="main-content">
-            <div id="dashboard-content">
-                <!-- Content will be loaded here -->
-            </div>
-        </main>
-    </div>
-    {% if messages %}
-      <script>
-        {% for message in messages %}
-          alert("{{ message|escapejs }}");
-        {% endfor %}
-      </script>
-    {% endif %}
+<div class="dashboard-container">
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- ── Sidebar ── -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header" style="overflow:hidden;">
+            <img src="{% static 'mainapp/assets/BE_logo_final2.png' %}" alt="BE" class="sidebar-logo" style="width:80px;max-width:80px;height:auto;object-fit:contain;display:block;">
+            <span class="sidebar-title">Fund Manager</span>
+        </div>
+        <ul class="sidebar-menu">
+            <li class="nav-item">
+                <a href="#" class="nav-link" id="firmStatusMenu">
+                    <i class="bi bi-bar-chart-line"></i><span>Firm's Portfolio</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'stock_performance_dashboard' %}" class="nav-link">
+                    <i class="bi bi-graph-up-arrow"></i><span>Stock Performance</span>
+                </a>
+            </li>
+            <li><hr class="sidebar-divider"></li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" id="addTransactionLink">
+                    <i class="bi bi-plus-circle"></i><span>Add Transaction</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" id="viewTransactionsLink">
+                    <i class="bi bi-table"></i><span>View Transactions</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" id="viewUserDashboardLink">
+                    <i class="bi bi-person-circle"></i><span>User Dashboard</span>
+                </a>
+            </li>
+            <li><hr class="sidebar-divider"></li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" id="addInvestmentLink">
+                    <i class="bi bi-wallet2"></i><span>Add Investment</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" id="addInvestmentTransactionLink">
+                    <i class="bi bi-cash-stack"></i><span>Inv. Transaction</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" id="closeInvestmentLink">
+                    <i class="bi bi-x-circle"></i><span>Close Investment</span>
+                </a>
+            </li>
+            <li><hr class="sidebar-divider"></li>
+            <li class="nav-item">
+                <a href="{% url 'fundmanager_withdrawal_requests' %}" class="nav-link" id="withdrawalRequestsLink">
+                    <i class="bi bi-bank"></i><span>Withdrawal Requests</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" id="pendingUploadsLink">
+                    <i class="bi bi-cloud-upload"></i><span>Pending Uploads</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" id="allUsersPortfolioLink">
+                    <i class="bi bi-people"></i><span>All Users</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Mobile sidebar overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- ── Topbar ── -->
+    <header class="topbar" id="topbar">
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+            <i class="bi bi-list"></i>
+        </button>
+        <span class="topbar-brand">BE Investment</span>
+        <div class="user-profile">
+            <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=14213d&color=bfa14a&bold=true" alt="User DP" class="user-dp">
+            <div class="user-info">
+                <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+                <div class="user-email">{{ user.email }}</div>
+            </div>
+            <a href="{% url 'logout' %}" class="logout-link"><i class="bi bi-box-arrow-right"></i> Log out</a>
+        </div>
+    </header>
+
+    <!-- ── Main Content ── -->
+    <main class="main-content" id="mainContent">
+        <div id="dashboard-content">
+            <!-- Welcome / landing state -->
+            <div class="fm-welcome">
+                <div class="fm-welcome-icon">
+                    <i class="bi bi-speedometer2"></i>
+                </div>
+                <h2 class="fm-welcome-title">Welcome, {{ user.get_full_name|default:user.username }}</h2>
+                <p class="fm-welcome-sub">Use the sidebar to navigate. Quick actions below:</p>
+                <div class="fm-quick-grid">
+                    <div class="fm-quick-card" onclick="document.getElementById('firmStatusMenu').click()">
+                        <i class="bi bi-bar-chart-line"></i>
+                        <span>Firm's Portfolio</span>
+                    </div>
+                    <div class="fm-quick-card" onclick="document.getElementById('addTransactionLink').click()">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>Add Transaction</span>
+                    </div>
+                    <div class="fm-quick-card" onclick="document.getElementById('viewTransactionsLink').click()">
+                        <i class="bi bi-table"></i>
+                        <span>View Transactions</span>
+                    </div>
+                    <div class="fm-quick-card" onclick="window.location='{% url 'fundmanager_withdrawal_requests' %}'">
+                        <i class="bi bi-bank"></i>
+                        <span>Withdrawal Requests</span>
+                    </div>
+                    <div class="fm-quick-card" onclick="document.getElementById('pendingUploadsLink').click()">
+                        <i class="bi bi-cloud-upload"></i>
+                        <span>Pending Uploads</span>
+                    </div>
+                    <div class="fm-quick-card" onclick="document.getElementById('allUsersPortfolioLink').click()">
+                        <i class="bi bi-people"></i>
+                        <span>All Users</span>
+                    </div>
+                    <div class="fm-quick-card" onclick="document.getElementById('addInvestmentLink').click()">
+                        <i class="bi bi-wallet2"></i>
+                        <span>Add Investment</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+</div>
+
+{% if messages %}
+  <script>
+    {% for message in messages %}
+      alert("{{ message|escapejs }}");
+    {% endfor %}
+  </script>
+{% endif %}
+
+<!-- ── Firm Status Modal ── -->
+<div class="modal fade" id="firmStatusModal" tabindex="-1" aria-labelledby="firmStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header fm-modal-header">
+                <h5 class="modal-title" id="firmStatusModalLabel">
+                    <i class="bi bi-bar-chart-line me-2"></i>Firm's Portfolio
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="firm-status-dashboard">
+                <div class="text-center py-5">
+                    <div class="spinner-border fm-spinner" role="status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

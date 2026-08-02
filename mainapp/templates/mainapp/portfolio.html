@@ -1,109 +1,98 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Portfolio Performance</title>
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'mainapp/user_dashboard.css' %}">
-</head>
-<body>
-    <div class="dashboard-title">Portfolio Performance</div>
-    <div class="dashboard-message"></div>
-    <div class="row portfolio-cards justify-content-center">
-        <div class="col-12 col-sm-6 col-md-4 mb-3">
-            <div class="portfolio-card h-100">
-                <div class="card-title">Total Unit Balance</div>
-                <div class="card-value">{{ total_units|floatformat:0 }}</div>
-            </div>
+<div class="portfolio-container">
+    <div class="portfolio-header">
+        <h2 class="portfolio-title gradient-text-primary">Portfolio Performance</h2>
+        <div class="portfolio-message"></div>
+    </div>
+    
+    <div class="portfolio-cards-grid">
+        <div class="portfolio-card">
+            <div class="card-title">Total Unit Balance</div>
+            <div class="card-value">{{ total_units|floatformat:0 }}</div>
         </div>
-        <div class="col-12 col-sm-6 col-md-4 mb-3">
-            <div class="portfolio-card h-100">
-                <div class="card-title">NAV <span class="nav-date">(as of {{ nav_date }})</span></div>
-                <div class="card-value">Rs. {{ nav|floatformat:2 }}</div>
-            </div>
+        <div class="portfolio-card">
+            <div class="card-title">NAV <span class="nav-date">(as of {{ nav_date }})</span></div>
+            <div class="card-value">NRs. {{ nav|floatformat:2 }}</div>
         </div>
-        <div class="col-12 col-sm-6 col-md-4 mb-3">
-            <div class="portfolio-card h-100">
-                <div class="card-title">Total Amount</div>
-                <div class="card-value">Rs. {{ total_amount_format }}</div>
-            </div>
+        <div class="portfolio-card">
+            <div class="card-title">Total Amount</div>
+            <div class="card-value">NRs. {{ total_amount_format }}</div>
         </div>
-        <div class="col-12 col-sm-6 col-md-4 mb-3">
-            <div class="portfolio-card h-100">
-                <div class="card-title">Unrealized Profit/Loss</div>
-                <div class="card-value"
-                     style="color: {% if unrealized_pl > 0 %}green{% else %}red{% endif %};">
-                    Rs. {{ unrealized_pl|floatformat:2 }}
-                </div>
+        <div class="portfolio-card">
+            <div class="card-title">Unrealized Profit/Loss</div>
+            <div class="card-value"
+                style="color: {% if unrealized_pl > 0 %}#28a745{% elif unrealized_pl < 0 %}#dc3545{% else %}#6c757d{% endif %};">
+                NRs. {{ unrealized_pl|floatformat:2 }}
+            </div>
+            <div style="color: {% if unrealized_pl > 0 %}#28a745{% elif unrealized_pl < 0 %}#dc3545{% else %}#6c757d{% endif %}; font-size: 0.9rem; font-weight: 600; margin-top: 4px;">
+                {% if unrealized_pl_percentage > 0 %}+{% endif %}{{ unrealized_pl_percentage|floatformat:2 }}%
             </div>
         </div>
     </div>
-    <div class="row justify-content-center mt-4">
-        <div class="col-12 col-md-10">
-            <div class="card p-3">
-                <div class="card-title">NAV changes<span class="nav-date">
-                <div>
-                    <canvas id="navLineChart" height="100"
-                        data-dates='{{ nav_dates_json|safe }}'
-                        data-costs='{{ nav_unit_costs_json|safe }}'></canvas>
-                </div>
-                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-                <script>
-    (function() {
-        try {
-            const canvas = document.getElementById('navLineChart');
-            if (!canvas) {
-                console.error("Canvas with id 'navLineChart' not found.");
-                return;
-            }
-            const navDates = JSON.parse(canvas.dataset.dates);
-            const navUnitCosts = JSON.parse(canvas.dataset.costs);
+    
+    <div class="portfolio-chart-section">
+        <div class="chart-container">
+            <div class="chart-title gradient-text-secondary">NAV Performance</div>
+            <div class="chart-wrapper">
+                <canvas id="navLineChart" height="100"
+                    data-dates='{{ nav_dates_json|safe }}'
+                    data-costs='{{ nav_unit_costs_json|safe }}'></canvas>
+            </div>
+        </div>
+    </div>
+</div>
 
-            if (!navDates.length || !navUnitCosts.length) {
-                console.warn("No NAV data to display.");
-                return;
-            }
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function() {
+    try {
+        const canvas = document.getElementById('navLineChart');
+        if (!canvas) {
+            console.error("Canvas with id 'navLineChart' not found.");
+            return;
+        }
+        const navDates = JSON.parse(canvas.dataset.dates);
+        const navUnitCosts = JSON.parse(canvas.dataset.costs);
 
-            const ctx = canvas.getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: navDates,
-                    datasets: [{
-                        label: 'Unit Cost (NAV)',
-                        data: navUnitCosts,
-                        borderColor: '#bfa14a',
-                        backgroundColor: 'rgba(191,161,74,0.1)',
-                        tension: 0.3,
-                        fill: true,
-                        pointRadius: 3,
-                        pointBackgroundColor: '#bfa14a'
-                    }]
+        if (!navDates.length || !navUnitCosts.length) {
+            console.warn("No NAV data to display.");
+            return;
+        }
+
+        const ctx = canvas.getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: navDates,
+                datasets: [{
+                    label: 'Unit Cost (NAV)',
+                    data: navUnitCosts,
+                    borderColor: '#bfa14a',
+                    backgroundColor: 'rgba(191,161,74,0.1)',
+                    tension: 0.3,
+                    fill: true,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#bfa14a'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
                 },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false }
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Date' }
                     },
-                    scales: {
-                        x: {
-                            title: { display: true, text: 'Date' }
-                        },
-                        y: {
-                            title: { display: true, text: 'Unit Cost' },
-                            beginAtZero: false
-                        }
+                    y: {
+                        title: { display: true, text: 'Unit Cost' },
+                        beginAtZero: false
                     }
                 }
-            });
-        } catch (e) {
-            console.error("Chart rendering error:", e);
-        }
-    })();
-    </script>
-            </div>
-        </div>
-    </div>
-
-</body>
-</html>
+            }
+        });
+    } catch (e) {
+        console.error("Chart rendering error:", e);
+    }
+})();
+</script>

@@ -1,0 +1,195 @@
+<div class="withdraw-request-container">
+    <div class="alert alert-info">
+        <h4><i class="bi bi-info-circle"></i> Bank Details Required</h4>
+        <p>To process withdrawal requests, we need your bank account details first.</p>
+        <p>Please set up your bank details before submitting a withdrawal request.</p>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Setup Bank Details</h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">Click the button below to set up your bank account details. This is a one-time setup required for all withdrawal requests.</p>
+            <div class="d-grid gap-2">
+                <button type="button" class="btn btn-primary" id="setupBankDetailsBtn" onclick="handleSetupBankDetails()">
+                    <i class="bi bi-bank"></i> Setup Bank Details
+                </button>
+                <button type="button" class="btn btn-secondary" id="cancelWithdrawBtn" onclick="handleBackToDashboard()">
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Define global handler functions immediately
+window.handleSetupBankDetails = function() {
+    console.log('Setup bank details button clicked via onclick');
+    
+    // Try to navigate to bank details using multiple approaches
+    try {
+        // Approach 1: Use global navigation functions
+        if (typeof window.goToBankDetails === 'function') {
+            console.log('Using goToBankDetails function');
+            if (window.goToBankDetails()) return;
+        }
+        
+        if (typeof window.navigateToBankDetails === 'function') {
+            console.log('Using navigateToBankDetails function');
+            if (window.navigateToBankDetails()) return;
+        }
+        
+        // Approach 2: Direct DOM manipulation
+        console.log('Trying direct DOM approach');
+        const bankDetailLink = document.getElementById('bank-detail-link');
+        if (bankDetailLink) {
+            console.log('Found bank detail link, clicking...');
+            bankDetailLink.click();
+            return;
+        }
+        
+        // Approach 3: Find and trigger the sidebar link
+        const sidebarLinks = document.querySelectorAll('#sidebar a, .sidebar a');
+        for (let link of sidebarLinks) {
+            if (link.textContent.includes('Bank Detail') || link.id === 'bank-detail-link') {
+                console.log('Found bank detail link in sidebar, clicking...');
+                link.click();
+                return;
+            }
+        }
+        
+        // Fallback: Show alert with instructions
+        alert('To set up your bank details:\n\n1. Click on "Bank Details" in the sidebar menu\n2. Fill in your bank account information\n3. Save the details\n4. Then return here to request a withdrawal\n\nFor security reasons, bank details must be set up through the dedicated Bank Details section.');
+        
+    } catch (error) {
+        console.error('Error in handleSetupBankDetails:', error);
+        alert('Please use the "Bank Details" option in the sidebar menu to set up your bank account information.');
+    }
+};
+
+window.handleBackToDashboard = function() {
+    console.log('Back to dashboard button clicked via onclick');
+    
+    try {
+        // Approach 1: Use global navigation functions
+        if (typeof window.goToMainDashboard === 'function') {
+            console.log('Using goToMainDashboard function');
+            window.goToMainDashboard();
+            return;
+        }
+        
+        if (typeof window.navigateToMainDashboard === 'function') {
+            console.log('Using navigateToMainDashboard function');
+            window.navigateToMainDashboard();
+            return;
+        }
+        
+        if (typeof window.showMainDashboard === 'function') {
+            console.log('Using showMainDashboard function');
+            window.showMainDashboard();
+            return;
+        }
+        
+        // Approach 2: Find and click portfolio link
+        const portfolioLink = document.getElementById('portfolio-link');
+        if (portfolioLink) {
+            console.log('Found portfolio link, clicking...');
+            portfolioLink.click();
+            return;
+        }
+        
+        // Approach 3: Find portfolio link in sidebar
+        const sidebarLinks = document.querySelectorAll('#sidebar a, .sidebar a');
+        for (let link of sidebarLinks) {
+            if (link.textContent.includes('Portfolio') || link.id === 'portfolio-link') {
+                console.log('Found portfolio link in sidebar, clicking...');
+                link.click();
+                return;
+            }
+        }
+        
+        // Approach 4: Hide all sections to show main dashboard
+        const mainDashboardContent = document.getElementById('main-dashboard-content');
+        const allSections = document.querySelectorAll('.content-section');
+        
+        if (mainDashboardContent) {
+            allSections.forEach(section => section.style.display = 'none');
+            mainDashboardContent.style.display = 'block';
+            console.log('Manually showed main dashboard content');
+            return;
+        }
+        
+        // Last resort: page reload
+        console.log('Using page reload as last resort');
+        window.location.href = '/user/dashboard/';
+        
+    } catch (error) {
+        console.error('Error in handleBackToDashboard:', error);
+        window.location.href = '/user/dashboard/';
+    }
+};
+
+// Also set up event listeners as backup
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Withdraw request no bank template loaded');
+    
+    // Setup bank details button
+    const setupBtn = document.getElementById('setupBankDetailsBtn');
+    if (setupBtn && !setupBtn.onclick) {
+        setupBtn.addEventListener('click', window.handleSetupBankDetails);
+    }
+    
+    // Cancel button
+    const cancelBtn = document.getElementById('cancelWithdrawBtn');
+    if (cancelBtn && !cancelBtn.onclick) {
+        cancelBtn.addEventListener('click', window.handleBackToDashboard);
+    }
+});
+</script>
+
+<style>
+.withdraw-request-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0rem;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-radius: 0.75rem;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    color: white;
+    border-radius: 0.75rem 0.75rem 0 0 !important;
+    border: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: #6b7280;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+}
+
+.btn-secondary:hover {
+    background: #4b5563;
+    transform: translateY(-1px);
+}
+</style>
