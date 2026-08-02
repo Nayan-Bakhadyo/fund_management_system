@@ -10,14 +10,14 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='usertransactionupload',
-            name='id',
-            field=models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
-        ),
         migrations.AlterField(
             model_name='usertransactionupload',
             name='email',
             field=models.EmailField(max_length=254),
+        ),
+        migrations.AddField(
+            model_name='usertransactionupload',
+            name='id',
+            field=models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
         ),
     ]
