@@ -1,13 +1,15 @@
-import os
+from decimal import Decimal, InvalidOperation
+
 import requests
 from bs4 import BeautifulSoup
-import pandas as pd
 from django.core.management.base import BaseCommand
-from django.conf import settings
+from django.db import transaction
+
+from mainapp.models import SharePrice
 
 
 class Command(BaseCommand):
-    help = 'Fetch latest share prices from sharesansar.com and update CSV file'
+    help = 'Fetch latest share prices from sharesansar.com and update the SharePrice table'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -55,25 +57,31 @@ class Command(BaseCommand):
                 )
                 return
 
-            df = pd.DataFrame(data, columns=headers)
-            
-            # Define the CSV file path
-            csv_path = os.path.join(settings.BASE_DIR, 'mainapp', 'utilities', 'share_price.csv')
-            
-            # Ensure the utilities directory exists
-            utilities_dir = os.path.dirname(csv_path)
-            os.makedirs(utilities_dir, exist_ok=True)
-            
-            # Export to CSV
-            df.to_csv(csv_path, index=False)
-            
+            symbol_idx = headers.index('Symbol')
+            ltp_idx = headers.index('LTP')
+
+            updated = 0
+            with transaction.atomic():
+                for cols in data:
+                    symbol = cols[symbol_idx].strip().upper()
+                    ltp_str = cols[ltp_idx].replace(',', '').strip()
+                    if not symbol:
+                        continue
+                    try:
+                        ltp = Decimal(ltp_str)
+                    except (InvalidOperation, ValueError):
+                        continue
+                    SharePrice.objects.update_or_create(
+                        symbol=symbol, defaults={'ltp': ltp}
+                    )
+                    updated += 1
+
             if options['verbose']:
-                self.stdout.write(f'Successfully fetched {df.shape[0]} share prices')
-                self.stdout.write(f'Data saved to: {csv_path}')
-            
+                self.stdout.write(f'Successfully fetched {updated} share prices')
+
             self.stdout.write(
                 self.style.SUCCESS(
-                    f'Successfully updated share prices - {df.shape[0]} records'
+                    f'Successfully updated share prices - {updated} records'
                 )
             )
             

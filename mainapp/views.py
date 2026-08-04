@@ -6,9 +6,8 @@ from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
 from django.db.models import Max, Sum
 from django.utils import timezone
-from .models import AuthorizedUser, UserRecurringPayment, UserTransaction, UserNAV, NAVRecord, UserBankDetail, InvestmentCategory, FirmInvestment, TotalCapitalRecord, InvestmentTransaction, UserTransactionUpload, WithdrawalRequest
+from .models import AuthorizedUser, UserRecurringPayment, UserTransaction, UserNAV, NAVRecord, UserBankDetail, InvestmentCategory, FirmInvestment, TotalCapitalRecord, InvestmentTransaction, UserTransactionUpload, WithdrawalRequest, SharePrice
 import random
-import os
 from django import template
 from django.contrib.auth import logout
 from django.urls import reverse
@@ -516,19 +515,8 @@ def user_dashboard(request):
     nav_dates = [nav_rec.date_time.strftime('%Y-%m-%d') for nav_rec in unique_nav_records]
     nav_unit_costs = [float(nav_rec.unit_cost) for nav_rec in unique_nav_records]
 
-    # Load share prices from CSV for current value calculation
-    share_prices = {}
-    try:
-        import csv as _csv
-        _csv_path = os.path.join('mainapp', 'utilities', 'share_price.csv')
-        with open(_csv_path, 'r') as _f:
-            for _row in _csv.DictReader(_f):
-                try:
-                    share_prices[_row['Symbol'].strip().upper()] = Decimal(_row['LTP'].replace(',', ''))
-                except Exception:
-                    pass
-    except Exception:
-        pass
+    # Load share prices for current value calculation
+    share_prices = {sp.symbol: sp.ltp for sp in SharePrice.objects.all()}
 
     # Fetch all open investments grouped by category
     open_investments = FirmInvestment.objects.filter(status='open').select_related('investment_category').prefetch_related('transactions')
@@ -1526,19 +1514,8 @@ def firm_status_dashboard(request):
     latest_record = TotalCapitalRecord.objects.order_by('-id').first()
     history = TotalCapitalRecord.objects.order_by('date_time').values('date_time', 'total_capital')
 
-    # Load share prices from CSV (same source used by calculate_nav command)
-    share_prices = {}
-    csv_path = os.path.join('mainapp', 'utilities', 'share_price.csv')
-    try:
-        import csv as _csv
-        with open(csv_path, 'r') as f:
-            for row in _csv.DictReader(f):
-                try:
-                    share_prices[row['Symbol'].strip().upper()] = Decimal(row['LTP'].replace(',', ''))
-                except Exception:
-                    pass
-    except Exception:
-        pass
+    # Load share prices (same source used by calculate_nav command)
+    share_prices = {sp.symbol: sp.ltp for sp in SharePrice.objects.all()}
 
     # Compute per-investment current values for open investments
     open_investments = FirmInvestment.objects.filter(status='open').select_related('investment_category').prefetch_related('transactions')
@@ -2028,9 +2005,6 @@ def fundmanager_withdrawal_detail(request, withdrawal_id):
 @login_required
 def stock_performance_dashboard(request):
     """Display stock performance dashboard showing profit/loss for share market investments."""
-    import csv
-    import os
-    
     # Get all open share market investments
     share_market_category = InvestmentCategory.objects.filter(category_name__icontains='share market').first()
     if not share_market_category:
@@ -2044,24 +2018,11 @@ def stock_performance_dashboard(request):
         share_symbol__isnull=False
     ).exclude(share_symbol='')
     
-    # Load share price data from CSV
-    csv_path = os.path.join(settings.BASE_DIR, 'mainapp', 'utilities', 'share_price.csv')
-    share_prices = {}
-    
-    try:
-        with open(csv_path, 'r', newline='', encoding='utf-8') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                symbol = row['Symbol'].strip()
-                ltp_str = row['LTP'].replace(',', '').strip()
-                try:
-                    ltp = Decimal(ltp_str)
-                    share_prices[symbol] = ltp
-                except (ValueError, TypeError):
-                    continue
-    except FileNotFoundError:
+    # Load share price data
+    share_prices = {sp.symbol: sp.ltp for sp in SharePrice.objects.all()}
+    if not share_prices:
         return render(request, 'mainapp/stock_performance_dashboard.html', {
-            'error': 'Share price data file not found.'
+            'error': 'Share price data not available yet.'
         })
     
     # Get latest total capital record
