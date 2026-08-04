@@ -411,3 +411,16 @@ class WithdrawalRequest(models.Model):
         if self.processed_date and self.request_date:
             return (self.processed_date - self.request_date).days
         return None
+
+
+class SharePrice(models.Model):
+    """
+    Latest traded price per stock symbol, refreshed by the
+    fetch_share_prices management command (cron-nav-pipeline).
+    """
+    symbol = models.CharField(max_length=20, unique=True)
+    ltp = models.DecimalField(max_digits=12, decimal_places=2)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.symbol}: {self.ltp}"

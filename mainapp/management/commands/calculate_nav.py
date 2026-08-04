@@ -1,11 +1,9 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
-import csv
-import os
 from mainapp.models import (
-    TotalCapitalRecord, FirmInvestment, InvestmentTransaction, 
-    NAVRecord, InvestmentCategory, UserNAV
+    TotalCapitalRecord, FirmInvestment, InvestmentTransaction,
+    NAVRecord, InvestmentCategory, UserNAV, SharePrice
 )
 
 
@@ -75,32 +73,16 @@ class Command(BaseCommand):
             self.stdout.write(f"[{timestamp}] {message}")
 
     def load_share_prices(self):
-        """Load share prices from CSV file"""
+        """Load share prices from the database"""
         share_prices = {}
-        csv_path = os.path.join('mainapp', 'utilities', 'share_price.csv')
-        
         try:
-            with open(csv_path, 'r') as file:
-                reader = csv.DictReader(file)
-                for row in reader:
-                    symbol = row['Symbol'].strip()
-                    # Remove commas and convert LTP to decimal
-                    ltp_str = row['LTP'].replace(',', '')
-                    try:
-                        ltp = Decimal(ltp_str)
-                        share_prices[symbol] = ltp
-                        if self.verbose:
-                            self.log(f"Loaded price for {symbol}: {ltp}")
-                    except (ValueError, InvalidOperation):
-                        self.log(f"Warning: Invalid LTP for {symbol}: {row['LTP']}", 'WARNING')
-                        continue
-            
-            self.log(f"Loaded {len(share_prices)} share prices from CSV")
+            for sp in SharePrice.objects.all():
+                share_prices[sp.symbol] = sp.ltp
+                if self.verbose:
+                    self.log(f"Loaded price for {sp.symbol}: {sp.ltp}")
+
+            self.log(f"Loaded {len(share_prices)} share prices")
             return share_prices
-        
-        except FileNotFoundError:
-            self.log(f"Error: Share price CSV file not found at {csv_path}", 'ERROR')
-            return {}
         except Exception as e:
             self.log(f"Error loading share prices: {str(e)}", 'ERROR')
             return {}
