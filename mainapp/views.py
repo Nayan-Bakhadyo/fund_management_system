@@ -20,6 +20,41 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 import sys
 
+import functools
+from decimal import InvalidOperation
+
+
+def fund_manager_required(view_func):
+    """Allow only an authenticated AuthorizedUser with role 'fund_manager'.
+
+    Must be stacked under @login_required. XHR/JSON callers get a 403 JSON
+    response; normal page requests are redirected home.
+    """
+    @functools.wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        is_manager = AuthorizedUser.objects.filter(
+            email=request.user.email, role='fund_manager'
+        ).exists()
+        if not is_manager:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.method != 'GET':
+                return JsonResponse({"success": False, "error": "Unauthorized"}, status=403)
+            return redirect('home')
+        return view_func(request, *args, **kwargs)
+    return _wrapped
+
+
+def _parse_amount(raw):
+    """Parse a money amount from form input. Returns a positive, finite Decimal
+    with at most 2 decimal places, or None if invalid."""
+    try:
+        value = Decimal(str(raw).strip())
+    except (InvalidOperation, TypeError, ValueError):
+        return None
+    if not value.is_finite() or value <= 0:
+        return None
+    return value.quantize(Decimal('0.01'))
+
+
 def _build_email_html(title, body_html):
     """Wrap email body in a full HTML document with dark-mode support."""
     return f"""<!DOCTYPE html>
@@ -289,12 +324,19 @@ def add_transaction(request):
 
     if request.method == 'POST':
         email = request.POST.get('authorized_email')
-        amount = Decimal(request.POST.get('amount'))
+        amount = _parse_amount(request.POST.get('amount'))
+        if amount is None:
+            return JsonResponse({"success": False, "error": "Enter a valid amount greater than zero."})
         action_type = request.POST.get('action_type')
         transaction_image = request.FILES.get('transaction_image')
         description = request.POST.get('description', '')  # <-- Get description from form
 
-        user = AuthorizedUser.objects.get(email=email)
+        if action_type not in ('deposit', 'withdrawal'):
+            return JsonResponse({"success": False, "error": "Invalid action."})
+        try:
+            user = AuthorizedUser.objects.get(email=email)
+        except AuthorizedUser.DoesNotExist:
+            return JsonResponse({"success": False, "error": "Selected user does not exist."})
         nav, _ = UserNAV.objects.get_or_create(authorized_user=user)
 
         latest_nav_record = NAVRecord.objects.latest('id')
@@ -366,7 +408,6 @@ def add_transaction(request):
             available_unit = Decimal(str(nav.available_unit))
             available_credit = Decimal(str(nav.available_credit_amount))
             unit_cost = Decimal(str(unit_cost))
-            amount = Decimal(request.POST.get('amount'))
 
             max_withdrawable = (available_unit * unit_cost) + available_credit
 
@@ -440,12 +481,14 @@ def add_transaction(request):
     return JsonResponse({"success": False, "error": "Invalid request."})
 
 @login_required
+@fund_manager_required
 def add_transaction_form(request):
     authorized_users = AuthorizedUser.objects.all()
     html = render_to_string('mainapp/add_transaction_form.html', {'authorized_users': authorized_users})
     return JsonResponse({'html': html})
 
 @login_required
+@fund_manager_required
 def view_transactions(request):
     email = request.GET.get('filter_email')
     authorized_users = AuthorizedUser.objects.all()
@@ -964,6 +1007,7 @@ def user_contract(request):
     return render(request, 'mainapp/user_contract.html')
 
 @login_required
+@fund_manager_required
 def add_investment_transaction(request):
     if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         from datetime import datetime as _dt, date as _date
@@ -973,10 +1017,11 @@ def add_investment_transaction(request):
         stock_units_purchased = request.POST.get('stock_units_purchased', None)
         transaction_date_str = request.POST.get('transaction_date', '').strip()
 
-        try:
-            amount = Decimal(amount)
-        except (TypeError, ValueError):
-            return JsonResponse({"success": False, "error": "Invalid amount."})
+        amount = _parse_amount(amount)
+        if amount is None:
+            return JsonResponse({"success": False, "error": "Enter a valid amount greater than zero."})
+        if amount_type not in ('investment', 'return', 'interest'):
+            return JsonResponse({"success": False, "error": "Invalid transaction type."})
 
         try:
             transaction_date = _dt.strptime(transaction_date_str, '%Y-%m-%d').date() if transaction_date_str else _date.today()
@@ -1237,6 +1282,7 @@ from django.template.loader import render_to_string
 from .models import FirmInvestment, InvestmentCategory
 
 @login_required
+@fund_manager_required
 def add_investment_modal(request):
     if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         investment_name = request.POST.get('investment_name')
@@ -1294,6 +1340,7 @@ def add_investment_modal(request):
     return HttpResponse(html)
 
 @login_required
+@fund_manager_required
 def close_investment_modal(request):
     if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         investment_id = request.POST.get('investment_id')
