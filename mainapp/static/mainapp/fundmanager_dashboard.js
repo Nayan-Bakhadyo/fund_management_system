@@ -452,10 +452,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
   pendingUploadsLink.addEventListener('click', function(e) {
     e.preventDefault();
-    fetch('/fundmanager/pending_user_uploads/')
-      .then(response => response.json())
+    dashboardContent.innerHTML =
+      '<div class="text-center py-5"><div class="spinner-border" style="color:#bfa14a;" role="status"></div></div>';
+    fetch('/fundmanager/pending_user_uploads/', {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+      .then(response => {
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        return response.json();
+      })
       .then(data => {
         dashboardContent.innerHTML = data.html;
+      })
+      .catch(err => {
+        console.error('Error loading pending uploads:', err);
+        dashboardContent.innerHTML =
+          '<div class="alert alert-danger m-3">Failed to load pending uploads. Please try again.</div>';
       });
   });
 
@@ -463,8 +475,13 @@ document.addEventListener('DOMContentLoaded', function() {
   dashboardContent.addEventListener('click', function(e) {
     if (e.target.classList.contains('edit-upload-btn')) {
       const uploadId = e.target.getAttribute('data-upload-id');
-      fetch(`/fundmanager/edit_user_upload/${uploadId}/`)
-        .then(response => response.json())
+      fetch(`/fundmanager/edit_user_upload/${uploadId}/`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+        .then(response => {
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          return response.json();
+        })
         .then(data => {
           // Remove any existing modal
           const oldModal = document.getElementById('editUserUploadModal');
@@ -495,6 +512,10 @@ document.addEventListener('DOMContentLoaded', function() {
               }
             });
           };
+        })
+        .catch(err => {
+          console.error('Error loading upload editor:', err);
+          alert('Failed to load the upload editor. Please try again.');
         });
     }
   });
