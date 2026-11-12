@@ -66,6 +66,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "social_django.middleware.SocialAuthExceptionMiddleware",
 ]
 
 ROOT_URLCONF = "be_inv_project.urls"
@@ -182,6 +183,22 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/post_login_redirect/'
+# On OAuth failure, redirect home instead of 500 (error is logged below).
+SOCIAL_AUTH_LOGIN_ERROR_URL = '/'
+SOCIAL_AUTH_RAISE_EXCEPTIONS = False
+
+# Send errors (incl. OAuth failures and 500 tracebacks) to stdout so they
+# appear in Railway logs.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "loggers": {
+        "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False},
+        "social": {"handlers": ["console"], "level": "INFO", "propagate": False},
+    },
+    "root": {"handlers": ["console"], "level": "WARNING"},
+}
 LOGIN_URL = '/auth/login/google-oauth2/'
 
 # Scheduled jobs (daily_transaction_email, calculate_nav, fetch_share_prices)
